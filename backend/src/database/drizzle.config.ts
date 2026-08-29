@@ -5,8 +5,8 @@ import { createEnv } from "./env";
 const env = createEnv(process.env);
 
 export default defineConfig({
-  out: "./drizzle",
-  schema: "./schema.ts",
+  out: "./src/database/drizzle",
+  schema: "./src/database/schema.ts",
   dialect: "postgresql",
   dbCredentials: {
     url: env.DATABASE_URL,

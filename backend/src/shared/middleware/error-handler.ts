@@ -10,6 +10,7 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
         code: err.code,
         message: err.message,
         details: err.details,
+        requestId: req.requestId,
       },
     });
     return;
@@ -21,6 +22,7 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
         code: "VALIDATION_ERROR",
         message: "Invalid request",
         details: err.issues,
+        requestId: req.requestId,
       },
     });
     return;
@@ -35,6 +37,7 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
     error: {
       code: "INTERNAL_ERROR",
       message: "Internal server error",
+      requestId: req.requestId,
     },
   });
 }

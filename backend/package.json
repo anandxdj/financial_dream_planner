@@ -3,15 +3,19 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@11.5.2",
+  "packageManager": "pnpm@11.24.0",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc --noEmit",
+    "build": "pnpm check-types && tsx scripts/build.ts",
     "check-types": "tsc --noEmit",
-    "start": "tsx src/server.ts",
+    "start": "node dist/server.js",
+    "start:worker": "node dist/worker.js",
+    "lint": "eslint src tests scripts",
+    "openapi:generate": "tsx scripts/generate-openapi.ts && openapi-typescript ../docs/api/openapi.json -o ../sdk/src/generated/schema.d.ts",
+    "openapi:check": "pnpm openapi:generate && git diff --exit-code -- ../docs/api/openapi.json ../sdk/src/generated/schema.d.ts",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
     "test:watch": "vitest",
@@ -20,15 +24,19 @@
     "db:studio": "drizzle-kit studio --config src/database/drizzle.config.ts"
   },
   "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^9.1.0",
     "argon2": "^0.45.1",
+    "bullmq": "^6.3.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
+    "decimal.js": "^10.6.0",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.44.6",
     "express": "^5.2.1",
     "express-rate-limit": "^8.6.2",
     "google-auth-library": "^11.0.2",
     "helmet": "^8.3.0",
+    "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
     "nodemailer": "^9.0.5",
     "postgres": "^3.4.7",
@@ -44,9 +52,13 @@
     "@types/nodemailer": "^8.0.1",
     "@types/supertest": "^7.2.1",
     "drizzle-kit": "^0.31.6",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.9.1",
+    "openapi-typescript": "^7.13.0",
     "supertest": "^7.2.2",
     "tsx": "^4.23.12",
     "typescript": "^5.9.2",
+    "typescript-eslint": "^8.68.0",
     "vitest": "^4.1.10"
   }
 }

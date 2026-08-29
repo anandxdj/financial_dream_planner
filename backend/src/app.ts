@@ -8,8 +8,12 @@ import { usersRouter } from "./modules/users/users.route";
 import { errorHandler } from "./shared/middleware/error-handler";
 import { requestId } from "./shared/middleware/request-id";
 import { logger } from "./shared/logger/logger";
+import { createRunRouter } from "./modules/runs/run.route";
+import type { RunService } from "./modules/runs/run.service";
 
-export function createApp() {
+export interface AppDependencies { runService?: RunService; }
+
+export function createApp(dependencies: AppDependencies = {}) {
   const app = express();
 
   app.set("trust proxy", 1);
@@ -39,6 +43,7 @@ export function createApp() {
 
   app.use("/api/v1/auth", authRouter);
   app.use("/api/v1/users", usersRouter);
+  if (dependencies.runService) app.use("/api/v1/runs", createRunRouter(dependencies.runService));
 
   app.use(errorHandler);
   return app;
