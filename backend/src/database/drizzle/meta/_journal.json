@@ -36,6 +36,20 @@
       "when": 1788071659166,
       "tag": "0004_cultured_maria_hill",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788090250418,
+      "tag": "0005_ambitious_roland_deschain",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788090930345,
+      "tag": "0006_wise_frightful_four",
+      "breakpoints": true
     }
   ]
 }

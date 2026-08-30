@@ -8,7 +8,7 @@ Status values: `in progress`, `planned`, `accepted`. A unit begins only after it
 | U2 Auth and tenancy | accepted | U1 | Hardened starter, OIDC broker, device sessions, household provisioning | Local security/unit and Docker-backed migration/race/provider-contract gates pass; real-provider staging remains a release gate |
 | U3 Ledger vertical | accepted | U2 | Accounts, categories, SMS sync, dedupe, provenance, cash-flow snapshot | Exact and fallback replay are concurrency-safe; ambiguous matches survive review; PostgreSQL-backed suite and generated contracts pass |
 | U4 Financial engine | accepted | U3 | Financial domains, versioned policy, deterministic calculators | Pure calculators, golden/property tests, authenticated API, and generated contracts pass deterministically |
-| U5 Plans/scenarios | planned | U4 | Immutable snapshots/plans, scenario compare/apply | Concurrent apply cannot overwrite a baseline |
+| U5 Plans/scenarios | accepted | U4 | Immutable snapshots/plans, scenario compare/apply | Concurrent apply cannot overwrite a baseline |
 | U6 AI/research | planned | U5 | Provider abstraction, agents, citations, history | Tool/prompt/SSRF/fallback/retention tests pass |
 | U7 Drift | planned | U5, U6 | Material-change detection and explicit actions | Jobs dedupe; only accepted drift can create a baseline |
 | U8 Privacy/storage | planned | U2, U3 | R2 documents, consent, export, deletion | Tenant isolation and outage/retry/deletion tests pass |

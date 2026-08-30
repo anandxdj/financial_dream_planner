@@ -44,3 +44,20 @@ All financial-engine endpoints are authenticated, stateless `POST` calculations 
 - `POST /goal-funding` — Inflated goal cost, funding gap, required contribution, and feasibility.
 - `POST /net-worth` — Exact assets, liabilities, net worth, and allocation percentages.
 - `POST /scenario` — Deterministic baseline evaluation with partial scenario changes overlaid by domain.
+
+## Plans and Scenarios Endpoints (U5)
+
+All plans and scenarios endpoints are authenticated and household scoped under `/api/v1/plans` and `/api/v1/scenarios`.
+
+- **Plans (`/api/v1/plans`)**:
+  - `POST /recalculate` — Evaluates explicit baseline inputs with U4 scenario evaluator, locks household plan, and atomically appends an immutable snapshot and new plan version.
+  - `GET /current` — Returns current immutable plan version and snapshot; returns `404` if uninitialized.
+  - `GET /history` — Returns household plan version history newest-first with stable cursor pagination.
+
+- **Scenarios (`/api/v1/scenarios`)**:
+  - `POST /` — Creates scenario draft referencing current plan version as baseline.
+  - `GET /` — Lists authenticated household's scenario drafts and applied records.
+  - `GET /:id` — Retrieves scenario details by ID.
+  - `POST /compare` — Compares 2 to 10 scenarios in caller order; rejects mixed baselines (`400 SCENARIO_MIXED_BASELINES`).
+  - `POST /:id/run` — Evaluates baseline inputs plus stored overlay without database side effects.
+  - `POST /:id/apply` — Atomically applies scenario against current baseline: appends new snapshot and version, advances plan pointer, marks scenario applied. Rejects stale baseline with `409 SCENARIO_BASELINE_STALE`; retries of the same scenario return its applied version idempotently.

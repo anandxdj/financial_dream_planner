@@ -9,3 +9,5 @@ export * from "../modules/auth/invitation.model";
 export * from "../modules/accounts/model";
 export * from "../modules/categories/model";
 export * from "../modules/transactions/model";
+export * from "../modules/plans/model";
+export * from "../modules/scenarios/model";

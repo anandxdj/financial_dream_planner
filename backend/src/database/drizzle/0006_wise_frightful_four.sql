@@ -1,0 +1,3 @@
+ALTER TABLE "plans" ADD CONSTRAINT "plans_status_check" CHECK ("plans"."status" IN ('active', 'archived'));--> statement-breakpoint
+ALTER TABLE "scenarios" ADD CONSTRAINT "scenarios_status_check" CHECK ("scenarios"."status" IN ('draft', 'applied'));--> statement-breakpoint
+ALTER TABLE "scenarios" ADD CONSTRAINT "scenarios_applied_state_check" CHECK (("scenarios"."status" = 'draft' AND "scenarios"."applied_version_id" IS NULL AND "scenarios"."applied_at" IS NULL) OR ("scenarios"."status" = 'applied' AND "scenarios"."applied_version_id" IS NOT NULL AND "scenarios"."applied_at" IS NOT NULL));

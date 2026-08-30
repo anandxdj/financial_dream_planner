@@ -9,6 +9,8 @@ import { accountsRouter } from "./modules/accounts/accounts.route";
 import { categoriesRouter } from "./modules/categories/categories.route";
 import { transactionsRouter } from "./modules/transactions/transactions.route";
 import { financialEngineRouter } from "./modules/financial-engine/financial-engine.route";
+import { plansRouter } from "./modules/plans/plans.route";
+import { scenariosRouter } from "./modules/scenarios/scenarios.route";
 import { errorHandler } from "./shared/middleware/error-handler";
 import { requestId } from "./shared/middleware/request-id";
 import { logger } from "./shared/logger/logger";
@@ -53,6 +55,8 @@ export function createApp(dependencies: AppDependencies = {}) {
   app.use("/api/v1/categories", categoriesRouter);
   app.use("/api/v1/transactions", transactionsRouter);
   app.use("/api/v1/financial-engine", financialEngineRouter);
+  app.use("/api/v1/plans", plansRouter);
+  app.use("/api/v1/scenarios", scenariosRouter);
   if (dependencies.runService) app.use("/api/v1/runs", createRunRouter(dependencies.runService));
 
   app.use(errorHandler);

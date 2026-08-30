@@ -8,4 +8,4 @@ Initial visible defaults: general inflation 6%, education/medical inflation 8%, 
 
 The first published policy is `IN-2026.1`. Public calculations accept base-10 decimal strings, retain 40-digit intermediate precision with half-up rounding, and round only at typed output boundaries. Every output includes the selected policy, resolved assumptions, and a completeness result; absent inputs never silently become zero.
 
-U4 exposes stateless authenticated calculation endpoints. Goal, snapshot, plan, and scenario persistence remains a U5 concern. The executable contract and acceptance cases are recorded in [U4-SPEC.md](../implementation/U4-SPEC.md).
+U4 exposes stateless authenticated calculation endpoints. U5 provides immutable snapshot and plan persistence, deterministic scenario runs, and concurrency-safe apply semantics. The executable contracts are recorded in [U4-SPEC.md](../implementation/U4-SPEC.md) and [U5-SPEC.md](../implementation/U5-SPEC.md).

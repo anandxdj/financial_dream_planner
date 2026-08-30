@@ -16,6 +16,24 @@ import {
   ScenarioEvaluationRequestSchema,
   ScenarioEvaluationResponseSchema as FinancialEngineScenarioEvaluationOutputSchema,
 } from "./modules/financial-engine/model";
+import {
+  CurrentPlanResponseSchema,
+  FinancialSnapshotSchema,
+  PlanHistoryResponseSchema,
+  PlanSchema,
+  PlanVersionSchema,
+  RecalculatePlanRequestSchema,
+} from "./modules/plans/model";
+import {
+  ApplyScenarioResponseSchema,
+  CompareScenariosRequestSchema,
+  CompareScenariosResponseSchema,
+  CreateScenarioRequestSchema,
+  RunScenarioResponseSchema,
+  ScenarioListResponseSchema,
+  ScenarioResponseSchema,
+  ScenarioSchema,
+} from "./modules/scenarios/model";
 
 extendZodWithOpenApi(z);
 const registry = new OpenAPIRegistry();
@@ -392,6 +410,125 @@ registry.registerPath({
     200: { description: "Scenario evaluation result", content: json(FinancialEngineScenarioResponseSchema) },
     400: { description: "Invalid input", content: json(ErrorResponseSchema) },
     401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+  },
+});
+
+// --- Plans Schemas ---
+registry.register("FinancialSnapshot", FinancialSnapshotSchema);
+registry.register("PlanVersion", PlanVersionSchema);
+registry.register("Plan", PlanSchema);
+const CurrentPlanResponseApiSchema = registry.register("CurrentPlanResponse", CurrentPlanResponseSchema);
+const PlanHistoryResponseApiSchema = registry.register("PlanHistoryResponse", PlanHistoryResponseSchema);
+
+// --- Scenarios Schemas ---
+registry.register("Scenario", ScenarioSchema);
+const ScenarioResponseApiSchema = registry.register("ScenarioResponse", ScenarioResponseSchema);
+const ScenarioListResponseApiSchema = registry.register("ScenarioListResponse", ScenarioListResponseSchema);
+const CompareScenariosResponseApiSchema = registry.register("CompareScenariosResponse", CompareScenariosResponseSchema);
+const RunScenarioResponseApiSchema = registry.register("RunScenarioResponse", RunScenarioResponseSchema);
+const ApplyScenarioResponseApiSchema = registry.register("ApplyScenarioResponse", ApplyScenarioResponseSchema);
+
+// --- Plans Routes ---
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/plans/recalculate",
+  request: { body: { content: json(RecalculatePlanRequestSchema) } },
+  responses: {
+    200: { description: "Plan recalculation result with new snapshot and version", content: json(CurrentPlanResponseApiSchema) },
+    400: { description: "Invalid input", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/plans/current",
+  responses: {
+    200: { description: "Current household plan, version, and snapshot", content: json(CurrentPlanResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Plan not found", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/plans/history",
+  request: {
+    query: z.object({
+      cursor: z.string().optional(),
+      limit: z.coerce.number().optional(),
+    }),
+  },
+  responses: {
+    200: { description: "Household plan version history", content: json(PlanHistoryResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+  },
+});
+
+// --- Scenarios Routes ---
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/scenarios",
+  request: { body: { content: json(CreateScenarioRequestSchema) } },
+  responses: {
+    201: { description: "Scenario draft created", content: json(ScenarioResponseApiSchema) },
+    400: { description: "Invalid input or no current plan", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/scenarios",
+  responses: {
+    200: { description: "List of household scenarios", content: json(ScenarioListResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/scenarios/compare",
+  request: { body: { content: json(CompareScenariosRequestSchema) } },
+  responses: {
+    200: { description: "Scenario comparison results", content: json(CompareScenariosResponseApiSchema) },
+    400: { description: "Invalid scenario count or mixed baselines", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "One or more scenarios not found", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/scenarios/{id}",
+  request: { params: IdParamsSchema },
+  responses: {
+    200: { description: "Scenario details", content: json(ScenarioResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Scenario not found", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/scenarios/{id}/run",
+  request: { params: IdParamsSchema },
+  responses: {
+    200: { description: "Scenario run output against baseline without persistence side effects", content: json(RunScenarioResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Scenario not found", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/scenarios/{id}/apply",
+  request: { params: IdParamsSchema },
+  responses: {
+    200: { description: "Scenario applied; returns updated plan, new version, and snapshot", content: json(ApplyScenarioResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Scenario or plan not found", content: json(ErrorResponseSchema) },
+    409: { description: "Scenario baseline is stale", content: json(ErrorResponseSchema) },
   },
 });
 
