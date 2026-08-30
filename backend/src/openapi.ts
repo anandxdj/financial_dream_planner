@@ -1,5 +1,21 @@
 import { extendZodWithOpenApi, OpenAPIRegistry, OpenApiGeneratorV31 } from "@asteasolutions/zod-to-openapi";
 import { z } from "zod";
+import {
+  CashFlowRequestSchema,
+  CashFlowResponseSchema as FinancialEngineCashFlowOutputSchema,
+  EmergencyFundRequestSchema,
+  EmergencyFundResponseSchema as FinancialEngineEmergencyFundOutputSchema,
+  GoalFundingRequestSchema,
+  GoalFundingResponseSchema as FinancialEngineGoalFundingOutputSchema,
+  InvestmentProjectionRequestSchema,
+  InvestmentProjectionResponseSchema as FinancialEngineInvestmentProjectionOutputSchema,
+  LoanRequestSchema,
+  LoanResponseSchema as FinancialEngineLoanOutputSchema,
+  NetWorthRequestSchema,
+  NetWorthResponseSchema as FinancialEngineNetWorthOutputSchema,
+  ScenarioEvaluationRequestSchema,
+  ScenarioEvaluationResponseSchema as FinancialEngineScenarioEvaluationOutputSchema,
+} from "./modules/financial-engine/model";
 
 extendZodWithOpenApi(z);
 const registry = new OpenAPIRegistry();
@@ -262,6 +278,36 @@ registry.registerPath({ method: "get", path: "/api/v1/categories/{id}", request:
 registry.registerPath({ method: "patch", path: "/api/v1/categories/{id}", request: { params: IdParamsSchema, body: { content: json(UpdateCategorySchema) } }, responses: { 200: { description: "Updated category", content: json(CategoryResponseSchema) }, 403: { description: "System category cannot be updated", content: json(ErrorResponseSchema) }, 404: { description: "Category not found", content: json(ErrorResponseSchema) }, 401: { description: "Unauthorized", content: json(ErrorResponseSchema) } } });
 registry.registerPath({ method: "delete", path: "/api/v1/categories/{id}", request: { params: IdParamsSchema }, responses: { 204: { description: "Category deleted" }, 403: { description: "System category cannot be deleted", content: json(ErrorResponseSchema) }, 404: { description: "Category not found", content: json(ErrorResponseSchema) }, 401: { description: "Unauthorized", content: json(ErrorResponseSchema) } } });
 
+// --- Financial Engine Schemas ---
+const FinancialEngineCashFlowResponseSchema = registry.register(
+  "FinancialEngineCashFlowResponse",
+  z.object({ data: FinancialEngineCashFlowOutputSchema }),
+);
+const FinancialEngineEmergencyFundResponseSchema = registry.register(
+  "FinancialEngineEmergencyFundResponse",
+  z.object({ data: FinancialEngineEmergencyFundOutputSchema }),
+);
+const FinancialEngineLoanResponseSchema = registry.register(
+  "FinancialEngineLoanResponse",
+  z.object({ data: FinancialEngineLoanOutputSchema }),
+);
+const FinancialEngineInvestmentProjectionResponseSchema = registry.register(
+  "FinancialEngineInvestmentProjectionResponse",
+  z.object({ data: FinancialEngineInvestmentProjectionOutputSchema }),
+);
+const FinancialEngineGoalFundingResponseSchema = registry.register(
+  "FinancialEngineGoalFundingResponse",
+  z.object({ data: FinancialEngineGoalFundingOutputSchema }),
+);
+const FinancialEngineNetWorthResponseSchema = registry.register(
+  "FinancialEngineNetWorthResponse",
+  z.object({ data: FinancialEngineNetWorthOutputSchema }),
+);
+const FinancialEngineScenarioResponseSchema = registry.register(
+  "FinancialEngineScenarioResponse",
+  z.object({ data: FinancialEngineScenarioEvaluationOutputSchema }),
+);
+
 // --- Transactions Routes ---
 registry.registerPath({ method: "post", path: "/api/v1/transactions/sync", request: { body: { content: json(SyncTransactionsRequestSchema) } }, responses: { 200: { description: "Sync batch result", content: json(SyncTransactionsResponseSchema) }, 400: { description: "Invalid input", content: json(ErrorResponseSchema) }, 401: { description: "Unauthorized", content: json(ErrorResponseSchema) } } });
 registry.registerPath({ method: "get", path: "/api/v1/transactions/cash-flow", request: { query: z.object({ startDate: z.string().datetime().optional(), endDate: z.string().datetime().optional(), accountId: z.string().uuid().optional(), currency: z.string().length(3).optional() }) }, responses: { 200: { description: "Single-currency cash flow snapshot (defaults to INR)", content: json(CashFlowResponseSchema) }, 401: { description: "Unauthorized", content: json(ErrorResponseSchema) } } });
@@ -270,6 +316,84 @@ registry.registerPath({ method: "post", path: "/api/v1/transactions", request: {
 registry.registerPath({ method: "get", path: "/api/v1/transactions/{id}", request: { params: IdParamsSchema }, responses: { 200: { description: "Transaction details with provenance", content: json(TransactionWithProvenanceResponseSchema) }, 404: { description: "Transaction not found", content: json(ErrorResponseSchema) }, 401: { description: "Unauthorized", content: json(ErrorResponseSchema) } } });
 registry.registerPath({ method: "patch", path: "/api/v1/transactions/{id}", request: { params: IdParamsSchema, body: { content: json(UpdateTransactionSchema) } }, responses: { 200: { description: "Updated transaction", content: json(TransactionResponseSchema) }, 404: { description: "Transaction not found", content: json(ErrorResponseSchema) }, 401: { description: "Unauthorized", content: json(ErrorResponseSchema) } } });
 registry.registerPath({ method: "delete", path: "/api/v1/transactions/{id}", request: { params: IdParamsSchema }, responses: { 204: { description: "Transaction deleted" }, 404: { description: "Transaction not found", content: json(ErrorResponseSchema) }, 401: { description: "Unauthorized", content: json(ErrorResponseSchema) } } });
+
+// --- Financial Engine Routes ---
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/financial-engine/cash-flow",
+  request: { body: { content: json(CashFlowRequestSchema) } },
+  responses: {
+    200: { description: "Cash flow calculation result", content: json(FinancialEngineCashFlowResponseSchema) },
+    400: { description: "Invalid input", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/financial-engine/emergency-fund",
+  request: { body: { content: json(EmergencyFundRequestSchema) } },
+  responses: {
+    200: { description: "Emergency fund calculation result", content: json(FinancialEngineEmergencyFundResponseSchema) },
+    400: { description: "Invalid input", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/financial-engine/loan",
+  request: { body: { content: json(LoanRequestSchema) } },
+  responses: {
+    200: { description: "Loan and amortization calculation result", content: json(FinancialEngineLoanResponseSchema) },
+    400: { description: "Invalid input", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/financial-engine/investment-projection",
+  request: { body: { content: json(InvestmentProjectionRequestSchema) } },
+  responses: {
+    200: { description: "Investment projection calculation result", content: json(FinancialEngineInvestmentProjectionResponseSchema) },
+    400: { description: "Invalid input", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/financial-engine/goal-funding",
+  request: { body: { content: json(GoalFundingRequestSchema) } },
+  responses: {
+    200: { description: "Goal funding calculation result", content: json(FinancialEngineGoalFundingResponseSchema) },
+    400: { description: "Invalid input", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/financial-engine/net-worth",
+  request: { body: { content: json(NetWorthRequestSchema) } },
+  responses: {
+    200: { description: "Net worth calculation result", content: json(FinancialEngineNetWorthResponseSchema) },
+    400: { description: "Invalid input", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/financial-engine/scenario",
+  request: { body: { content: json(ScenarioEvaluationRequestSchema) } },
+  responses: {
+    200: { description: "Scenario evaluation result", content: json(FinancialEngineScenarioResponseSchema) },
+    400: { description: "Invalid input", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+  },
+});
 
 export function generateOpenApiDocument() {
   return new OpenApiGeneratorV31(registry.definitions).generateDocument({

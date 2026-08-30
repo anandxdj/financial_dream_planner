@@ -1325,6 +1325,623 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/financial-engine/cash-flow": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        income?: string;
+                        essentialExpenses?: string;
+                        discretionaryExpenses?: string;
+                        emis?: string;
+                        mandatoryObligations?: string;
+                        policyVersion?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Cash flow calculation result */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["FinancialEngineCashFlowResponse"];
+                    };
+                };
+                /** @description Invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/financial-engine/emergency-fund": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        essentialExpenses?: string;
+                        emis?: string;
+                        mandatoryObligations?: string;
+                        /** @enum {string} */
+                        incomeStability?: "stable" | "variable" | "irregular";
+                        dependents?: number;
+                        currentReserves?: string;
+                        monthlyContribution?: string;
+                        customReserveMonths?: number;
+                        policyVersion?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Emergency fund calculation result */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["FinancialEngineEmergencyFundResponse"];
+                    };
+                };
+                /** @description Invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/financial-engine/loan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        principal?: string;
+                        annualRate?: string;
+                        tenureMonths?: number;
+                        prepayments?: {
+                            month: number;
+                            amount: string;
+                        }[];
+                        /** @enum {string} */
+                        prepaymentStrategy?: "reduce_tenure" | "reduce_emi";
+                        refinancing?: {
+                            newAnnualRate: string;
+                            newTenureMonths?: number;
+                            processingFee?: string;
+                        };
+                        policyVersion?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Loan and amortization calculation result */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["FinancialEngineLoanResponse"];
+                    };
+                };
+                /** @description Invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/financial-engine/investment-projection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        initialLumpSum?: string;
+                        monthlySip?: string;
+                        annualStepUp?: string;
+                        horizonMonths?: number;
+                        customAnnualRate?: string;
+                        policyVersion?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Investment projection calculation result */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["FinancialEngineInvestmentProjectionResponse"];
+                    };
+                };
+                /** @description Invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/financial-engine/goal-funding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        goalName?: string;
+                        /** @enum {string} */
+                        goalCategory?: "general" | "education" | "medical" | "retirement" | "home" | "custom";
+                        targetAmountToday?: string;
+                        horizonMonths?: number;
+                        currentSavings?: string;
+                        availableMonthlyCapacity?: string;
+                        expectedAnnualReturn?: string;
+                        annualInflation?: string;
+                        policyVersion?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Goal funding calculation result */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["FinancialEngineGoalFundingResponse"];
+                    };
+                };
+                /** @description Invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/financial-engine/net-worth": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        assets?: {
+                            id?: string;
+                            name: string;
+                            category: string;
+                            value: string;
+                        }[];
+                        liabilities?: {
+                            id?: string;
+                            name: string;
+                            category: string;
+                            value: string;
+                        }[];
+                        policyVersion?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Net worth calculation result */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["FinancialEngineNetWorthResponse"];
+                    };
+                };
+                /** @description Invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/financial-engine/scenario": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        name: string;
+                        description?: string;
+                        baseline: {
+                            cashFlow?: {
+                                income?: string;
+                                essentialExpenses?: string;
+                                discretionaryExpenses?: string;
+                                emis?: string;
+                                mandatoryObligations?: string;
+                                policyVersion?: string;
+                            };
+                            emergencyFund?: {
+                                essentialExpenses?: string;
+                                emis?: string;
+                                mandatoryObligations?: string;
+                                /** @enum {string} */
+                                incomeStability?: "stable" | "variable" | "irregular";
+                                dependents?: number;
+                                currentReserves?: string;
+                                monthlyContribution?: string;
+                                customReserveMonths?: number;
+                                policyVersion?: string;
+                            };
+                            loan?: {
+                                principal?: string;
+                                annualRate?: string;
+                                tenureMonths?: number;
+                                prepayments?: {
+                                    month: number;
+                                    amount: string;
+                                }[];
+                                /** @enum {string} */
+                                prepaymentStrategy?: "reduce_tenure" | "reduce_emi";
+                                refinancing?: {
+                                    newAnnualRate: string;
+                                    newTenureMonths?: number;
+                                    processingFee?: string;
+                                };
+                                policyVersion?: string;
+                            };
+                            investment?: {
+                                initialLumpSum?: string;
+                                monthlySip?: string;
+                                annualStepUp?: string;
+                                horizonMonths?: number;
+                                customAnnualRate?: string;
+                                policyVersion?: string;
+                            };
+                            goal?: {
+                                goalName?: string;
+                                /** @enum {string} */
+                                goalCategory?: "general" | "education" | "medical" | "retirement" | "home" | "custom";
+                                targetAmountToday?: string;
+                                horizonMonths?: number;
+                                currentSavings?: string;
+                                availableMonthlyCapacity?: string;
+                                expectedAnnualReturn?: string;
+                                annualInflation?: string;
+                                policyVersion?: string;
+                            };
+                            netWorth?: {
+                                assets?: {
+                                    id?: string;
+                                    name: string;
+                                    category: string;
+                                    value: string;
+                                }[];
+                                liabilities?: {
+                                    id?: string;
+                                    name: string;
+                                    category: string;
+                                    value: string;
+                                }[];
+                                policyVersion?: string;
+                            };
+                        };
+                        scenario: {
+                            cashFlow?: {
+                                income?: string;
+                                essentialExpenses?: string;
+                                discretionaryExpenses?: string;
+                                emis?: string;
+                                mandatoryObligations?: string;
+                                policyVersion?: string;
+                            };
+                            emergencyFund?: {
+                                essentialExpenses?: string;
+                                emis?: string;
+                                mandatoryObligations?: string;
+                                /** @enum {string} */
+                                incomeStability?: "stable" | "variable" | "irregular";
+                                dependents?: number;
+                                currentReserves?: string;
+                                monthlyContribution?: string;
+                                customReserveMonths?: number;
+                                policyVersion?: string;
+                            };
+                            loan?: {
+                                principal?: string;
+                                annualRate?: string;
+                                tenureMonths?: number;
+                                prepayments?: {
+                                    month: number;
+                                    amount: string;
+                                }[];
+                                /** @enum {string} */
+                                prepaymentStrategy?: "reduce_tenure" | "reduce_emi";
+                                refinancing?: {
+                                    newAnnualRate: string;
+                                    newTenureMonths?: number;
+                                    processingFee?: string;
+                                };
+                                policyVersion?: string;
+                            };
+                            investment?: {
+                                initialLumpSum?: string;
+                                monthlySip?: string;
+                                annualStepUp?: string;
+                                horizonMonths?: number;
+                                customAnnualRate?: string;
+                                policyVersion?: string;
+                            };
+                            goal?: {
+                                goalName?: string;
+                                /** @enum {string} */
+                                goalCategory?: "general" | "education" | "medical" | "retirement" | "home" | "custom";
+                                targetAmountToday?: string;
+                                horizonMonths?: number;
+                                currentSavings?: string;
+                                availableMonthlyCapacity?: string;
+                                expectedAnnualReturn?: string;
+                                annualInflation?: string;
+                                policyVersion?: string;
+                            };
+                            netWorth?: {
+                                assets?: {
+                                    id?: string;
+                                    name: string;
+                                    category: string;
+                                    value: string;
+                                }[];
+                                liabilities?: {
+                                    id?: string;
+                                    name: string;
+                                    category: string;
+                                    value: string;
+                                }[];
+                                policyVersion?: string;
+                            };
+                        };
+                        policyVersion?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Scenario evaluation result */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["FinancialEngineScenarioResponse"];
+                    };
+                };
+                /** @description Invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1498,6 +2115,880 @@ export interface components {
         };
         CashFlowResponse: {
             data: components["schemas"]["CashFlowSnapshot"];
+        };
+        FinancialEngineCashFlowResponse: {
+            data: {
+                monthlyIncome: string | null;
+                essentialExpenses: string | null;
+                discretionaryExpenses: string | null;
+                emis: string | null;
+                mandatoryObligations: string | null;
+                totalExpenses: string | null;
+                fixedObligations: string | null;
+                totalOutflows: string | null;
+                monthlySurplus: string | null;
+                savingsRate: string | null;
+                investableCapacity: string | null;
+                completeness: {
+                    /** @enum {string} */
+                    status: "complete" | "incomplete";
+                    missing: string[];
+                    warnings: string[];
+                };
+                policyVersion: string;
+                resolvedAssumptions: {
+                    policyVersion: string;
+                    generalInflation: string;
+                    educationInflation: string;
+                    medicalInflation: string;
+                    returns: {
+                        conservative: string;
+                        expected: string;
+                        optimistic: string;
+                    };
+                    annualStepUp: string;
+                    emergencyReserveMonths: {
+                        stable: number;
+                        variable: number;
+                        irregular: number;
+                    };
+                };
+            };
+        };
+        FinancialEngineEmergencyFundResponse: {
+            data: {
+                monthlyNeed: string | null;
+                baseReserveMonths: number | null;
+                dependentsUpliftMonths: number | null;
+                targetReserveMonths: number | null;
+                targetAmount: string | null;
+                currentReserves: string | null;
+                runwayMonths: string | null;
+                shortfall: string | null;
+                completionMonths: number | null;
+                completeness: {
+                    /** @enum {string} */
+                    status: "complete" | "incomplete";
+                    missing: string[];
+                    warnings: string[];
+                };
+                policyVersion: string;
+                resolvedAssumptions: {
+                    policyVersion: string;
+                    generalInflation: string;
+                    educationInflation: string;
+                    medicalInflation: string;
+                    returns: {
+                        conservative: string;
+                        expected: string;
+                        optimistic: string;
+                    };
+                    annualStepUp: string;
+                    emergencyReserveMonths: {
+                        stable: number;
+                        variable: number;
+                        irregular: number;
+                    };
+                };
+            };
+        };
+        FinancialEngineLoanResponse: {
+            data: {
+                monthlyEmi: string | null;
+                totalPrincipal: string | null;
+                totalInterest: string | null;
+                totalPayment: string | null;
+                tenureMonths: number | null;
+                annualRate: string | null;
+                monthlyRate: string | null;
+                schedule: {
+                    month: number;
+                    payment: string;
+                    principal: string;
+                    interest: string;
+                    remainingBalance: string;
+                }[];
+                prepaymentComparison: {
+                    originalTotalInterest: string;
+                    revisedTotalInterest: string;
+                    interestSaved: string;
+                    originalTenureMonths: number;
+                    revisedTenureMonths: number;
+                    monthsSaved: number;
+                    revisedMonthlyEmi: string;
+                    schedule: {
+                        month: number;
+                        payment: string;
+                        principal: string;
+                        interest: string;
+                        remainingBalance: string;
+                    }[];
+                } | null;
+                refinancingComparison: {
+                    currentRemainingInterest: string;
+                    newMonthlyEmi: string;
+                    newTotalInterest: string;
+                    processingFee: string;
+                    netSavings: string;
+                    isBeneficial: boolean;
+                } | null;
+                completeness: {
+                    /** @enum {string} */
+                    status: "complete" | "incomplete";
+                    missing: string[];
+                    warnings: string[];
+                };
+                policyVersion: string;
+                resolvedAssumptions: {
+                    policyVersion: string;
+                    generalInflation: string;
+                    educationInflation: string;
+                    medicalInflation: string;
+                    returns: {
+                        conservative: string;
+                        expected: string;
+                        optimistic: string;
+                    };
+                    annualStepUp: string;
+                    emergencyReserveMonths: {
+                        stable: number;
+                        variable: number;
+                        irregular: number;
+                    };
+                };
+            };
+        };
+        FinancialEngineInvestmentProjectionResponse: {
+            data: {
+                initialLumpSum: string | null;
+                monthlySip: string | null;
+                annualStepUp: string | null;
+                horizonMonths: number | null;
+                scenarios: {
+                    [key: string]: {
+                        scenarioName: string;
+                        annualRate: string;
+                        totalInvested: string;
+                        futureValue: string;
+                        totalGains: string;
+                        milestones: {
+                            month: number;
+                            year: number;
+                            totalInvested: string;
+                            futureValue: string;
+                            totalGains: string;
+                        }[];
+                    };
+                };
+                completeness: {
+                    /** @enum {string} */
+                    status: "complete" | "incomplete";
+                    missing: string[];
+                    warnings: string[];
+                };
+                policyVersion: string;
+                resolvedAssumptions: {
+                    policyVersion: string;
+                    generalInflation: string;
+                    educationInflation: string;
+                    medicalInflation: string;
+                    returns: {
+                        conservative: string;
+                        expected: string;
+                        optimistic: string;
+                    };
+                    annualStepUp: string;
+                    emergencyReserveMonths: {
+                        stable: number;
+                        variable: number;
+                        irregular: number;
+                    };
+                };
+            };
+        };
+        FinancialEngineGoalFundingResponse: {
+            data: {
+                goalName: string | null;
+                goalCategory: string;
+                targetAmountToday: string | null;
+                futureGoalCost: string | null;
+                currentSavings: string | null;
+                currentSavingsFutureValue: string | null;
+                fundingRatio: string | null;
+                shortfall: string | null;
+                requiredSip: string | null;
+                requiredLumpSum: string | null;
+                availableMonthlyCapacity: string | null;
+                /** @enum {string|null} */
+                feasibility: "funded" | "feasible" | "infeasible" | "unconstrained" | null;
+                horizonMonths: number | null;
+                annualInflationUsed: string;
+                expectedReturnUsed: string;
+                completeness: {
+                    /** @enum {string} */
+                    status: "complete" | "incomplete";
+                    missing: string[];
+                    warnings: string[];
+                };
+                policyVersion: string;
+                resolvedAssumptions: {
+                    policyVersion: string;
+                    generalInflation: string;
+                    educationInflation: string;
+                    medicalInflation: string;
+                    returns: {
+                        conservative: string;
+                        expected: string;
+                        optimistic: string;
+                    };
+                    annualStepUp: string;
+                    emergencyReserveMonths: {
+                        stable: number;
+                        variable: number;
+                        irregular: number;
+                    };
+                };
+            };
+        };
+        FinancialEngineNetWorthResponse: {
+            data: {
+                totalAssets: string | null;
+                totalLiabilities: string | null;
+                netWorth: string | null;
+                assetAllocations: {
+                    category: string;
+                    totalValue: string;
+                    percentage: string;
+                }[];
+                liabilityBreakdown: {
+                    category: string;
+                    totalValue: string;
+                    percentage: string;
+                }[];
+                completeness: {
+                    /** @enum {string} */
+                    status: "complete" | "incomplete";
+                    missing: string[];
+                    warnings: string[];
+                };
+                policyVersion: string;
+                resolvedAssumptions: {
+                    policyVersion: string;
+                    generalInflation: string;
+                    educationInflation: string;
+                    medicalInflation: string;
+                    returns: {
+                        conservative: string;
+                        expected: string;
+                        optimistic: string;
+                    };
+                    annualStepUp: string;
+                    emergencyReserveMonths: {
+                        stable: number;
+                        variable: number;
+                        irregular: number;
+                    };
+                };
+            };
+        };
+        FinancialEngineScenarioResponse: {
+            data: {
+                name: string;
+                description: string | null;
+                baseline: {
+                    cashFlow?: {
+                        monthlyIncome: string | null;
+                        essentialExpenses: string | null;
+                        discretionaryExpenses: string | null;
+                        emis: string | null;
+                        mandatoryObligations: string | null;
+                        totalExpenses: string | null;
+                        fixedObligations: string | null;
+                        totalOutflows: string | null;
+                        monthlySurplus: string | null;
+                        savingsRate: string | null;
+                        investableCapacity: string | null;
+                        completeness: {
+                            /** @enum {string} */
+                            status: "complete" | "incomplete";
+                            missing: string[];
+                            warnings: string[];
+                        };
+                        policyVersion: string;
+                        resolvedAssumptions: {
+                            policyVersion: string;
+                            generalInflation: string;
+                            educationInflation: string;
+                            medicalInflation: string;
+                            returns: {
+                                conservative: string;
+                                expected: string;
+                                optimistic: string;
+                            };
+                            annualStepUp: string;
+                            emergencyReserveMonths: {
+                                stable: number;
+                                variable: number;
+                                irregular: number;
+                            };
+                        };
+                    };
+                    emergencyFund?: {
+                        monthlyNeed: string | null;
+                        baseReserveMonths: number | null;
+                        dependentsUpliftMonths: number | null;
+                        targetReserveMonths: number | null;
+                        targetAmount: string | null;
+                        currentReserves: string | null;
+                        runwayMonths: string | null;
+                        shortfall: string | null;
+                        completionMonths: number | null;
+                        completeness: {
+                            /** @enum {string} */
+                            status: "complete" | "incomplete";
+                            missing: string[];
+                            warnings: string[];
+                        };
+                        policyVersion: string;
+                        resolvedAssumptions: {
+                            policyVersion: string;
+                            generalInflation: string;
+                            educationInflation: string;
+                            medicalInflation: string;
+                            returns: {
+                                conservative: string;
+                                expected: string;
+                                optimistic: string;
+                            };
+                            annualStepUp: string;
+                            emergencyReserveMonths: {
+                                stable: number;
+                                variable: number;
+                                irregular: number;
+                            };
+                        };
+                    };
+                    loan?: {
+                        monthlyEmi: string | null;
+                        totalPrincipal: string | null;
+                        totalInterest: string | null;
+                        totalPayment: string | null;
+                        tenureMonths: number | null;
+                        annualRate: string | null;
+                        monthlyRate: string | null;
+                        schedule: {
+                            month: number;
+                            payment: string;
+                            principal: string;
+                            interest: string;
+                            remainingBalance: string;
+                        }[];
+                        prepaymentComparison: {
+                            originalTotalInterest: string;
+                            revisedTotalInterest: string;
+                            interestSaved: string;
+                            originalTenureMonths: number;
+                            revisedTenureMonths: number;
+                            monthsSaved: number;
+                            revisedMonthlyEmi: string;
+                            schedule: {
+                                month: number;
+                                payment: string;
+                                principal: string;
+                                interest: string;
+                                remainingBalance: string;
+                            }[];
+                        } | null;
+                        refinancingComparison: {
+                            currentRemainingInterest: string;
+                            newMonthlyEmi: string;
+                            newTotalInterest: string;
+                            processingFee: string;
+                            netSavings: string;
+                            isBeneficial: boolean;
+                        } | null;
+                        completeness: {
+                            /** @enum {string} */
+                            status: "complete" | "incomplete";
+                            missing: string[];
+                            warnings: string[];
+                        };
+                        policyVersion: string;
+                        resolvedAssumptions: {
+                            policyVersion: string;
+                            generalInflation: string;
+                            educationInflation: string;
+                            medicalInflation: string;
+                            returns: {
+                                conservative: string;
+                                expected: string;
+                                optimistic: string;
+                            };
+                            annualStepUp: string;
+                            emergencyReserveMonths: {
+                                stable: number;
+                                variable: number;
+                                irregular: number;
+                            };
+                        };
+                    };
+                    investment?: {
+                        initialLumpSum: string | null;
+                        monthlySip: string | null;
+                        annualStepUp: string | null;
+                        horizonMonths: number | null;
+                        scenarios: {
+                            [key: string]: {
+                                scenarioName: string;
+                                annualRate: string;
+                                totalInvested: string;
+                                futureValue: string;
+                                totalGains: string;
+                                milestones: {
+                                    month: number;
+                                    year: number;
+                                    totalInvested: string;
+                                    futureValue: string;
+                                    totalGains: string;
+                                }[];
+                            };
+                        };
+                        completeness: {
+                            /** @enum {string} */
+                            status: "complete" | "incomplete";
+                            missing: string[];
+                            warnings: string[];
+                        };
+                        policyVersion: string;
+                        resolvedAssumptions: {
+                            policyVersion: string;
+                            generalInflation: string;
+                            educationInflation: string;
+                            medicalInflation: string;
+                            returns: {
+                                conservative: string;
+                                expected: string;
+                                optimistic: string;
+                            };
+                            annualStepUp: string;
+                            emergencyReserveMonths: {
+                                stable: number;
+                                variable: number;
+                                irregular: number;
+                            };
+                        };
+                    };
+                    goal?: {
+                        goalName: string | null;
+                        goalCategory: string;
+                        targetAmountToday: string | null;
+                        futureGoalCost: string | null;
+                        currentSavings: string | null;
+                        currentSavingsFutureValue: string | null;
+                        fundingRatio: string | null;
+                        shortfall: string | null;
+                        requiredSip: string | null;
+                        requiredLumpSum: string | null;
+                        availableMonthlyCapacity: string | null;
+                        /** @enum {string|null} */
+                        feasibility: "funded" | "feasible" | "infeasible" | "unconstrained" | null;
+                        horizonMonths: number | null;
+                        annualInflationUsed: string;
+                        expectedReturnUsed: string;
+                        completeness: {
+                            /** @enum {string} */
+                            status: "complete" | "incomplete";
+                            missing: string[];
+                            warnings: string[];
+                        };
+                        policyVersion: string;
+                        resolvedAssumptions: {
+                            policyVersion: string;
+                            generalInflation: string;
+                            educationInflation: string;
+                            medicalInflation: string;
+                            returns: {
+                                conservative: string;
+                                expected: string;
+                                optimistic: string;
+                            };
+                            annualStepUp: string;
+                            emergencyReserveMonths: {
+                                stable: number;
+                                variable: number;
+                                irregular: number;
+                            };
+                        };
+                    };
+                    netWorth?: {
+                        totalAssets: string | null;
+                        totalLiabilities: string | null;
+                        netWorth: string | null;
+                        assetAllocations: {
+                            category: string;
+                            totalValue: string;
+                            percentage: string;
+                        }[];
+                        liabilityBreakdown: {
+                            category: string;
+                            totalValue: string;
+                            percentage: string;
+                        }[];
+                        completeness: {
+                            /** @enum {string} */
+                            status: "complete" | "incomplete";
+                            missing: string[];
+                            warnings: string[];
+                        };
+                        policyVersion: string;
+                        resolvedAssumptions: {
+                            policyVersion: string;
+                            generalInflation: string;
+                            educationInflation: string;
+                            medicalInflation: string;
+                            returns: {
+                                conservative: string;
+                                expected: string;
+                                optimistic: string;
+                            };
+                            annualStepUp: string;
+                            emergencyReserveMonths: {
+                                stable: number;
+                                variable: number;
+                                irregular: number;
+                            };
+                        };
+                    };
+                };
+                scenario: {
+                    cashFlow?: {
+                        monthlyIncome: string | null;
+                        essentialExpenses: string | null;
+                        discretionaryExpenses: string | null;
+                        emis: string | null;
+                        mandatoryObligations: string | null;
+                        totalExpenses: string | null;
+                        fixedObligations: string | null;
+                        totalOutflows: string | null;
+                        monthlySurplus: string | null;
+                        savingsRate: string | null;
+                        investableCapacity: string | null;
+                        completeness: {
+                            /** @enum {string} */
+                            status: "complete" | "incomplete";
+                            missing: string[];
+                            warnings: string[];
+                        };
+                        policyVersion: string;
+                        resolvedAssumptions: {
+                            policyVersion: string;
+                            generalInflation: string;
+                            educationInflation: string;
+                            medicalInflation: string;
+                            returns: {
+                                conservative: string;
+                                expected: string;
+                                optimistic: string;
+                            };
+                            annualStepUp: string;
+                            emergencyReserveMonths: {
+                                stable: number;
+                                variable: number;
+                                irregular: number;
+                            };
+                        };
+                    };
+                    emergencyFund?: {
+                        monthlyNeed: string | null;
+                        baseReserveMonths: number | null;
+                        dependentsUpliftMonths: number | null;
+                        targetReserveMonths: number | null;
+                        targetAmount: string | null;
+                        currentReserves: string | null;
+                        runwayMonths: string | null;
+                        shortfall: string | null;
+                        completionMonths: number | null;
+                        completeness: {
+                            /** @enum {string} */
+                            status: "complete" | "incomplete";
+                            missing: string[];
+                            warnings: string[];
+                        };
+                        policyVersion: string;
+                        resolvedAssumptions: {
+                            policyVersion: string;
+                            generalInflation: string;
+                            educationInflation: string;
+                            medicalInflation: string;
+                            returns: {
+                                conservative: string;
+                                expected: string;
+                                optimistic: string;
+                            };
+                            annualStepUp: string;
+                            emergencyReserveMonths: {
+                                stable: number;
+                                variable: number;
+                                irregular: number;
+                            };
+                        };
+                    };
+                    loan?: {
+                        monthlyEmi: string | null;
+                        totalPrincipal: string | null;
+                        totalInterest: string | null;
+                        totalPayment: string | null;
+                        tenureMonths: number | null;
+                        annualRate: string | null;
+                        monthlyRate: string | null;
+                        schedule: {
+                            month: number;
+                            payment: string;
+                            principal: string;
+                            interest: string;
+                            remainingBalance: string;
+                        }[];
+                        prepaymentComparison: {
+                            originalTotalInterest: string;
+                            revisedTotalInterest: string;
+                            interestSaved: string;
+                            originalTenureMonths: number;
+                            revisedTenureMonths: number;
+                            monthsSaved: number;
+                            revisedMonthlyEmi: string;
+                            schedule: {
+                                month: number;
+                                payment: string;
+                                principal: string;
+                                interest: string;
+                                remainingBalance: string;
+                            }[];
+                        } | null;
+                        refinancingComparison: {
+                            currentRemainingInterest: string;
+                            newMonthlyEmi: string;
+                            newTotalInterest: string;
+                            processingFee: string;
+                            netSavings: string;
+                            isBeneficial: boolean;
+                        } | null;
+                        completeness: {
+                            /** @enum {string} */
+                            status: "complete" | "incomplete";
+                            missing: string[];
+                            warnings: string[];
+                        };
+                        policyVersion: string;
+                        resolvedAssumptions: {
+                            policyVersion: string;
+                            generalInflation: string;
+                            educationInflation: string;
+                            medicalInflation: string;
+                            returns: {
+                                conservative: string;
+                                expected: string;
+                                optimistic: string;
+                            };
+                            annualStepUp: string;
+                            emergencyReserveMonths: {
+                                stable: number;
+                                variable: number;
+                                irregular: number;
+                            };
+                        };
+                    };
+                    investment?: {
+                        initialLumpSum: string | null;
+                        monthlySip: string | null;
+                        annualStepUp: string | null;
+                        horizonMonths: number | null;
+                        scenarios: {
+                            [key: string]: {
+                                scenarioName: string;
+                                annualRate: string;
+                                totalInvested: string;
+                                futureValue: string;
+                                totalGains: string;
+                                milestones: {
+                                    month: number;
+                                    year: number;
+                                    totalInvested: string;
+                                    futureValue: string;
+                                    totalGains: string;
+                                }[];
+                            };
+                        };
+                        completeness: {
+                            /** @enum {string} */
+                            status: "complete" | "incomplete";
+                            missing: string[];
+                            warnings: string[];
+                        };
+                        policyVersion: string;
+                        resolvedAssumptions: {
+                            policyVersion: string;
+                            generalInflation: string;
+                            educationInflation: string;
+                            medicalInflation: string;
+                            returns: {
+                                conservative: string;
+                                expected: string;
+                                optimistic: string;
+                            };
+                            annualStepUp: string;
+                            emergencyReserveMonths: {
+                                stable: number;
+                                variable: number;
+                                irregular: number;
+                            };
+                        };
+                    };
+                    goal?: {
+                        goalName: string | null;
+                        goalCategory: string;
+                        targetAmountToday: string | null;
+                        futureGoalCost: string | null;
+                        currentSavings: string | null;
+                        currentSavingsFutureValue: string | null;
+                        fundingRatio: string | null;
+                        shortfall: string | null;
+                        requiredSip: string | null;
+                        requiredLumpSum: string | null;
+                        availableMonthlyCapacity: string | null;
+                        /** @enum {string|null} */
+                        feasibility: "funded" | "feasible" | "infeasible" | "unconstrained" | null;
+                        horizonMonths: number | null;
+                        annualInflationUsed: string;
+                        expectedReturnUsed: string;
+                        completeness: {
+                            /** @enum {string} */
+                            status: "complete" | "incomplete";
+                            missing: string[];
+                            warnings: string[];
+                        };
+                        policyVersion: string;
+                        resolvedAssumptions: {
+                            policyVersion: string;
+                            generalInflation: string;
+                            educationInflation: string;
+                            medicalInflation: string;
+                            returns: {
+                                conservative: string;
+                                expected: string;
+                                optimistic: string;
+                            };
+                            annualStepUp: string;
+                            emergencyReserveMonths: {
+                                stable: number;
+                                variable: number;
+                                irregular: number;
+                            };
+                        };
+                    };
+                    netWorth?: {
+                        totalAssets: string | null;
+                        totalLiabilities: string | null;
+                        netWorth: string | null;
+                        assetAllocations: {
+                            category: string;
+                            totalValue: string;
+                            percentage: string;
+                        }[];
+                        liabilityBreakdown: {
+                            category: string;
+                            totalValue: string;
+                            percentage: string;
+                        }[];
+                        completeness: {
+                            /** @enum {string} */
+                            status: "complete" | "incomplete";
+                            missing: string[];
+                            warnings: string[];
+                        };
+                        policyVersion: string;
+                        resolvedAssumptions: {
+                            policyVersion: string;
+                            generalInflation: string;
+                            educationInflation: string;
+                            medicalInflation: string;
+                            returns: {
+                                conservative: string;
+                                expected: string;
+                                optimistic: string;
+                            };
+                            annualStepUp: string;
+                            emergencyReserveMonths: {
+                                stable: number;
+                                variable: number;
+                                irregular: number;
+                            };
+                        };
+                    };
+                };
+                deltas: {
+                    cashFlow?: {
+                        monthlyIncomeDelta: string | null;
+                        totalExpensesDelta: string | null;
+                        monthlySurplusDelta: string | null;
+                        savingsRateDelta: string | null;
+                        investableCapacityDelta: string | null;
+                    };
+                    emergencyFund?: {
+                        monthlyNeedDelta: string | null;
+                        targetAmountDelta: string | null;
+                        runwayMonthsDelta: string | null;
+                        shortfallDelta: string | null;
+                        completionMonthsDelta: number | null;
+                    };
+                    loan?: {
+                        monthlyEmiDelta: string | null;
+                        totalInterestDelta: string | null;
+                        totalPaymentDelta: string | null;
+                        tenureMonthsDelta: number | null;
+                    };
+                    investment?: {
+                        expectedFutureValueDelta: string | null;
+                        expectedTotalInvestedDelta: string | null;
+                        expectedGainsDelta: string | null;
+                    };
+                    goal?: {
+                        futureGoalCostDelta: string | null;
+                        shortfallDelta: string | null;
+                        requiredSipDelta: string | null;
+                        fundingRatioDelta: string | null;
+                        feasibilityChanged: boolean;
+                    };
+                    netWorth?: {
+                        totalAssetsDelta: string | null;
+                        totalLiabilitiesDelta: string | null;
+                        netWorthDelta: string | null;
+                    };
+                };
+                completeness: {
+                    /** @enum {string} */
+                    status: "complete" | "incomplete";
+                    missing: string[];
+                    warnings: string[];
+                };
+                policyVersion: string;
+                resolvedAssumptions: {
+                    policyVersion: string;
+                    generalInflation: string;
+                    educationInflation: string;
+                    medicalInflation: string;
+                    returns: {
+                        conservative: string;
+                        expected: string;
+                        optimistic: string;
+                    };
+                    annualStepUp: string;
+                    emergencyReserveMonths: {
+                        stable: number;
+                        variable: number;
+                        irregular: number;
+                    };
+                };
+            };
         };
     };
     responses: never;

@@ -32,3 +32,15 @@ Authentication endpoints cover local register/login/refresh plus central OIDC st
   - `PATCH /api/v1/transactions/:id` — Update category, merchant, description, or verification status.
   - `DELETE /api/v1/transactions/:id` — Delete transaction and cascaded provenance.
   - `GET /api/v1/transactions/cash-flow` — Compute an exact single-currency snapshot (defaults to INR) with explicit `null` for no-data vs `"0.00"` for net-zero.
+
+## Financial Engine Endpoints (U4)
+
+All financial-engine endpoints are authenticated, stateless `POST` calculations under `/api/v1/financial-engine`. Decimal money/rate inputs are strings. Outputs include policy version, resolved assumptions, and completeness metadata; missing inputs remain distinguishable from explicit zero.
+
+- `POST /cash-flow` — Cash flow, savings rate, and investable capacity.
+- `POST /emergency-fund` — Reserve target, runway, shortfall, and completion estimate.
+- `POST /loan` — EMI, amortization, prepayment, and refinancing comparisons.
+- `POST /investment-projection` — Lump-sum, SIP, step-up SIP, and policy return scenarios.
+- `POST /goal-funding` — Inflated goal cost, funding gap, required contribution, and feasibility.
+- `POST /net-worth` — Exact assets, liabilities, net worth, and allocation percentages.
+- `POST /scenario` — Deterministic baseline evaluation with partial scenario changes overlaid by domain.
