@@ -34,6 +34,24 @@ import {
   ScenarioResponseSchema,
   ScenarioSchema,
 } from "./modules/scenarios/model";
+import {
+  CitationSchema,
+  PlannerAnalyzeRequestSchema,
+  PlannerChatRequestSchema,
+  PlannerChatResponseSchema,
+  PlannerConversationSchema,
+  PlannerConversationsResponseSchema,
+  PlannerMessageSchema,
+  PlannerMessagesResponseSchema,
+} from "./modules/planner/model";
+import {
+  CreateResearchRequestSchema,
+  CreateResearchResponseSchema,
+  EvidenceListResponseSchema,
+  EvidenceSchema,
+  ResearchRunResponseSchema,
+  ResearchRunSchema,
+} from "./modules/research/model";
 
 extendZodWithOpenApi(z);
 const registry = new OpenAPIRegistry();
@@ -529,6 +547,109 @@ registry.registerPath({
     401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
     404: { description: "Scenario or plan not found", content: json(ErrorResponseSchema) },
     409: { description: "Scenario baseline is stale", content: json(ErrorResponseSchema) },
+  },
+});
+
+// --- Planner Schemas ---
+registry.register("Citation", CitationSchema);
+registry.register("PlannerConversation", PlannerConversationSchema);
+registry.register("PlannerMessage", PlannerMessageSchema);
+const PlannerChatResponseApiSchema = registry.register("PlannerChatResponse", PlannerChatResponseSchema);
+const PlannerConversationsResponseApiSchema = registry.register("PlannerConversationsResponse", PlannerConversationsResponseSchema);
+const PlannerMessagesResponseApiSchema = registry.register("PlannerMessagesResponse", PlannerMessagesResponseSchema);
+
+// --- Research Schemas ---
+registry.register("Evidence", EvidenceSchema);
+registry.register("ResearchRun", ResearchRunSchema);
+const CreateResearchResponseApiSchema = registry.register("CreateResearchResponse", CreateResearchResponseSchema);
+const ResearchRunResponseApiSchema = registry.register("ResearchRunResponse", ResearchRunResponseSchema);
+const EvidenceListResponseApiSchema = registry.register("EvidenceListResponse", EvidenceListResponseSchema);
+
+// --- Planner Routes ---
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/planner/chat",
+  request: { body: { content: json(PlannerChatRequestSchema) } },
+  responses: {
+    200: { description: "Planner chat response with citations", content: json(PlannerChatResponseApiSchema) },
+    400: { description: "Invalid input or prompt injection", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Conversation not found", content: json(ErrorResponseSchema) },
+    422: { description: "Risk or critic validation failed", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/planner/analyze",
+  request: { body: { content: json(PlannerAnalyzeRequestSchema) } },
+  responses: {
+    200: { description: "Plan analysis response with citations", content: json(PlannerChatResponseApiSchema) },
+    400: { description: "Missing active plan", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Conversation not found", content: json(ErrorResponseSchema) },
+    422: { description: "Risk or critic validation failed", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/planner/conversations",
+  request: {
+    query: z.object({
+      cursor: z.string().optional(),
+      limit: z.coerce.number().optional(),
+    }),
+  },
+  responses: {
+    200: { description: "List of conversations", content: json(PlannerConversationsResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/planner/conversations/{id}/messages",
+  request: { params: IdParamsSchema },
+  responses: {
+    200: { description: "List of conversation messages", content: json(PlannerMessagesResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Conversation not found", content: json(ErrorResponseSchema) },
+  },
+});
+
+// --- Research Routes ---
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/research",
+  request: { body: { content: json(CreateResearchRequestSchema) } },
+  responses: {
+    200: { description: "Research run result with evidence", content: json(CreateResearchResponseApiSchema) },
+    400: { description: "Invalid input or unsafe search query", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    502: { description: "Research or search fetch failure", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/research/{id}",
+  request: { params: IdParamsSchema },
+  responses: {
+    200: { description: "Research run details", content: json(ResearchRunResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Research run not found", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/research/{id}/evidence",
+  request: { params: IdParamsSchema },
+  responses: {
+    200: { description: "List of evidence for research run", content: json(EvidenceListResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Research run not found", content: json(ErrorResponseSchema) },
   },
 });
 

@@ -50,6 +50,20 @@
       "when": 1788090930345,
       "tag": "0006_wise_frightful_four",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788093161252,
+      "tag": "0007_keen_hydra",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788093780647,
+      "tag": "0008_eminent_shinko_yamashiro",
+      "breakpoints": true
     }
   ]
 }

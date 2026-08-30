@@ -30282,6 +30282,1084 @@
         "required": [
           "data"
         ]
+      },
+      "Citation": {
+        "type": "object",
+        "properties": {
+          "evidenceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "topic": {
+            "type": "string"
+          },
+          "claim": {
+            "type": "string"
+          },
+          "canonicalSourceUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "publisher": {
+            "type": "string"
+          },
+          "sourceType": {
+            "type": "string",
+            "enum": [
+              "government_regulator",
+              "exchange_official_filing",
+              "official_provider",
+              "structured_finance_api",
+              "reputable_publication",
+              "community"
+            ]
+          },
+          "supportingExcerpt": {
+            "type": "string"
+          },
+          "retrievedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "freshnessExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "evidenceId",
+          "topic",
+          "claim",
+          "canonicalSourceUrl",
+          "publisher",
+          "sourceType",
+          "supportingExcerpt",
+          "retrievedAt",
+          "freshnessExpiresAt"
+        ]
+      },
+      "PlannerConversation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "householdId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "archived"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "retentionExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "householdId",
+          "userId",
+          "title",
+          "status",
+          "createdAt",
+          "updatedAt",
+          "retentionExpiresAt"
+        ]
+      },
+      "PlannerMessage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "householdId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "conversationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sender": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant"
+            ]
+          },
+          "content": {
+            "type": "string"
+          },
+          "sequenceNumber": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "evidenceId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "topic": {
+                  "type": "string"
+                },
+                "claim": {
+                  "type": "string"
+                },
+                "canonicalSourceUrl": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "publisher": {
+                  "type": "string"
+                },
+                "sourceType": {
+                  "type": "string",
+                  "enum": [
+                    "government_regulator",
+                    "exchange_official_filing",
+                    "official_provider",
+                    "structured_finance_api",
+                    "reputable_publication",
+                    "community"
+                  ]
+                },
+                "supportingExcerpt": {
+                  "type": "string"
+                },
+                "retrievedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "freshnessExpiresAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "evidenceId",
+                "topic",
+                "claim",
+                "canonicalSourceUrl",
+                "publisher",
+                "sourceType",
+                "supportingExcerpt",
+                "retrievedAt",
+                "freshnessExpiresAt"
+              ]
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "retentionExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "householdId",
+          "conversationId",
+          "sender",
+          "content",
+          "sequenceNumber",
+          "citations",
+          "createdAt",
+          "retentionExpiresAt"
+        ]
+      },
+      "PlannerChatResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "conversationId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "message": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "householdId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "conversationId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "sender": {
+                    "type": "string",
+                    "enum": [
+                      "user",
+                      "assistant"
+                    ]
+                  },
+                  "content": {
+                    "type": "string"
+                  },
+                  "sequenceNumber": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "citations": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "evidenceId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "topic": {
+                          "type": "string"
+                        },
+                        "claim": {
+                          "type": "string"
+                        },
+                        "canonicalSourceUrl": {
+                          "type": "string",
+                          "format": "uri"
+                        },
+                        "publisher": {
+                          "type": "string"
+                        },
+                        "sourceType": {
+                          "type": "string",
+                          "enum": [
+                            "government_regulator",
+                            "exchange_official_filing",
+                            "official_provider",
+                            "structured_finance_api",
+                            "reputable_publication",
+                            "community"
+                          ]
+                        },
+                        "supportingExcerpt": {
+                          "type": "string"
+                        },
+                        "retrievedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "freshnessExpiresAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "evidenceId",
+                        "topic",
+                        "claim",
+                        "canonicalSourceUrl",
+                        "publisher",
+                        "sourceType",
+                        "supportingExcerpt",
+                        "retrievedAt",
+                        "freshnessExpiresAt"
+                      ]
+                    }
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  },
+                  "createdAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "retentionExpiresAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "required": [
+                  "id",
+                  "householdId",
+                  "conversationId",
+                  "sender",
+                  "content",
+                  "sequenceNumber",
+                  "citations",
+                  "createdAt",
+                  "retentionExpiresAt"
+                ]
+              }
+            },
+            "required": [
+              "conversationId",
+              "message"
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "PlannerConversationsResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "householdId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "userId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "archived"
+                  ]
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "retentionExpiresAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "id",
+                "householdId",
+                "userId",
+                "title",
+                "status",
+                "createdAt",
+                "updatedAt",
+                "retentionExpiresAt"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "PlannerMessagesResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "householdId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "conversationId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "sender": {
+                  "type": "string",
+                  "enum": [
+                    "user",
+                    "assistant"
+                  ]
+                },
+                "content": {
+                  "type": "string"
+                },
+                "sequenceNumber": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "citations": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "evidenceId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "topic": {
+                        "type": "string"
+                      },
+                      "claim": {
+                        "type": "string"
+                      },
+                      "canonicalSourceUrl": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "publisher": {
+                        "type": "string"
+                      },
+                      "sourceType": {
+                        "type": "string",
+                        "enum": [
+                          "government_regulator",
+                          "exchange_official_filing",
+                          "official_provider",
+                          "structured_finance_api",
+                          "reputable_publication",
+                          "community"
+                        ]
+                      },
+                      "supportingExcerpt": {
+                        "type": "string"
+                      },
+                      "retrievedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "freshnessExpiresAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    },
+                    "required": [
+                      "evidenceId",
+                      "topic",
+                      "claim",
+                      "canonicalSourceUrl",
+                      "publisher",
+                      "sourceType",
+                      "supportingExcerpt",
+                      "retrievedAt",
+                      "freshnessExpiresAt"
+                    ]
+                  }
+                },
+                "metadata": {
+                  "type": "object",
+                  "additionalProperties": {}
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "retentionExpiresAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "id",
+                "householdId",
+                "conversationId",
+                "sender",
+                "content",
+                "sequenceNumber",
+                "citations",
+                "createdAt",
+                "retentionExpiresAt"
+              ]
+            }
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "Evidence": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "householdId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "researchRunId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "topic": {
+            "type": "string"
+          },
+          "claim": {
+            "type": "string"
+          },
+          "canonicalSourceUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "publisher": {
+            "type": "string"
+          },
+          "sourceType": {
+            "type": "string",
+            "enum": [
+              "government_regulator",
+              "exchange_official_filing",
+              "official_provider",
+              "structured_finance_api",
+              "reputable_publication",
+              "community"
+            ]
+          },
+          "publicationTime": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "effectiveTime": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "retrievedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "freshnessExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "contentHash": {
+            "type": "string"
+          },
+          "supportingExcerpt": {
+            "type": "string"
+          },
+          "confidence": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "retentionExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "householdId",
+          "researchRunId",
+          "topic",
+          "claim",
+          "canonicalSourceUrl",
+          "publisher",
+          "sourceType",
+          "publicationTime",
+          "effectiveTime",
+          "retrievedAt",
+          "freshnessExpiresAt",
+          "contentHash",
+          "supportingExcerpt",
+          "confidence",
+          "createdAt",
+          "retentionExpiresAt"
+        ]
+      },
+      "ResearchRun": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "householdId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "query": {
+            "type": "string"
+          },
+          "topic": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "completed",
+              "failed"
+            ]
+          },
+          "provider": {
+            "type": "string"
+          },
+          "failureCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "retentionExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "householdId",
+          "userId",
+          "query",
+          "topic",
+          "status",
+          "provider",
+          "failureCode",
+          "createdAt",
+          "completedAt",
+          "retentionExpiresAt"
+        ]
+      },
+      "CreateResearchResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "run": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "householdId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "userId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "query": {
+                    "type": "string"
+                  },
+                  "topic": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "queued",
+                      "running",
+                      "completed",
+                      "failed"
+                    ]
+                  },
+                  "provider": {
+                    "type": "string"
+                  },
+                  "failureCode": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "createdAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "completedAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "retentionExpiresAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "required": [
+                  "id",
+                  "householdId",
+                  "userId",
+                  "query",
+                  "topic",
+                  "status",
+                  "provider",
+                  "failureCode",
+                  "createdAt",
+                  "completedAt",
+                  "retentionExpiresAt"
+                ]
+              },
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "householdId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "researchRunId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "topic": {
+                      "type": "string"
+                    },
+                    "claim": {
+                      "type": "string"
+                    },
+                    "canonicalSourceUrl": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "publisher": {
+                      "type": "string"
+                    },
+                    "sourceType": {
+                      "type": "string",
+                      "enum": [
+                        "government_regulator",
+                        "exchange_official_filing",
+                        "official_provider",
+                        "structured_finance_api",
+                        "reputable_publication",
+                        "community"
+                      ]
+                    },
+                    "publicationTime": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "effectiveTime": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "retrievedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "freshnessExpiresAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "contentHash": {
+                      "type": "string"
+                    },
+                    "supportingExcerpt": {
+                      "type": "string"
+                    },
+                    "confidence": {
+                      "type": "string"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "retentionExpiresAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "householdId",
+                    "researchRunId",
+                    "topic",
+                    "claim",
+                    "canonicalSourceUrl",
+                    "publisher",
+                    "sourceType",
+                    "publicationTime",
+                    "effectiveTime",
+                    "retrievedAt",
+                    "freshnessExpiresAt",
+                    "contentHash",
+                    "supportingExcerpt",
+                    "confidence",
+                    "createdAt",
+                    "retentionExpiresAt"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "run",
+              "evidence"
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "ResearchRunResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "householdId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "userId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "query": {
+                "type": "string"
+              },
+              "topic": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "queued",
+                  "running",
+                  "completed",
+                  "failed"
+                ]
+              },
+              "provider": {
+                "type": "string"
+              },
+              "failureCode": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "completedAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "retentionExpiresAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "id",
+              "householdId",
+              "userId",
+              "query",
+              "topic",
+              "status",
+              "provider",
+              "failureCode",
+              "createdAt",
+              "completedAt",
+              "retentionExpiresAt"
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "EvidenceListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "householdId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "researchRunId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "topic": {
+                  "type": "string"
+                },
+                "claim": {
+                  "type": "string"
+                },
+                "canonicalSourceUrl": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "publisher": {
+                  "type": "string"
+                },
+                "sourceType": {
+                  "type": "string",
+                  "enum": [
+                    "government_regulator",
+                    "exchange_official_filing",
+                    "official_provider",
+                    "structured_finance_api",
+                    "reputable_publication",
+                    "community"
+                  ]
+                },
+                "publicationTime": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "effectiveTime": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "retrievedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "freshnessExpiresAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "contentHash": {
+                  "type": "string"
+                },
+                "supportingExcerpt": {
+                  "type": "string"
+                },
+                "confidence": {
+                  "type": "string"
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "retentionExpiresAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "id",
+                "householdId",
+                "researchRunId",
+                "topic",
+                "claim",
+                "canonicalSourceUrl",
+                "publisher",
+                "sourceType",
+                "publicationTime",
+                "effectiveTime",
+                "retrievedAt",
+                "freshnessExpiresAt",
+                "contentHash",
+                "supportingExcerpt",
+                "confidence",
+                "createdAt",
+                "retentionExpiresAt"
+              ]
+            }
+          }
+        },
+        "required": [
+          "data"
+        ]
       }
     },
     "parameters": {}
@@ -34080,6 +35158,418 @@
           },
           "409": {
             "description": "Scenario baseline is stale",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/planner/chat": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "conversationId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "message": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4000
+                  }
+                },
+                "required": [
+                  "message"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Planner chat response with citations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlannerChatResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or prompt injection",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Risk or critic validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/planner/analyze": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "conversationId": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Plan analysis response with citations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlannerChatResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing active plan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Risk or critic validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/planner/conversations": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of conversations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlannerConversationsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/planner/conversations/{id}/messages": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of conversation messages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlannerMessagesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/research": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  },
+                  "topic": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  }
+                },
+                "required": [
+                  "query",
+                  "topic"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Research run result with evidence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateResearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or unsafe search query",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Research or search fetch failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/research/{id}": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Research run details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchRunResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Research run not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/research/{id}/evidence": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of evidence for research run",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Research run not found",
             "content": {
               "application/json": {
                 "schema": {

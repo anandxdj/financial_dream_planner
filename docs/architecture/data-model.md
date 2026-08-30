@@ -14,4 +14,11 @@ Income, recurring expenses, loans, investments, insurance, and goals form normal
 - `plan_versions`: Append-only, monotonically increasing version numbers per plan (`unique (plan_id, version_number)`), referencing an immutable snapshot and resolved scenario output.
 - `scenarios`: Household-scoped draft overlays linked to an immutable baseline version. `status` is `draft` or `applied`. Applying a scenario creates a new snapshot and advances the plan version atomically, failing with `409` if the baseline has become stale.
 
+AI planning conversations and cited research evidence:
+- `planner_conversations`: Household-scoped conversation threads with status (`active`, `archived`), title, and 90-day `retention_expires_at`.
+- `planner_messages`: Append-only ordered dialogue turns (`user`, `assistant`) keyed by `(household_id, conversation_id)` with positive monotonically increasing `sequence_number`, visible citation snapshots, metadata, and 90-day `retention_expires_at`.
+- `planner_message_citations`: Tenant-scoped foreign-key links from assistant messages to persisted evidence; cross-household evidence cannot be attached.
+- `research_runs`: Household-scoped research execution tracking with query, topic, status (`queued`, `running`, `completed`, `failed`), provider, failure code, and 90-day `retention_expires_at`.
+- `evidence`: Household-scoped factual research findings keyed by `(household_id, research_run_id)` with source URL, publisher, source type ranking (rank 1 to 6), excerpt, SHA-256 content hash, 30-day `freshness_expires_at`, and 90-day `retention_expires_at`.
+
 `job_runs`, ordered `run_events`, and `outbox_events` provide durable asynchronous state. Audit events are append-only and privacy-safe. Documents store metadata and private object keys; consent/export/deletion records make privacy operations durable.

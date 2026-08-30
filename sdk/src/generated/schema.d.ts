@@ -2582,6 +2582,444 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/planner/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        conversationId?: string;
+                        message: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Planner chat response with citations */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlannerChatResponse"];
+                    };
+                };
+                /** @description Invalid input or prompt injection */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Conversation not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Risk or critic validation failed */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/planner/analyze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        conversationId?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Plan analysis response with citations */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlannerChatResponse"];
+                    };
+                };
+                /** @description Missing active plan */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Conversation not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Risk or critic validation failed */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/planner/conversations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    limit?: number | null;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description List of conversations */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlannerConversationsResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/planner/conversations/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description List of conversation messages */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlannerMessagesResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Conversation not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/research": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        query: string;
+                        topic: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Research run result with evidence */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CreateResearchResponse"];
+                    };
+                };
+                /** @description Invalid input or unsafe search query */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Research or search fetch failure */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/research/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Research run details */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ResearchRunResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Research run not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/research/{id}/evidence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description List of evidence for research run */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["EvidenceListResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Research run not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -9185,6 +9623,330 @@ export interface components {
                     createdAt: string;
                 };
             };
+        };
+        Citation: {
+            /** Format: uuid */
+            evidenceId: string;
+            topic: string;
+            claim: string;
+            /** Format: uri */
+            canonicalSourceUrl: string;
+            publisher: string;
+            /** @enum {string} */
+            sourceType: "government_regulator" | "exchange_official_filing" | "official_provider" | "structured_finance_api" | "reputable_publication" | "community";
+            supportingExcerpt: string;
+            /** Format: date-time */
+            retrievedAt: string;
+            /** Format: date-time */
+            freshnessExpiresAt: string;
+        };
+        PlannerConversation: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            householdId: string;
+            /** Format: uuid */
+            userId: string;
+            title: string;
+            /** @enum {string} */
+            status: "active" | "archived";
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** Format: date-time */
+            retentionExpiresAt: string;
+        };
+        PlannerMessage: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            householdId: string;
+            /** Format: uuid */
+            conversationId: string;
+            /** @enum {string} */
+            sender: "user" | "assistant";
+            content: string;
+            sequenceNumber: number;
+            citations: {
+                /** Format: uuid */
+                evidenceId: string;
+                topic: string;
+                claim: string;
+                /** Format: uri */
+                canonicalSourceUrl: string;
+                publisher: string;
+                /** @enum {string} */
+                sourceType: "government_regulator" | "exchange_official_filing" | "official_provider" | "structured_finance_api" | "reputable_publication" | "community";
+                supportingExcerpt: string;
+                /** Format: date-time */
+                retrievedAt: string;
+                /** Format: date-time */
+                freshnessExpiresAt: string;
+            }[];
+            metadata?: {
+                [key: string]: unknown;
+            };
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            retentionExpiresAt: string;
+        };
+        PlannerChatResponse: {
+            data: {
+                /** Format: uuid */
+                conversationId: string;
+                message: {
+                    /** Format: uuid */
+                    id: string;
+                    /** Format: uuid */
+                    householdId: string;
+                    /** Format: uuid */
+                    conversationId: string;
+                    /** @enum {string} */
+                    sender: "user" | "assistant";
+                    content: string;
+                    sequenceNumber: number;
+                    citations: {
+                        /** Format: uuid */
+                        evidenceId: string;
+                        topic: string;
+                        claim: string;
+                        /** Format: uri */
+                        canonicalSourceUrl: string;
+                        publisher: string;
+                        /** @enum {string} */
+                        sourceType: "government_regulator" | "exchange_official_filing" | "official_provider" | "structured_finance_api" | "reputable_publication" | "community";
+                        supportingExcerpt: string;
+                        /** Format: date-time */
+                        retrievedAt: string;
+                        /** Format: date-time */
+                        freshnessExpiresAt: string;
+                    }[];
+                    metadata?: {
+                        [key: string]: unknown;
+                    };
+                    /** Format: date-time */
+                    createdAt: string;
+                    /** Format: date-time */
+                    retentionExpiresAt: string;
+                };
+            };
+        };
+        PlannerConversationsResponse: {
+            data: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                householdId: string;
+                /** Format: uuid */
+                userId: string;
+                title: string;
+                /** @enum {string} */
+                status: "active" | "archived";
+                /** Format: date-time */
+                createdAt: string;
+                /** Format: date-time */
+                updatedAt: string;
+                /** Format: date-time */
+                retentionExpiresAt: string;
+            }[];
+            nextCursor?: string;
+        };
+        PlannerMessagesResponse: {
+            data: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                householdId: string;
+                /** Format: uuid */
+                conversationId: string;
+                /** @enum {string} */
+                sender: "user" | "assistant";
+                content: string;
+                sequenceNumber: number;
+                citations: {
+                    /** Format: uuid */
+                    evidenceId: string;
+                    topic: string;
+                    claim: string;
+                    /** Format: uri */
+                    canonicalSourceUrl: string;
+                    publisher: string;
+                    /** @enum {string} */
+                    sourceType: "government_regulator" | "exchange_official_filing" | "official_provider" | "structured_finance_api" | "reputable_publication" | "community";
+                    supportingExcerpt: string;
+                    /** Format: date-time */
+                    retrievedAt: string;
+                    /** Format: date-time */
+                    freshnessExpiresAt: string;
+                }[];
+                metadata?: {
+                    [key: string]: unknown;
+                };
+                /** Format: date-time */
+                createdAt: string;
+                /** Format: date-time */
+                retentionExpiresAt: string;
+            }[];
+        };
+        Evidence: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            householdId: string;
+            /** Format: uuid */
+            researchRunId: string;
+            topic: string;
+            claim: string;
+            /** Format: uri */
+            canonicalSourceUrl: string;
+            publisher: string;
+            /** @enum {string} */
+            sourceType: "government_regulator" | "exchange_official_filing" | "official_provider" | "structured_finance_api" | "reputable_publication" | "community";
+            /** Format: date-time */
+            publicationTime: string | null;
+            /** Format: date-time */
+            effectiveTime: string | null;
+            /** Format: date-time */
+            retrievedAt: string;
+            /** Format: date-time */
+            freshnessExpiresAt: string;
+            contentHash: string;
+            supportingExcerpt: string;
+            confidence: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            retentionExpiresAt: string;
+        };
+        ResearchRun: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            householdId: string;
+            /** Format: uuid */
+            userId: string;
+            query: string;
+            topic: string;
+            /** @enum {string} */
+            status: "queued" | "running" | "completed" | "failed";
+            provider: string;
+            failureCode: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            completedAt: string | null;
+            /** Format: date-time */
+            retentionExpiresAt: string;
+        };
+        CreateResearchResponse: {
+            data: {
+                run: {
+                    /** Format: uuid */
+                    id: string;
+                    /** Format: uuid */
+                    householdId: string;
+                    /** Format: uuid */
+                    userId: string;
+                    query: string;
+                    topic: string;
+                    /** @enum {string} */
+                    status: "queued" | "running" | "completed" | "failed";
+                    provider: string;
+                    failureCode: string | null;
+                    /** Format: date-time */
+                    createdAt: string;
+                    /** Format: date-time */
+                    completedAt: string | null;
+                    /** Format: date-time */
+                    retentionExpiresAt: string;
+                };
+                evidence: {
+                    /** Format: uuid */
+                    id: string;
+                    /** Format: uuid */
+                    householdId: string;
+                    /** Format: uuid */
+                    researchRunId: string;
+                    topic: string;
+                    claim: string;
+                    /** Format: uri */
+                    canonicalSourceUrl: string;
+                    publisher: string;
+                    /** @enum {string} */
+                    sourceType: "government_regulator" | "exchange_official_filing" | "official_provider" | "structured_finance_api" | "reputable_publication" | "community";
+                    /** Format: date-time */
+                    publicationTime: string | null;
+                    /** Format: date-time */
+                    effectiveTime: string | null;
+                    /** Format: date-time */
+                    retrievedAt: string;
+                    /** Format: date-time */
+                    freshnessExpiresAt: string;
+                    contentHash: string;
+                    supportingExcerpt: string;
+                    confidence: string;
+                    /** Format: date-time */
+                    createdAt: string;
+                    /** Format: date-time */
+                    retentionExpiresAt: string;
+                }[];
+            };
+        };
+        ResearchRunResponse: {
+            data: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                householdId: string;
+                /** Format: uuid */
+                userId: string;
+                query: string;
+                topic: string;
+                /** @enum {string} */
+                status: "queued" | "running" | "completed" | "failed";
+                provider: string;
+                failureCode: string | null;
+                /** Format: date-time */
+                createdAt: string;
+                /** Format: date-time */
+                completedAt: string | null;
+                /** Format: date-time */
+                retentionExpiresAt: string;
+            };
+        };
+        EvidenceListResponse: {
+            data: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                householdId: string;
+                /** Format: uuid */
+                researchRunId: string;
+                topic: string;
+                claim: string;
+                /** Format: uri */
+                canonicalSourceUrl: string;
+                publisher: string;
+                /** @enum {string} */
+                sourceType: "government_regulator" | "exchange_official_filing" | "official_provider" | "structured_finance_api" | "reputable_publication" | "community";
+                /** Format: date-time */
+                publicationTime: string | null;
+                /** Format: date-time */
+                effectiveTime: string | null;
+                /** Format: date-time */
+                retrievedAt: string;
+                /** Format: date-time */
+                freshnessExpiresAt: string;
+                contentHash: string;
+                supportingExcerpt: string;
+                confidence: string;
+                /** Format: date-time */
+                createdAt: string;
+                /** Format: date-time */
+                retentionExpiresAt: string;
+            }[];
         };
     };
     responses: never;
