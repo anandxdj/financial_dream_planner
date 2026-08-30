@@ -6,3 +6,6 @@ export * from "./models/platform";
 export * from "../modules/households/model";
 export * from "../modules/auth/session.model";
 export * from "../modules/auth/invitation.model";
+export * from "../modules/accounts/model";
+export * from "../modules/categories/model";
+export * from "../modules/transactions/model";
