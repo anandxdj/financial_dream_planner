@@ -10,5 +10,6 @@
 - [API conventions and generated contract](api/README.md)
 - [Feature delivery roadmap](implementation/roadmap.md)
 - [Operations runbook](operations/runbook.md)
+- [Mobile application PRD pack](frontend_mobile/README.md)
 
 The PRD defines product intent. Architecture documents define stable engineering boundaries. The roadmap is the dependency-ordered build checklist, and generated OpenAPI is the client-facing source of truth.
