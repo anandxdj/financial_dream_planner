@@ -10,7 +10,7 @@ Status values: `in progress`, `planned`, `accepted`. A unit begins only after it
 | U4 Financial engine | accepted | U3 | Financial domains, versioned policy, deterministic calculators | Pure calculators, golden/property tests, authenticated API, and generated contracts pass deterministically |
 | U5 Plans/scenarios | accepted | U4 | Immutable snapshots/plans, scenario compare/apply | Concurrent apply cannot overwrite a baseline |
 | U6 AI/research | accepted | U5 | Provider abstraction, agents, citations, history | Tool/prompt/SSRF/fallback/retention tests pass |
-| U7 Drift | planned | U5, U6 | Material-change detection and explicit actions | Jobs dedupe; only accepted drift can create a baseline |
+| U7 Drift | accepted | U5, U6 | Material-change detection and explicit actions | Jobs dedupe; only accepted drift can create a baseline |
 | U8 Privacy/storage | planned | U2, U3 | R2 documents, consent, export, deletion | Tenant isolation and outage/retry/deletion tests pass |
 | U9 Closed-beta ops | planned | U1–U8 | Deploy, health, metrics, alerts, backup/restore, release gates | E2E beta flow and restore rehearsal pass |
 

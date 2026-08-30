@@ -41,7 +41,7 @@ export async function stopTestDb() {
 
 export async function resetTestDb() {
   await db.execute(
-    sql`TRUNCATE TABLE auth_challenges, sessions, auth_identities, scenarios, plan_versions, financial_snapshots, plans, transaction_sources, transactions, accounts, categories, household_members, session_families, households, users, planner_message_citations, planner_messages, planner_conversations, evidence, research_runs RESTART IDENTITY CASCADE`,
+    sql`TRUNCATE TABLE auth_challenges, sessions, auth_identities, drift_events, drift_checks, scenarios, plan_versions, financial_snapshots, plans, transaction_sources, transactions, accounts, categories, household_members, session_families, households, users, planner_message_citations, planner_messages, planner_conversations, evidence, research_runs RESTART IDENTITY CASCADE`,
   );
 }
 

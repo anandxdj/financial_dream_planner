@@ -13,3 +13,4 @@ export * from "../modules/plans/model";
 export * from "../modules/scenarios/model";
 export * from "../modules/planner/model";
 export * from "../modules/research/model";
+export * from "../modules/drift/model";

@@ -7,6 +7,7 @@
 - [Data model](architecture/data-model.md)
 - [Financial engine](architecture/financial-engine.md)
 - [AI and research](architecture/ai-research.md)
+- [Plan drift](architecture/drift.md)
 - [API conventions and generated contract](api/README.md)
 - [Feature delivery roadmap](implementation/roadmap.md)
 - [Operations runbook](operations/runbook.md)

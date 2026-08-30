@@ -21,4 +21,8 @@ AI planning conversations and cited research evidence:
 - `research_runs`: Household-scoped research execution tracking with query, topic, status (`queued`, `running`, `completed`, `failed`), provider, failure code, and 90-day `retention_expires_at`.
 - `evidence`: Household-scoped factual research findings keyed by `(household_id, research_run_id)` with source URL, publisher, source type ranking (rank 1 to 6), excerpt, SHA-256 content hash, 30-day `freshness_expires_at`, and 90-day `retention_expires_at`.
 
+Drift detection and baseline alignment:
+- `drift_checks`: Durable, household-scoped evaluation jobs (`queued`, `running`, `completed`, `failed`) keyed by composite foreign key `(household_id, baseline_version_id)` and unique idempotency key `(household_id, idempotency_key)`. Deduplicated by `(household_id, baseline_version_id, mode, observed_input_hash, revision)`. Retained for 90 days.
+- `drift_events`: Material findings and baseline alignment events (`pending`, `kept`, `accepted`, `no_change`) referencing `(household_id, check_id)` and `(household_id, baseline_version_id)`. Contains ordered material findings under policy `DRIFT-IN-2026.1`, observed inputs and outputs, and optional `created_version_id` upon acceptance. Kept/no_change records expire after 90 days, while pending/accepted records remain protected.
+
 `job_runs`, ordered `run_events`, and `outbox_events` provide durable asynchronous state. Audit events are append-only and privacy-safe. Documents store metadata and private object keys; consent/export/deletion records make privacy operations durable.

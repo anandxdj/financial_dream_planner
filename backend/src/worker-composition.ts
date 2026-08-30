@@ -6,6 +6,7 @@ import { OutboxDispatcher } from "./modules/jobs/outbox";
 import { createDomainQueue, createDomainWorker, createRedisConnection } from "./modules/jobs/queue";
 import { RUN_EVENT_TYPE } from "./modules/runs/model";
 import { PostgresRunStore, RunService } from "./modules/runs/run.service";
+import { processDriftCheck } from "./modules/drift/drift.service";
 import { logger } from "./shared/logger/logger";
 
 export interface WorkerRuntime { close(): Promise<void>; }
@@ -32,6 +33,21 @@ export async function composeWorker(options: WorkerCompositionOptions = {}): Pro
   const queue = (options.queueFactory ?? createDomainQueue)(redis);
   const runService = new RunService(new PostgresRunStore(database));
   const worker = (options.workerFactory ?? createDomainWorker)(redis, async (job) => {
+    if (job.name === "drift_check") {
+      const targetCheckId =
+        typeof job.data?.checkId === "string"
+          ? job.data.checkId
+          : typeof job.id === "string"
+            ? job.id
+            : undefined;
+      if (targetCheckId) {
+        log.info("drift_job_started", { jobId: job.id, checkId: targetCheckId });
+        await processDriftCheck(targetCheckId, database);
+        log.info("drift_job_completed", { jobId: job.id, checkId: targetCheckId });
+        return;
+      }
+    }
+
     const runId = typeof job.data?.runId === "string" ? job.data.runId : undefined;
     if (!runId) return;
     const run = (await database.select().from(jobRuns).where(eq(jobRuns.id, runId)).limit(1))[0];

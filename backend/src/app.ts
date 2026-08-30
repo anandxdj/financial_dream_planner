@@ -13,6 +13,7 @@ import { plansRouter } from "./modules/plans/plans.route";
 import { scenariosRouter } from "./modules/scenarios/scenarios.route";
 import { plannerRouter } from "./modules/planner/planner.route";
 import { researchRouter } from "./modules/research/research.route";
+import { driftRouter } from "./modules/drift/drift.route";
 import { errorHandler } from "./shared/middleware/error-handler";
 import { requestId } from "./shared/middleware/request-id";
 import { logger } from "./shared/logger/logger";
@@ -61,6 +62,7 @@ export function createApp(dependencies: AppDependencies = {}) {
   app.use("/api/v1/scenarios", scenariosRouter);
   app.use("/api/v1/planner", plannerRouter);
   app.use("/api/v1/research", researchRouter);
+  app.use("/api/v1/drift", driftRouter);
   if (dependencies.runService) app.use("/api/v1/runs", createRunRouter(dependencies.runService));
 
   app.use(errorHandler);

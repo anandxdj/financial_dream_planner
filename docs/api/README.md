@@ -61,3 +61,16 @@ All plans and scenarios endpoints are authenticated and household scoped under `
   - `POST /compare` — Compares 2 to 10 scenarios in caller order; rejects mixed baselines (`400 SCENARIO_MIXED_BASELINES`).
   - `POST /:id/run` — Evaluates baseline inputs plus stored overlay without database side effects.
   - `POST /:id/apply` — Atomically applies scenario against current baseline: appends new snapshot and version, advances plan pointer, marks scenario applied. Rejects stale baseline with `409 SCENARIO_BASELINE_STALE`; retries of the same scenario return its applied version idempotently.
+
+## Drift Endpoints (U7)
+
+All drift endpoints are authenticated and household scoped under `/api/v1/drift`. Check creation requires an idempotency key in the strict JSON body and the exact current baseline version.
+
+- `POST /checks` — Durably creates or deduplicates an asynchronous deterministic drift check; returns `202` while queued/running and `200` for an existing terminal check.
+- `GET /checks/:id` — Returns the non-expired check and its completed event, if present.
+- `GET /current` — Returns the newest pending event for the exact current plan version, or `null`.
+- `GET /` — Lists non-expired events newest-first with cursor pagination and optional status filter.
+- `POST /:id/accept` — With an empty body, atomically accepts a pending material event and creates one immutable snapshot/plan version. Stale baselines return `409 DRIFT_BASELINE_STALE`.
+- `POST /:id/keep` — With an empty body, idempotently keeps the existing baseline and creates no plan state.
+
+Only `accept` can advance the plan. Duplicate jobs, failures, no-change results, reads, and keep actions cannot mutate baseline history.

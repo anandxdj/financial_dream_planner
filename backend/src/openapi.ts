@@ -52,6 +52,19 @@ import {
   ResearchRunResponseSchema,
   ResearchRunSchema,
 } from "./modules/research/model";
+import {
+  AcceptDriftResponseSchema,
+  CreateDriftCheckRequestSchema,
+  CurrentDriftEventResponseSchema,
+  DriftCheckResponseSchema,
+  DriftCheckSchema,
+  DriftCheckWithEventResponseSchema,
+  DriftEventListResponseSchema,
+  DriftEventResponseSchema,
+  DriftEventSchema,
+  DriftFindingSchema,
+  KeepDriftResponseSchema,
+} from "./modules/drift/model";
 
 extendZodWithOpenApi(z);
 const registry = new OpenAPIRegistry();
@@ -650,6 +663,95 @@ registry.registerPath({
     200: { description: "List of evidence for research run", content: json(EvidenceListResponseApiSchema) },
     401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
     404: { description: "Research run not found", content: json(ErrorResponseSchema) },
+  },
+});
+
+// --- Drift Schemas ---
+registry.register("DriftFinding", DriftFindingSchema);
+registry.register("DriftCheck", DriftCheckSchema);
+registry.register("DriftEvent", DriftEventSchema);
+const DriftCheckResponseApiSchema = registry.register("DriftCheckResponse", DriftCheckResponseSchema);
+const DriftCheckWithEventResponseApiSchema = registry.register("DriftCheckWithEventResponse", DriftCheckWithEventResponseSchema);
+registry.register("DriftEventResponse", DriftEventResponseSchema);
+const CurrentDriftEventResponseApiSchema = registry.register("CurrentDriftEventResponse", CurrentDriftEventResponseSchema);
+const DriftEventListResponseApiSchema = registry.register("DriftEventListResponse", DriftEventListResponseSchema);
+const AcceptDriftResponseApiSchema = registry.register("AcceptDriftResponse", AcceptDriftResponseSchema);
+const KeepDriftResponseApiSchema = registry.register("KeepDriftResponse", KeepDriftResponseSchema);
+
+// --- Drift Routes ---
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/drift/checks",
+  request: { body: { content: json(CreateDriftCheckRequestSchema) } },
+  responses: {
+    202: { description: "Drift check queued or running", content: json(DriftCheckResponseApiSchema) },
+    200: { description: "Existing terminal check returned", content: json(DriftCheckResponseApiSchema) },
+    400: { description: "Invalid input", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Plan or baseline version not found", content: json(ErrorResponseSchema) },
+    409: { description: "Stale baseline or idempotency conflict", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/drift/checks/{id}",
+  request: { params: IdParamsSchema },
+  responses: {
+    200: { description: "Drift check and associated event details", content: json(DriftCheckWithEventResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Drift check not found or expired", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/drift/current",
+  responses: {
+    200: { description: "Current pending drift event for current baseline version", content: json(CurrentDriftEventResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/drift",
+  request: {
+    query: z.object({
+      cursor: z.string().optional(),
+      limit: z.coerce.number().optional(),
+      status: z.enum(["pending", "kept", "accepted", "no_change"]).optional(),
+    }),
+  },
+  responses: {
+    200: { description: "List of household drift events", content: json(DriftEventListResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/drift/{id}/accept",
+  request: { params: IdParamsSchema },
+  responses: {
+    200: { description: "Drift accepted and new plan version created", content: json(AcceptDriftResponseApiSchema) },
+    400: { description: "Invalid state or no material findings", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Drift event not found", content: json(ErrorResponseSchema) },
+    409: { description: "Stale baseline or already resolved", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/drift/{id}/keep",
+  request: { params: IdParamsSchema },
+  responses: {
+    200: { description: "Drift dismissed and baseline kept", content: json(KeepDriftResponseApiSchema) },
+    400: { description: "Invalid state", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Drift event not found", content: json(ErrorResponseSchema) },
+    409: { description: "Already resolved", content: json(ErrorResponseSchema) },
   },
 });
 
