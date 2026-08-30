@@ -5,8 +5,8 @@ Status values: `in progress`, `planned`, `accepted`. A unit begins only after it
 | Unit | Status | Depends on | Deliverable | Acceptance gate |
 |---|---|---|---|---|
 | U1 Foundation | accepted | — | Docs, contracts, exact primitives, builds, durable jobs/SSE, OpenAPI/SDK, local services | API/worker build; focused tests pass; event resume and outbox replay are durable |
-| U2 Auth and tenancy | in progress | U1 | Hardened starter, OIDC broker, device sessions, household provisioning | Local security/unit gates pass; Docker-backed migration/race/provider staging checks remain |
-| U3 Ledger vertical | in progress | U2 | Accounts, categories, SMS sync, dedupe, provenance, cash-flow snapshot | Deterministic dedupe policy started; concurrent replay creates no duplicates; ambiguous matches survive review |
+| U2 Auth and tenancy | accepted | U1 | Hardened starter, OIDC broker, device sessions, household provisioning | Local security/unit and Docker-backed migration/race/provider-contract gates pass; real-provider staging remains a release gate |
+| U3 Ledger vertical | accepted | U2 | Accounts, categories, SMS sync, dedupe, provenance, cash-flow snapshot | Exact and fallback replay are concurrency-safe; ambiguous matches survive review; PostgreSQL-backed suite and generated contracts pass |
 | U4 Financial engine | planned | U3 | Financial domains, versioned policy, deterministic calculators | Golden/property tests are exact and reproducible |
 | U5 Plans/scenarios | planned | U4 | Immutable snapshots/plans, scenario compare/apply | Concurrent apply cannot overwrite a baseline |
 | U6 AI/research | planned | U5 | Provider abstraction, agents, citations, history | Tool/prompt/SSRF/fallback/retention tests pass |
@@ -15,3 +15,5 @@ Status values: `in progress`, `planned`, `accepted`. A unit begins only after it
 | U9 Closed-beta ops | planned | U1–U8 | Deploy, health, metrics, alerts, backup/restore, release gates | E2E beta flow and restore rehearsal pass |
 
 Each unit updates its architecture/API documentation, checked-in migrations, OpenAPI, SDK, and focused tests in the same change. Enable beta features only after their acceptance gate passes.
+
+Acceptance policy: a development unit may be marked `accepted` after its deterministic local and Docker-backed gates pass. Environment-specific staging and CI checks remain release gates and must not be represented as completed until they run successfully.

@@ -1,18 +1,20 @@
 # U3 Ledger Vertical — Session Handoff
 
+> Fresh-session entry point: [NEXT-SESSION.md](NEXT-SESSION.md). Read that plan first, then use this document for detailed evidence and logs.
+
 Date: 2026-08-30 (Asia/Calcutta)  
 Branch: `feat/ledger-vertical`  
 Base/U2 checkpoint: `66b2717 feat(auth): harden tenancy and OIDC sessions`  
-U3 status: implementation complete and locally verified; changes are **not committed**.
+U3 status: implementation complete, locally verified, and committed as five focused commits through `0c1edb6`.
 
-## First priority on resume
+## Completion record
 
-1. Review `git diff` and `git status`; preserve every current U3 file.
-2. Run the final generation/build checks listed below once more if the workspace or dependencies changed.
-3. Update roadmap acceptance statuses only if the intended policy is to accept U2 and U3 from the now-green Docker gates.
-4. Commit the U3 slice with a focused message such as `feat(ledger): add tenant-scoped canonical transaction vertical`.
+1. The committed U3 diff was reviewed in a fresh session.
+2. Backend build, lint, the full PostgreSQL-backed suite, SDK checks, and `openapi:check` passed after the final serializer change.
+3. U2 and U3 were marked accepted under the roadmap's documented local-acceptance policy; real-provider staging remains a release gate.
+4. U3 is represented by commits `ccd43ab`, `9756b51`, `e1a899b`, `58f6c63`, and `0c1edb6`.
 
-Do not start U4 before reviewing and committing this branch.
+U4 may now start from a dedicated branch based on `0c1edb6` plus this documentation checkpoint.
 
 ## Orchestration record
 
@@ -96,14 +98,8 @@ Important earlier failures that were fixed:
 - Ledger API mutations returned 403 because worker tests omitted CSRF headers.
 - Account API returned `25000.0000` instead of the two-decimal API contract.
 
-## Remaining work
+## Remaining release work
 
-- Review the final uncommitted diff, especially generated OpenAPI/SDK files and both U3 migrations.
-- Optionally rerun `pnpm build` after the last controller-only serialization edit.
-- Run `pnpm openapi:check` only after staging/committing generated artifacts; before commit it intentionally reports their diff from `HEAD`.
-- Decide whether the now-green Docker gates are sufficient to mark U2 `accepted`. U2 currently remains `in progress` in the roadmap.
-- Decide whether U3 should be marked `accepted` now or only after CI/staging validation. It currently remains `in progress`.
-- Commit U3. Nothing has been pushed.
 - CI/provider staging remains advisable for central OIDC against a real provider even though local Docker auth gates are green.
 
 ## Operational notes
