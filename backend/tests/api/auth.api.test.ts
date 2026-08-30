@@ -150,9 +150,9 @@ describe.skipIf(!isDockerAvailable())("auth API", () => {
 
   it("consumes a password reset token only once", async () => {
     const agent = request.agent(app);
-    await agent.post("/api/v1/auth/register").send(registerBody);
+    const registered = await agent.post("/api/v1/auth/register").send(registerBody);
 
-    await agent.post("/api/v1/auth/forgot-password").send({ email: "ada@example.com" });
+    await agent.post("/api/v1/auth/forgot-password").set(csrfHeaders(registered)).send({ email: "ada@example.com" });
     const challenge = await findPasswordResetChallenge();
     expect(challenge).toBeTruthy();
 

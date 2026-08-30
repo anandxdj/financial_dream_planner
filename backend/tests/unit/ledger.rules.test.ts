@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { classifyCandidate, fallbackFingerprint, normalizeExternalReference, normalizeMerchant, occurredAtBucket } from "../../src/modules/transactions/dedupe";
+import { syncTransactionsSchema } from "../../src/modules/transactions/transactions.controller";
 
 const candidate = {
   householdId: "household-1",
@@ -30,5 +31,13 @@ describe("ledger deduplication policy", () => {
 
   it("rejects invalid bucket configuration", () => {
     expect(() => occurredAtBucket(candidate.occurredAt, 0)).toThrow(RangeError);
+  });
+
+  it("rejects raw SMS or unknown fields at the ingestion boundary", () => {
+    const result = syncTransactionsSchema.safeParse({
+      syncId: "sync-1",
+      transactions: [{ clientId: "sms-1", amount: "10.00", direction: "DEBIT", occurredAt: "2026-08-29T13:00:00.000Z", rawSms: "secret message" }],
+    });
+    expect(result.success).toBe(false);
   });
 });
