@@ -29,6 +29,28 @@ const envSchema = z.object({
   SMTP_PORT: z.coerce.number().int().positive().default(587),
   SMTP_USER: z.string().default(""),
   SMTP_PASS: z.string().default(""),
+  AUTH_ENABLED: z.enum(["true", "false"]).default("true").transform((value) => value === "true"),
+  REGISTRATION_ENABLED: z.enum(["true", "false"]).default("true").transform((value) => value === "true"),
+  CLOSED_BETA: z.enum(["true", "false"]).default("false").transform((value) => value === "true"),
+  OIDC_ENABLED: z.enum(["true", "false"]).default("false").transform((value) => value === "true"),
+  OIDC_ISSUER: z.string().url().default("https://github.com/anandxdj/id"),
+  OIDC_CLIENT_ID: z.string().default(""),
+  OIDC_CLIENT_SECRET: z.string().default(""),
+  OIDC_REDIRECT_URI: z.string().default(""),
+  OIDC_ALLOWED_REDIRECTS: z.string().default(""),
+  OIDC_REAUTH_HOURS: z.coerce.number().int().positive().default(24),
+  COOKIE_DOMAIN: z.string().default(""),
+}).superRefine((value, ctx) => {
+  if (value.NODE_ENV !== "production") return;
+  if (!value.WEB_ORIGIN.startsWith("https://") || !value.API_ORIGIN.startsWith("https://")) {
+    ctx.addIssue({ code: "custom", message: "Production auth origins must use HTTPS" });
+  }
+  if (value.COOKIE_DOMAIN) {
+    ctx.addIssue({ code: "custom", message: "COOKIE_DOMAIN must be empty for __Host- cookies" });
+  }
+  if (value.OIDC_ENABLED && (!value.OIDC_CLIENT_ID || !value.OIDC_CLIENT_SECRET || !value.OIDC_REDIRECT_URI)) {
+    ctx.addIssue({ code: "custom", message: "OIDC client settings are required when OIDC is enabled" });
+  }
 });
 
 export function createEnv(input: NodeJS.ProcessEnv) {

@@ -7,12 +7,26 @@ export const USER_STATUS = {
 export const IDENTITY_PROVIDER = {
   password: "password",
   google: "google",
+  oidc: "oidc",
 } as const;
 
 export const CHALLENGE_TYPE = {
   emailVerification: "email_verification",
   passwordReset: "password_reset",
   oauthState: "oauth_state",
+  oidcTransaction: "oidc_transaction",
+  oidcBridge: "oidc_bridge",
+} as const;
+
+export const HOUSEHOLD_ROLE = {
+  owner: "owner",
+  member: "member",
+} as const;
+
+export const AUTH_METHOD = {
+  password: "password",
+  oidc: "oidc",
+  googleLegacy: "google_legacy",
 } as const;
 
 export const SESSION_REVOKE_REASON = {

@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { env } from "../../config/env";
 import { clearAuthCookies, setAuthCookies } from "../../shared/middleware/cookies";
-import { getRefreshToken, getRequestMeta } from "../../shared/middleware/require-auth";
+import { getOptionalRefreshToken, getRefreshToken, getRequestMeta } from "../../shared/middleware/require-auth";
 import * as authService from "./auth.service";
 import type {
   ForgotPasswordInputSchema,
@@ -9,7 +9,12 @@ import type {
   RegisterInputSchema,
   ResetPasswordInputSchema,
   VerifyEmailInputSchema,
+  OidcStartInput,
+  OidcBridgeInput,
 } from "./model";
+import { OidcService } from "./oidc.service";
+
+const oidc = new OidcService();
 
 function respondWithSession(
   res: Response,
@@ -43,8 +48,7 @@ export async function refresh(req: Request, res: Response) {
 }
 
 export async function logout(req: Request, res: Response) {
-  const token = req.cookies?.refresh_token as string | undefined;
-  await authService.logout(token);
+  await authService.logout(getOptionalRefreshToken(req));
   clearAuthCookies(res);
   res.status(204).send();
 }
@@ -77,4 +81,28 @@ export async function verifyEmail(req: Request, res: Response) {
   const body = req.body as VerifyEmailInputSchema;
   const user = await authService.verifyEmail(body.token);
   res.json({ user });
+}
+
+export async function oidcStart(req: Request, res: Response) {
+  const url = await oidc.start(req.body as OidcStartInput);
+  res.json({ authorizationUrl: url });
+}
+
+export async function oidcCallback(req: Request, res: Response) {
+  const code = typeof req.query.code === "string" ? req.query.code : "";
+  const state = typeof req.query.state === "string" ? req.query.state : "";
+  const result = await oidc.callback(code, state, getRequestMeta(req));
+  if (result.kind === "browser") {
+    setAuthCookies(res, result.session.accessToken, result.session.refreshToken);
+    res.redirect(result.redirectUri);
+    return;
+  }
+  const redirect = new URL(result.redirectUri);
+  redirect.searchParams.set("code", result.bridgeCode);
+  res.redirect(redirect.toString());
+}
+
+export async function oidcBridge(req: Request, res: Response) {
+  const session = await oidc.exchangeBridge(req.body as OidcBridgeInput);
+  res.json(session);
 }

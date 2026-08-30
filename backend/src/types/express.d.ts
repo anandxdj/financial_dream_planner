@@ -8,6 +8,14 @@ declare global {
         id: string;
         email: string;
       };
+      auth?: {
+        userId: string;
+        sessionId: string;
+        householdId: string;
+        role: "owner" | "member";
+        authMethod: string;
+        transport: "bearer" | "cookie";
+      };
     }
   }
 }

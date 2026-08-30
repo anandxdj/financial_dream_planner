@@ -29,7 +29,7 @@ export const users = pgTable(
       .$onUpdate(() => new Date()),
   },
   (table) => [
-    uniqueIndex("users_email_uidx").on(table.email),
+    uniqueIndex("users_email_lower_uidx").on(sql`lower(${table.email})`),
     index("users_status_idx").on(table.status),
   ],
 );

@@ -30,6 +30,17 @@ export const verifyEmailInputSchema = z.object({
 });
 export type VerifyEmailInputSchema = z.infer<typeof verifyEmailInputSchema>;
 
+export const oidcStartInputSchema = z.object({
+  redirectUri: z.string().url(),
+  clientId: z.string().min(1).max(120),
+  mode: z.enum(["browser", "mobile"]).default("browser"),
+  appChallenge: z.string().min(43).max(128).optional(),
+}).refine((value) => value.mode === "browser" || Boolean(value.appChallenge), { message: "appChallenge is required for mobile" });
+export type OidcStartInput = z.infer<typeof oidcStartInputSchema>;
+
+export const oidcBridgeInputSchema = z.object({ code: z.string().min(1), verifier: z.string().min(43).max(128), redirectUri: z.string().url(), clientId: z.string().min(1).max(120) });
+export type OidcBridgeInput = z.infer<typeof oidcBridgeInputSchema>;
+
 export const registerOutputSchema = z.object({
   user: userOutputSchema,
   message: z.string().optional(),

@@ -10,6 +10,7 @@ import { requestId } from "./shared/middleware/request-id";
 import { logger } from "./shared/logger/logger";
 import { createRunRouter } from "./modules/runs/run.route";
 import type { RunService } from "./modules/runs/run.service";
+import { protectCookieRequests } from "./shared/middleware/csrf";
 
 export interface AppDependencies { runService?: RunService; }
 
@@ -26,6 +27,7 @@ export function createApp(dependencies: AppDependencies = {}) {
   );
   app.use(express.json({ limit: "1mb" }));
   app.use(cookieParser());
+  app.use(protectCookieRequests);
   app.use(requestId);
   app.use((req, _res, next) => {
     logger.info("request", {

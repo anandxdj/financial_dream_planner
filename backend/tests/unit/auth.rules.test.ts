@@ -18,10 +18,11 @@ describe("crypto", () => {
   });
 
   it("issues and verifies an access JWT", () => {
-    const token = signAccessToken("user-1", "a@example.com");
+    const token = signAccessToken("user-1", "a@example.com", "session-1");
     const payload = verifyAccessToken(token);
     expect(payload.sub).toBe("user-1");
     expect(payload.email).toBe("a@example.com");
+    expect(payload.sid).toBe("session-1");
   });
 
   it("hashes opaque tokens deterministically", () => {
@@ -44,16 +45,16 @@ describe("identity linking rules", () => {
     ).toBe("email_taken");
   });
 
-  it("links a password identity onto a verified Google user", () => {
+  it("rejects password registration for an existing verified OAuth user", () => {
     expect(
       decidePasswordRegister({ hasUser: true, hasPasswordIdentity: false, emailVerified: true }),
-    ).toBe("link_password");
+    ).toBe("email_taken");
   });
 
-  it("rejects password register against an unverified existing user", () => {
+  it("rejects password registration for any existing unverified user", () => {
     expect(
       decidePasswordRegister({ hasUser: true, hasPasswordIdentity: false, emailVerified: false }),
-    ).toBe("unverified_collision");
+    ).toBe("email_taken");
   });
 
   it("logs in when a Google identity already exists", () => {
@@ -66,33 +67,33 @@ describe("identity linking rules", () => {
     ).toBe("login");
   });
 
-  it("creates a user when Google email is new", () => {
+  it("does not create new direct Google users", () => {
     expect(
       decideGoogleAuth({
         hasGoogleIdentity: false,
         hasUserByEmail: false,
         googleEmailVerified: true,
       }),
-    ).toBe("create");
+    ).toBe("registration_disabled");
   });
 
-  it("links Google onto an existing user when Google verified the email", () => {
+  it("does not auto-link Google onto an existing user", () => {
     expect(
       decideGoogleAuth({
         hasGoogleIdentity: false,
         hasUserByEmail: true,
         googleEmailVerified: true,
       }),
-    ).toBe("link_google");
+    ).toBe("email_collision");
   });
 
-  it("rejects Google linking when the email is unverified", () => {
+  it("rejects Google email collisions regardless of provider verification", () => {
     expect(
       decideGoogleAuth({
         hasGoogleIdentity: false,
         hasUserByEmail: true,
         googleEmailVerified: false,
       }),
-    ).toBe("unverified_collision");
+    ).toBe("email_collision");
   });
 });

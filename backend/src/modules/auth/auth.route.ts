@@ -8,6 +8,8 @@ import {
   registerInputSchema,
   resetPasswordInputSchema,
   verifyEmailInputSchema,
+  oidcStartInputSchema,
+  oidcBridgeInputSchema,
 } from "./model";
 
 export const authRouter = Router();
@@ -31,3 +33,6 @@ authRouter.post(
   authController.resetPassword,
 );
 authRouter.post("/verify-email", validate(verifyEmailInputSchema), authController.verifyEmail);
+authRouter.post("/oidc/start", authRateLimiter, validate(oidcStartInputSchema), authController.oidcStart);
+authRouter.get("/oidc/callback", authRateLimiter, authController.oidcCallback);
+authRouter.post("/oidc/bridge/exchange", authRateLimiter, validate(oidcBridgeInputSchema), authController.oidcBridge);

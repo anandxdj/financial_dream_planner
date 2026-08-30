@@ -8,12 +8,19 @@ import {
   gt,
   IDENTITY_PROVIDER,
   isNull,
+  or,
+  sql,
   SESSION_REVOKE_REASON,
   sessions,
+  sessionFamilies,
+  households,
+  householdMembers,
+  authInvitations,
   USER_STATUS,
   users,
   type SelectAuthChallenge,
   type SelectUser,
+  type Database,
 } from "../../database";
 import { env } from "../../config/env";
 import { GOOGLE_SCOPES } from "../../config/constants";
@@ -22,7 +29,6 @@ import {
   generateOpaqueToken,
   hashPassword,
   hashToken,
-  newFamilyId,
   signAccessToken,
   verifyPassword,
 } from "../../utils/crypto";
@@ -31,18 +37,16 @@ import { sendMail } from "../../utils/mailer";
 import { toUserOutput } from "../users/model";
 import type { LoginInputSchema, RegisterInputSchema, ResetPasswordInputSchema } from "./model";
 
-type RequestMeta = {
+export type RequestMeta = {
   userAgent?: string;
   ip?: string;
 };
 
 export type PasswordRegisterDecision =
   | "create"
-  | "link_password"
-  | "email_taken"
-  | "unverified_collision";
+  | "email_taken";
 
-export type GoogleAuthDecision = "login" | "create" | "link_google" | "unverified_collision";
+export type GoogleAuthDecision = "login" | "registration_disabled" | "email_collision";
 
 /**
  * Determines whether email/password registration should create a user,
@@ -56,13 +60,7 @@ export function decidePasswordRegister(input: {
   if (!input.hasUser) {
     return "create";
   }
-  if (input.hasPasswordIdentity) {
-    return "email_taken";
-  }
-  if (input.emailVerified) {
-    return "link_password";
-  }
-  return "unverified_collision";
+  return "email_taken";
 }
 
 /**
@@ -77,13 +75,7 @@ export function decideGoogleAuth(input: {
   if (input.hasGoogleIdentity) {
     return "login";
   }
-  if (!input.hasUserByEmail) {
-    return "create";
-  }
-  if (input.googleEmailVerified) {
-    return "link_google";
-  }
-  return "unverified_collision";
+  return input.hasUserByEmail ? "email_collision" : "registration_disabled";
 }
 
 function challengeExpiry(minutes: number) {
@@ -100,7 +92,7 @@ async function findUserById(id: string) {
 }
 
 async function findUserByEmail(email: string) {
-  const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  const [user] = await db.select().from(users).where(sql`lower(${users.email}) = ${email.toLowerCase()}`).limit(1);
   return user ?? null;
 }
 
@@ -128,41 +120,38 @@ async function findPasswordIdentityForUser(userId: string) {
 /**
  * Issues a new refresh-token family and returns signed access and refresh tokens.
  */
-async function issueSession(user: SelectUser, meta: RequestMeta) {
-  const refreshToken = generateOpaqueToken();
-  await db.insert(sessions).values({
-    userId: user.id,
-    familyId: newFamilyId(),
-    tokenHash: hashToken(refreshToken),
-    expiresAt: refreshExpiry(),
-    userAgent: meta.userAgent ?? null,
-    ip: meta.ip ?? null,
-    lastUsedAt: new Date(),
-  });
-  const [updated] = await db
-    .update(users)
-    .set({ lastLoginAt: new Date() })
-    .where(eq(users.id, user.id))
-    .returning();
+type AuthTransaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
+
+export async function issueSessionInTransaction(
+  tx: AuthTransaction,
+  user: SelectUser,
+  meta: RequestMeta,
+  authMethod: string,
+  refreshToken: string,
+) {
+  const expiresAt = refreshExpiry();
+  const [membership] = await tx.select().from(householdMembers).where(and(eq(householdMembers.userId, user.id), isNull(householdMembers.endedAt))).limit(1);
+  if (!membership) throw new AppError(403, "HOUSEHOLD_REQUIRED", "Active household membership required");
+  const [family] = await tx.insert(sessionFamilies).values({ userId: user.id, householdId: membership.householdId, authMethod, expiresAt }).returning();
+  await tx.insert(sessions).values({ userId: user.id, familyId: family.id, tokenHash: hashToken(refreshToken), expiresAt, userAgent: meta.userAgent ?? null, ip: meta.ip ?? null, lastUsedAt: new Date() });
+  const [updated] = await tx.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, user.id)).returning();
   const current = updated ?? user;
   return {
-    accessToken: signAccessToken(current.id, current.email),
+    accessToken: signAccessToken(current.id, current.email, family.id),
     refreshToken,
     user: toUserOutput(current),
   };
 }
 
+export async function issueSession(user: SelectUser, meta: RequestMeta, authMethod = "password") {
+  const refreshToken = generateOpaqueToken();
+  return db.transaction((tx) => issueSessionInTransaction(tx, user, meta, authMethod, refreshToken));
+}
+
 /**
  * Persists a hashed email-verification challenge and delivers the raw token by email.
  */
-async function sendVerificationEmail(user: SelectUser) {
-  const token = generateOpaqueToken();
-  await db.insert(authChallenges).values({
-    userId: user.id,
-    type: CHALLENGE_TYPE.emailVerification,
-    tokenHash: hashToken(token),
-    expiresAt: challengeExpiry(24 * 60),
-  });
+async function deliverVerificationEmail(user: SelectUser, token: string) {
   await sendMail({
     to: user.email,
     subject: "Verify your email",
@@ -176,6 +165,9 @@ async function sendVerificationEmail(user: SelectUser) {
  * Always sends a verification email. Omits session tokens when email verification is required.
  */
 export async function register(input: RegisterInputSchema, meta: RequestMeta) {
+  if (!env.AUTH_ENABLED || !env.REGISTRATION_ENABLED) {
+    throw new AppError(503, "REGISTRATION_DISABLED", "Registration is temporarily unavailable");
+  }
   const existingUser = await findUserByEmail(input.email);
   const passwordIdentity = existingUser ? await findPasswordIdentityForUser(existingUser.id) : null;
 
@@ -188,22 +180,22 @@ export async function register(input: RegisterInputSchema, meta: RequestMeta) {
   if (decision === "email_taken") {
     throw new AppError(409, "EMAIL_TAKEN", "An account with this email already exists");
   }
-  if (decision === "unverified_collision") {
-    throw new AppError(
-      409,
-      "UNVERIFIED_COLLISION",
-      "This email is already associated with an unverified account",
-    );
-  }
-
   const passwordHash = await hashPassword(input.password);
-  let user = existingUser;
-
-  if (decision === "create") {
+  const verificationToken = generateOpaqueToken();
+  const initialRefreshToken = env.REQUIRE_EMAIL_VERIFICATION ? null : generateOpaqueToken();
+  const created = await db.transaction(async (tx) => {
+    if (env.CLOSED_BETA) {
+      const [invitation] = await tx.update(authInvitations).set({ consumedAt: new Date() }).where(and(
+        sql`lower(${authInvitations.email}) = ${input.email}`,
+        isNull(authInvitations.consumedAt),
+        or(isNull(authInvitations.expiresAt), gt(authInvitations.expiresAt, new Date())),
+      )).returning();
+      if (!invitation) throw new AppError(403, "INVITATION_REQUIRED", "Registration requires a valid invitation");
+    }
     const status = env.REQUIRE_EMAIL_VERIFICATION
       ? USER_STATUS.pendingVerification
       : USER_STATUS.active;
-    const [created] = await db
+    const [created] = await tx
       .insert(users)
       .values({
         email: input.email,
@@ -211,30 +203,30 @@ export async function register(input: RegisterInputSchema, meta: RequestMeta) {
         status,
       })
       .returning();
-    user = created;
-  }
-
-  if (!user) {
-    throw new AppError(500, "INTERNAL_ERROR", "Failed to create user");
-  }
-
-  await db.insert(authIdentities).values({
-    userId: user.id,
+    await tx.insert(authIdentities).values({
+    userId: created.id,
     provider: IDENTITY_PROVIDER.password,
     providerUserId: input.email,
     passwordHash,
     email: input.email,
-    emailVerified: Boolean(user.emailVerifiedAt),
+    emailVerified: Boolean(created.emailVerifiedAt),
+    });
+    const [household] = await tx.insert(households).values({ name: `${input.displayName}'s household` }).returning();
+    await tx.insert(householdMembers).values({ householdId: household.id, userId: created.id, role: "owner", isPrimary: true });
+    await tx.insert(authChallenges).values({ userId: created.id, type: CHALLENGE_TYPE.emailVerification, tokenHash: hashToken(verificationToken), expiresAt: challengeExpiry(24 * 60) });
+    const tokens = initialRefreshToken
+      ? await issueSessionInTransaction(tx, created, meta, "password", initialRefreshToken)
+      : null;
+    return { user: created, tokens };
   });
 
-  await sendVerificationEmail(user);
+  await deliverVerificationEmail(created.user, verificationToken);
 
-  if (env.REQUIRE_EMAIL_VERIFICATION && decision === "create") {
-    return { user: toUserOutput(user), tokens: null as null };
+  if (env.REQUIRE_EMAIL_VERIFICATION) {
+    return { user: toUserOutput(created.user), tokens: null as null };
   }
-
-  const tokens = await issueSession(user, meta);
-  return { user: tokens.user, tokens };
+  if (!created.tokens) throw new AppError(500, "INTERNAL_ERROR", "Initial session was not created");
+  return { user: created.tokens.user, tokens: created.tokens };
 }
 
 /**
@@ -242,6 +234,7 @@ export async function register(input: RegisterInputSchema, meta: RequestMeta) {
  * Unknown emails and incorrect passwords both fail with 401 to avoid account enumeration.
  */
 export async function login(input: LoginInputSchema, meta: RequestMeta) {
+  if (!env.AUTH_ENABLED) throw new AppError(503, "AUTH_DISABLED", "Authentication is temporarily unavailable");
   const identity = await findIdentity(IDENTITY_PROVIDER.password, input.email);
   if (!identity?.passwordHash) {
     throw new AppError(401, "INVALID_CREDENTIALS", "Invalid email or password");
@@ -270,21 +263,20 @@ export async function login(input: LoginInputSchema, meta: RequestMeta) {
 export async function refresh(rawRefreshToken: string, meta: RequestMeta) {
   const tokenHash = hashToken(rawRefreshToken);
 
-  return db.transaction(async (tx) => {
+  const outcome = await db.transaction(async (tx) => {
     const [session] = await tx.select().from(sessions).where(eq(sessions.tokenHash, tokenHash)).limit(1);
     if (!session) {
       throw new AppError(401, "UNAUTHORIZED", "Invalid refresh token");
     }
 
     if (session.revokedAt) {
-      await tx
-        .update(sessions)
+      await tx.update(sessionFamilies)
         .set({
           revokedAt: new Date(),
           revokedReason: SESSION_REVOKE_REASON.reuseDetected,
         })
-        .where(and(eq(sessions.familyId, session.familyId), isNull(sessions.revokedAt)));
-      throw new AppError(401, "UNAUTHORIZED", "Refresh token reuse detected");
+        .where(and(eq(sessionFamilies.id, session.familyId), isNull(sessionFamilies.revokedAt)));
+      return { rejected: true as const };
     }
 
     if (session.expiresAt.getTime() < Date.now()) {
@@ -296,6 +288,13 @@ export async function refresh(rawRefreshToken: string, meta: RequestMeta) {
       throw new AppError(401, "UNAUTHORIZED", "Invalid refresh token");
     }
 
+    const [family] = await tx.select().from(sessionFamilies).where(and(eq(sessionFamilies.id, session.familyId), isNull(sessionFamilies.revokedAt), gt(sessionFamilies.expiresAt, new Date()))).limit(1);
+    if (!family) return { rejected: true as const };
+    const [won] = await tx.update(sessions).set({ revokedAt: new Date(), revokedReason: SESSION_REVOKE_REASON.rotated }).where(and(eq(sessions.id, session.id), isNull(sessions.revokedAt))).returning();
+    if (!won) {
+      await tx.update(sessionFamilies).set({ revokedAt: new Date(), revokedReason: SESSION_REVOKE_REASON.reuseDetected }).where(and(eq(sessionFamilies.id, session.familyId), isNull(sessionFamilies.revokedAt)));
+      return { rejected: true as const };
+    }
     const nextRefreshToken = generateOpaqueToken();
     const [nextSession] = await tx
       .insert(sessions)
@@ -303,28 +302,24 @@ export async function refresh(rawRefreshToken: string, meta: RequestMeta) {
         userId: user.id,
         familyId: session.familyId,
         tokenHash: hashToken(nextRefreshToken),
-        expiresAt: refreshExpiry(),
+        expiresAt: family.expiresAt,
         userAgent: meta.userAgent ?? session.userAgent,
         ip: meta.ip ?? session.ip,
         lastUsedAt: new Date(),
       })
       .returning();
 
-    await tx
-      .update(sessions)
-      .set({
-        revokedAt: new Date(),
-        revokedReason: SESSION_REVOKE_REASON.rotated,
-        replacedBySessionId: nextSession.id,
-      })
-      .where(eq(sessions.id, session.id));
+    await tx.update(sessions).set({ replacedBySessionId: nextSession.id }).where(eq(sessions.id, session.id));
 
     return {
-      accessToken: signAccessToken(user.id, user.email),
+      rejected: false as const,
+      accessToken: signAccessToken(user.id, user.email, family.id),
       refreshToken: nextRefreshToken,
       user: toUserOutput(user),
     };
   });
+  if (outcome.rejected) throw new AppError(401, "UNAUTHORIZED", "Invalid or reused refresh token");
+  return outcome;
 }
 
 /**
@@ -344,12 +339,16 @@ export async function logout(rawRefreshToken: string | undefined) {
     return;
   }
   await db
-    .update(sessions)
+    .update(sessionFamilies)
     .set({
       revokedAt: new Date(),
       revokedReason: SESSION_REVOKE_REASON.logout,
     })
-    .where(eq(sessions.id, session.id));
+    .where(and(eq(sessionFamilies.id, session.familyId), isNull(sessionFamilies.revokedAt)));
+}
+
+export async function revokeUserSessionFamilies(userId: string, reason: "password_changed" | "user_disabled") {
+  await db.update(sessionFamilies).set({ revokedAt: new Date(), revokedReason: reason }).where(and(eq(sessionFamilies.userId, userId), isNull(sessionFamilies.revokedAt)));
 }
 
 /**
@@ -427,60 +426,15 @@ export async function googleCallback(code: string | undefined, state: string | u
     googleEmailVerified,
   });
 
-  if (decision === "unverified_collision") {
+  if (decision !== "login") {
     throw new AppError(
       409,
-      "UNVERIFIED_COLLISION",
-      "This email belongs to an existing account and Google did not verify it",
+      decision === "email_collision" ? "EMAIL_TAKEN" : "GOOGLE_REGISTRATION_DISABLED",
+      "Direct Google registration and linking are disabled; use central OIDC",
     );
   }
 
-  let user: SelectUser | null = existingGoogle ? await findUserById(existingGoogle.userId) : existingUser;
-
-  if (decision === "create") {
-    const [created] = await db
-      .insert(users)
-      .values({
-        email: googleEmail,
-        displayName: payload.name ?? googleEmail.split("@")[0] ?? googleEmail,
-        avatarUrl: payload.picture ?? null,
-        status: USER_STATUS.active,
-        emailVerifiedAt: googleEmailVerified ? new Date() : null,
-      })
-      .returning();
-    user = created;
-    await db.insert(authIdentities).values({
-      userId: user.id,
-      provider: IDENTITY_PROVIDER.google,
-      providerUserId: payload.sub,
-      email: googleEmail,
-      emailVerified: googleEmailVerified,
-      profile: { picture: payload.picture, locale: payload.locale },
-    });
-  }
-
-  if (decision === "link_google" && user) {
-    await db.insert(authIdentities).values({
-      userId: user.id,
-      provider: IDENTITY_PROVIDER.google,
-      providerUserId: payload.sub,
-      email: googleEmail,
-      emailVerified: googleEmailVerified,
-      profile: { picture: payload.picture, locale: payload.locale },
-    });
-    const patch: Partial<SelectUser> = {};
-    if (!user.emailVerifiedAt && googleEmailVerified) {
-      patch.emailVerifiedAt = new Date();
-      patch.status = USER_STATUS.active;
-    }
-    if (!user.avatarUrl && payload.picture) {
-      patch.avatarUrl = payload.picture;
-    }
-    if (Object.keys(patch).length > 0) {
-      const [updated] = await db.update(users).set(patch).where(eq(users.id, user.id)).returning();
-      user = updated ?? user;
-    }
-  }
+  const user: SelectUser | null = existingGoogle ? await findUserById(existingGoogle.userId) : null;
 
   if (!user || user.status === USER_STATUS.disabled) {
     throw new AppError(401, "UNAUTHORIZED", "Unable to sign in with Google");
@@ -521,68 +475,29 @@ export async function forgotPassword(email: string) {
  * Consumes a one-time reset token, replaces the password hash, and revokes all sessions.
  */
 export async function resetPassword(input: ResetPasswordInputSchema) {
-  const [challenge] = await db
-    .select()
-    .from(authChallenges)
-    .where(
-      and(
-        eq(authChallenges.tokenHash, hashToken(input.token)),
-        eq(authChallenges.type, CHALLENGE_TYPE.passwordReset),
-      ),
-    )
-    .limit(1);
-  if (!challenge || challenge.consumedAt || challenge.expiresAt.getTime() < Date.now() || !challenge.userId) {
-    throw new AppError(400, "INVALID_TOKEN", "Invalid or expired reset token");
-  }
-
-  await db.update(authChallenges).set({ consumedAt: new Date() }).where(eq(authChallenges.id, challenge.id));
-
-  const identity = await findPasswordIdentityForUser(challenge.userId);
-  if (!identity) {
-    throw new AppError(400, "INVALID_TOKEN", "Invalid or expired reset token");
-  }
-
-  await db
-    .update(authIdentities)
-    .set({ passwordHash: await hashPassword(input.password) })
-    .where(eq(authIdentities.id, identity.id));
-
-  await db
-    .update(sessions)
-    .set({
-      revokedAt: new Date(),
-      revokedReason: SESSION_REVOKE_REASON.passwordChanged,
-    })
-    .where(and(eq(sessions.userId, challenge.userId), isNull(sessions.revokedAt)));
+  const passwordHash = await hashPassword(input.password);
+  const consumed = await db.transaction(async (tx) => {
+    const [challenge] = await tx.update(authChallenges).set({ consumedAt: new Date() }).where(and(eq(authChallenges.tokenHash, hashToken(input.token)), eq(authChallenges.type, CHALLENGE_TYPE.passwordReset), isNull(authChallenges.consumedAt), gt(authChallenges.expiresAt, new Date()))).returning();
+    if (!challenge?.userId) return false;
+    const [identity] = await tx.select().from(authIdentities).where(and(eq(authIdentities.userId, challenge.userId), eq(authIdentities.provider, IDENTITY_PROVIDER.password))).limit(1);
+    if (!identity) return false;
+    await tx.update(authIdentities).set({ passwordHash }).where(eq(authIdentities.id, identity.id));
+    await tx.update(sessionFamilies).set({ revokedAt: new Date(), revokedReason: SESSION_REVOKE_REASON.passwordChanged }).where(and(eq(sessionFamilies.userId, challenge.userId), isNull(sessionFamilies.revokedAt)));
+    return true;
+  });
+  if (!consumed) throw new AppError(400, "INVALID_TOKEN", "Invalid or expired reset token");
 }
 
 /**
  * Consumes a one-time verification token and marks the user and matching identities as verified.
  */
 export async function verifyEmail(token: string) {
-  const [challenge] = await db
-    .select()
-    .from(authChallenges)
-    .where(
-      and(
-        eq(authChallenges.tokenHash, hashToken(token)),
-        eq(authChallenges.type, CHALLENGE_TYPE.emailVerification),
-      ),
-    )
-    .limit(1);
-  if (!challenge || challenge.consumedAt || challenge.expiresAt.getTime() < Date.now() || !challenge.userId) {
-    throw new AppError(400, "INVALID_TOKEN", "Invalid or expired verification token");
-  }
-
-  await db.update(authChallenges).set({ consumedAt: new Date() }).where(eq(authChallenges.id, challenge.id));
-
-  const user = await findUserById(challenge.userId);
-  if (!user) {
-    throw new AppError(400, "INVALID_TOKEN", "Invalid or expired verification token");
-  }
-
-  const [updated] = await db
-    .update(users)
+  const updated = await db.transaction(async (tx) => {
+    const [challenge] = await tx.update(authChallenges).set({ consumedAt: new Date() }).where(and(eq(authChallenges.tokenHash, hashToken(token)), eq(authChallenges.type, CHALLENGE_TYPE.emailVerification), isNull(authChallenges.consumedAt), gt(authChallenges.expiresAt, new Date()))).returning();
+    if (!challenge?.userId) return null;
+    const [user] = await tx.select().from(users).where(eq(users.id, challenge.userId)).limit(1);
+    if (!user) return null;
+    const [next] = await tx.update(users)
     .set({
       emailVerifiedAt: new Date(),
       status: user.status === USER_STATUS.pendingVerification ? USER_STATUS.active : user.status,
@@ -590,12 +505,15 @@ export async function verifyEmail(token: string) {
     .where(eq(users.id, user.id))
     .returning();
 
-  await db
+    await tx
     .update(authIdentities)
     .set({ emailVerified: true })
     .where(and(eq(authIdentities.userId, user.id), eq(authIdentities.email, user.email)));
 
-  return toUserOutput(updated ?? { ...user, emailVerifiedAt: new Date() });
+    return next ?? { ...user, emailVerifiedAt: new Date() };
+  });
+  if (!updated) throw new AppError(400, "INVALID_TOKEN", "Invalid or expired verification token");
+  return toUserOutput(updated);
 }
 
 /**

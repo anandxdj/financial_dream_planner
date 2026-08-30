@@ -21,20 +21,33 @@ export function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 
+export function pkceChallenge(verifier: string) {
+  return createHash("sha256").update(verifier).digest("base64url");
+}
+
 export function newFamilyId() {
   return randomUUID();
 }
 
-export function signAccessToken(userId: string, email: string) {
-  return jwt.sign({ sub: userId, email }, env.ACCESS_TOKEN_SECRET, {
+export function signAccessToken(userId: string, email: string, sessionId: string) {
+  return jwt.sign({ sub: userId, email, sid: sessionId }, env.ACCESS_TOKEN_SECRET, {
+    algorithm: "HS256",
+    issuer: env.API_ORIGIN,
+    audience: "financial-dream-planner",
+    jwtid: randomUUID(),
+    mutatePayload: false,
     expiresIn: env.ACCESS_TOKEN_EXPIRES_IN as jwt.SignOptions["expiresIn"],
   });
 }
 
 export function verifyAccessToken(token: string): AccessTokenPayload {
   try {
-    const payload = jwt.verify(token, env.ACCESS_TOKEN_SECRET) as AccessTokenPayload;
-    if (!payload.sub || !payload.email) {
+    const payload = jwt.verify(token, env.ACCESS_TOKEN_SECRET, {
+      algorithms: ["HS256"],
+      issuer: env.API_ORIGIN,
+      audience: "financial-dream-planner",
+    }) as AccessTokenPayload;
+    if (!payload.sub || !payload.email || !payload.sid) {
       throw new AppError(401, "UNAUTHORIZED", "Invalid access token");
     }
     return payload;

@@ -10,6 +10,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { SESSION_REVOKE_REASON } from "../constants";
 import { users } from "./user";
+import { sessionFamilies } from "../../modules/auth/session.model";
 
 export const sessionRevokeReasonEnum = pgEnum("session_revoke_reason", [
   SESSION_REVOKE_REASON.logout,
@@ -26,7 +27,7 @@ export const sessions = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    familyId: uuid("family_id").notNull(),
+    familyId: uuid("family_id").notNull().references(() => sessionFamilies.id, { onDelete: "cascade" }),
     tokenHash: text("token_hash").notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     revokedAt: timestamp("revoked_at", { withTimezone: true }),

@@ -6,6 +6,8 @@ export const challengeTypeEnum = pgEnum("challenge_type", [
   CHALLENGE_TYPE.emailVerification,
   CHALLENGE_TYPE.passwordReset,
   CHALLENGE_TYPE.oauthState,
+  CHALLENGE_TYPE.oidcTransaction,
+  CHALLENGE_TYPE.oidcBridge,
 ]);
 
 export const authChallenges = pgTable(

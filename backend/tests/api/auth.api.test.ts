@@ -36,6 +36,11 @@ function cookieValue(response: request.Response, name: string) {
   return match?.split(";")[0]?.split("=")[1];
 }
 
+function csrfHeaders(response: request.Response) {
+  const csrf = cookieValue(response, COOKIE.csrf)!;
+  return { Origin: "http://localhost:3000", "X-CSRF-Token": csrf };
+}
+
 const registerBody = {
   email: "ada@example.com",
   password: "password12",
@@ -67,7 +72,7 @@ describe.skipIf(!isDockerAvailable())("auth API", () => {
     expect(me.status).toBe(200);
     expect(me.body.user.displayName).toBe("Ada");
 
-    const loggedOut = await agent.post("/api/v1/auth/logout");
+    const loggedOut = await agent.post("/api/v1/auth/logout").set(csrfHeaders(registered));
     expect(loggedOut.status).toBe(204);
 
     const afterLogout = await agent.get("/api/v1/users/me");
@@ -76,11 +81,11 @@ describe.skipIf(!isDockerAvailable())("auth API", () => {
 
   it("logs in with email and password", async () => {
     const agent = request.agent(app);
-    await agent.post("/api/v1/auth/register").send(registerBody);
-    await agent.post("/api/v1/auth/logout");
+    const registered = await agent.post("/api/v1/auth/register").send({ ...registerBody, email: "login@example.com" });
+    await agent.post("/api/v1/auth/logout").set(csrfHeaders(registered));
 
     const login = await agent.post("/api/v1/auth/login").send({
-      email: "ada@example.com",
+      email: "login@example.com",
       password: "password12",
     });
     expect(login.status).toBe(200);
@@ -114,18 +119,20 @@ describe.skipIf(!isDockerAvailable())("auth API", () => {
 
     const rotated = await request(app)
       .post("/api/v1/auth/refresh")
-      .set("Cookie", `${COOKIE.refresh}=${oldRefresh}`);
+      .set("Cookie", [`${COOKIE.refresh}=${oldRefresh}`, `${COOKIE.csrf}=${cookieValue(registered, COOKIE.csrf)}`])
+      .set(csrfHeaders(registered));
     expect(rotated.status).toBe(200);
     expect(cookieValue(rotated, COOKIE.refresh)).not.toBe(oldRefresh);
 
     const reused = await request(app)
       .post("/api/v1/auth/refresh")
-      .set("Cookie", `${COOKIE.refresh}=${oldRefresh}`);
+      .set("Cookie", [`${COOKIE.refresh}=${oldRefresh}`, `${COOKIE.csrf}=${cookieValue(registered, COOKIE.csrf)}`])
+      .set(csrfHeaders(registered));
     expect(reused.status).toBe(401);
     expect(reused.body.error.code).toBe("UNAUTHORIZED");
   });
 
-  it("creates a Google user from a mocked callback and sets cookies", async () => {
+  it("does not create a new direct Google user", async () => {
     const start = await request(app).get("/api/v1/auth/google").redirects(0);
     expect(start.status).toBe(302);
     const location = String(start.headers.location);
@@ -137,16 +144,8 @@ describe.skipIf(!isDockerAvailable())("auth API", () => {
       .query({ code: "google-code", state })
       .redirects(0);
 
-    expect(callback.status).toBe(302);
-    expect(callback.headers.location).toBe("http://localhost:3000/auth/callback");
-    expect(cookieValue(callback, COOKIE.access)).toBeTruthy();
-    expect(cookieValue(callback, COOKIE.refresh)).toBeTruthy();
-
-    const me = await request(app)
-      .get("/api/v1/users/me")
-      .set("Cookie", `${COOKIE.access}=${cookieValue(callback, COOKIE.access)}`);
-    expect(me.status).toBe(200);
-    expect(me.body.user.email).toBe("google.user@example.com");
+    expect(callback.status).toBe(409);
+    expect(callback.body.error.code).toBe("GOOGLE_REGISTRATION_DISABLED");
   });
 
   it("consumes a password reset token only once", async () => {
