@@ -5,6 +5,9 @@ import helmet from "helmet";
 import { env } from "./config/env";
 import { authRouter } from "./modules/auth/auth.route";
 import { usersRouter } from "./modules/users/users.route";
+import { accountsRouter } from "./modules/accounts/accounts.route";
+import { categoriesRouter } from "./modules/categories/categories.route";
+import { transactionsRouter } from "./modules/transactions/transactions.route";
 import { errorHandler } from "./shared/middleware/error-handler";
 import { requestId } from "./shared/middleware/request-id";
 import { logger } from "./shared/logger/logger";
@@ -45,6 +48,9 @@ export function createApp(dependencies: AppDependencies = {}) {
 
   app.use("/api/v1/auth", authRouter);
   app.use("/api/v1/users", usersRouter);
+  app.use("/api/v1/accounts", accountsRouter);
+  app.use("/api/v1/categories", categoriesRouter);
+  app.use("/api/v1/transactions", transactionsRouter);
   if (dependencies.runService) app.use("/api/v1/runs", createRunRouter(dependencies.runService));
 
   app.use(errorHandler);
