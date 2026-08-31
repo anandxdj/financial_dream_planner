@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/readme/story/01-hero.webp" alt="Financial Dream Planner — see your financial life before you live it" width="100%" />
+  <img src="docs/readme/story/01-hero-financial-dream-planner.png" alt="Financial Dream Planner — see your financial life before you live it" width="100%" />
 </p>
 
 <h1 align="center">Financial Dream Planner</h1>
@@ -34,7 +34,7 @@ The backend owns financial truth. Clients collect and present information. The d
 The product direction is deliberately conversational: start with goals and the minimum useful financial state, then progressively enrich the plan from accounts, observed transactions, documents, and targeted follow-up questions.
 
 <p align="center">
-  <img src="docs/readme/story/02-onboarding.webp" alt="Conversational onboarding for Financial Dream Planner" width="100%" />
+  <img src="docs/readme/story/02-conversational-onboarding.png" alt="Conversational onboarding for Financial Dream Planner" width="100%" />
 </p>
 
 The planned mobile onboarding mirrors the backend's progressive model: create an account → choose goals → enter minimum financial information → generate the first snapshot → enrich it with observed data.
@@ -44,7 +44,7 @@ The planned mobile onboarding mirrors the backend's progressive model: create an
 A financial plan is only useful if the underlying data is coherent. The repository models household-scoped accounts, canonical transactions, source provenance, categories, immutable snapshots, plans, and version history instead of stuffing the user's entire financial life into one AI prompt or a single JSON blob.
 
 <p align="center">
-  <img src="docs/readme/story/03-structured-state.webp" alt="Scattered financial data becoming a connected financial state" width="100%" />
+  <img src="docs/readme/story/03-from-scattered-finances-to-clarity.png" alt="Scattered financial data becoming a connected financial state" width="100%" />
 </p>
 
 ### A distinctive India-first ingestion path: private SMS → canonical ledger
@@ -52,7 +52,7 @@ A financial plan is only useful if the underlying data is coherent. The reposito
 The Android product plan treats SMS ingestion as a first-class privacy boundary: scan and classify on-device, upload normalized financial observations rather than the raw personal inbox, then let the backend deduplicate and reconcile them into one canonical ledger.
 
 <p align="center">
-  <img src="docs/readme/story/05-sms-ledger.webp" alt="Private Android SMS ingestion into a canonical financial ledger" width="100%" />
+  <img src="docs/readme/story/04-private-sms-to-clean-ledger.png" alt="Private Android SMS ingestion into a canonical financial ledger" width="100%" />
 </p>
 
 Strong identifiers such as UTR/RRN/reference IDs win first; conservative fingerprint matching handles the fallback case. One transaction may later have multiple provenance sources, but the user should still see one real transaction.
@@ -62,7 +62,7 @@ Strong identifiers such as UTR/RRN/reference IDs win first; conservative fingerp
 The planned Home experience is a **daily financial pulse**, not a giant analytics report: financial health, one next-best action, income/spend/surplus, meaningful drift, upcoming obligations, goal previews, and recent transactions.
 
 <p align="center">
-  <img src="docs/readme/story/04-daily-pulse.webp" alt="Financial Dream Planner daily financial pulse dashboard" width="100%" />
+  <img src="docs/readme/story/05-daily-financial-dashboard.png" alt="Financial Dream Planner daily financial pulse dashboard" width="100%" />
 </p>
 
 The financial health and core financial metrics are intended to be backend-calculated and deterministic. The client renders them; it does not independently reinvent financial math.
@@ -72,7 +72,7 @@ The financial health and core financial metrics are intended to be backend-calcu
 Goals are not isolated progress bars. The planning model reasons about target cost, inflation, existing funding, required contribution, flexibility, liabilities, competing goals, and the long-term trajectory together.
 
 <p align="center">
-  <img src="docs/readme/story/06-goals-projection.webp" alt="Goal planning and long-term net-worth projection" width="100%" />
+  <img src="docs/readme/story/06-project-your-future.png" alt="Goal planning and long-term net-worth projection" width="100%" />
 </p>
 
 The deterministic engine supports goal future cost/funding, required contribution, feasibility, cash flow, emergency reserves, loans and investment projections. Long-term calculations use explicit assumptions and immutable policy versions so historical plans never silently inherit newer defaults.
@@ -82,7 +82,7 @@ The deterministic engine supports goal future cost/funding, required contributio
 A scenario is an overlay on an immutable baseline. Running a scenario has no side effect; applying one is an explicit operation with stale-baseline protection and idempotent/concurrency-safe semantics.
 
 <p align="center">
-  <img src="docs/readme/story/07-scenarios.webp" alt="What-if financial scenario simulator" width="100%" />
+  <img src="docs/readme/story/07-scenario-simulator.png" alt="What-if financial scenario simulator" width="100%" />
 </p>
 
 The API supports creating scenario drafts, running them, comparing multiple scenarios, and explicitly applying one to create a new snapshot and plan version.
@@ -92,7 +92,7 @@ The API supports creating scenario drafts, running them, comparing multiple scen
 This is one of the project's defining ideas. The backend compares **accepted planned state** with **observed financial state**, computes material impact, and surfaces a drift event — but detection alone can never rewrite the plan.
 
 <p align="center">
-  <img src="docs/readme/story/08-living-plan-drift.webp" alt="Living plan drift detection and explicit baseline acceptance" width="100%" />
+  <img src="docs/readme/story/08-living-plan-drift.png" alt="Living plan drift detection and explicit baseline acceptance" width="100%" />
 </p>
 
 Only an explicit **Accept** action can advance the baseline. **Keep** preserves the existing plan, and competing stale events cannot overwrite newer plan history.
@@ -102,7 +102,7 @@ Only an explicit **Accept** action can advance the baseline. **Keep** preserves 
 A useful planner should expose the consequence chain: monthly flexibility, emergency runway, debt burden, goal timing, long-term corpus, and the assumptions behind those changes. The scenario API can compare multiple options against the same baseline, so the decision becomes **Current vs. Option A vs. Option B vs. a better-balanced path** — not “AI says yes/no.”
 
 <p align="center">
-  <img src="docs/readme/story/09-compare-futures.webp" alt="Side-by-side financial future and trade-off comparison" width="100%" />
+  <img src="docs/readme/story/09-compare-your-futures.png" alt="Side-by-side financial future and trade-off comparison" width="100%" />
 </p>
 
 ## 08 — Guarded AI, cited research, deterministic finance
@@ -110,7 +110,7 @@ A useful planner should expose the consequence chain: monthly flexibility, emerg
 The AI layer is intentionally bounded. The planner uses LangGraph orchestration, a closed typed tool registry, deterministic finance tools, cited research, a deterministic risk validator, and a critic that validates citation ownership and freshness before a guarded answer is returned.
 
 <p align="center">
-  <img src="docs/readme/story/10-ai-system.webp" alt="Financial Dream Planner AI, research, deterministic engine and system architecture" width="100%" />
+  <img src="docs/readme/story/10-system-overview.png" alt="Financial Dream Planner AI, research, deterministic engine and system architecture" width="100%" />
 </p>
 
 The primary OpenAI-compatible provider can fall back to Gemini only for bounded transient or structured-output failures and only before user-visible output begins. Prompt injection and policy failures fail closed. Underneath, the product is a standalone modular monolith: versioned REST + resumable SSE, PostgreSQL as durable source of truth, deterministic domain logic, BullMQ workers for asynchronous work, vendor-neutral storage, and separate clients.
