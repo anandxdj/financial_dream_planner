@@ -14,3 +14,5 @@ export * from "../modules/scenarios/model";
 export * from "../modules/planner/model";
 export * from "../modules/research/model";
 export * from "../modules/drift/model";
+export * from "../modules/privacy/model";
+export * from "../modules/documents/model";

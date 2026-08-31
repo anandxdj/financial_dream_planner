@@ -11,6 +11,9 @@ Backend capabilities live under `backend/src/modules/<capability>`:
 - `planner`: Bounded LangGraph planning orchestration, LLM provider routing, closed tool registry, risk/critic safety filters.
 - `research`: Cited financial research runner, SSRF-safe document fetcher, Tavily search provider, source rank classification.
 - `drift`: Deterministic material-change policy, durable deduplicated checks, explicit baseline acceptance, and drift retention.
+- `privacy`: Consent lifecycle, durable export generation, two-step confirmation household deletions, append-only compliance audit events, and retention cleanup.
+- `documents`: Tenant-scoped document metadata, upload validation, short-lived download grants, and delete lifecycle.
+- `storage`: Vendor-neutral `ObjectStorage` contract, R2-compatible S3 adapter, opaque key generator, and deterministic in-memory `FakeStorage`.
 - `jobs`: BullMQ queues, job runs, and transactional outbox.
 
 Composition roots (`app.ts`, `composition.ts`, and worker composition) only wire modules and infrastructure. `shared/` is reserved for genuinely cross-cutting protocol primitives such as error envelopes, request IDs, authentication transport middleware, exact decimals, and pagination; business rules do not accumulate there.

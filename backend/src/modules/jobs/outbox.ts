@@ -20,7 +20,12 @@ export class OutboxDispatcher {
     let published = 0;
     for (const event of events) {
       try {
-        const durableId = event.topic === "drift_check" ? event.aggregateId : event.id;
+        const durableId =
+          event.topic === "drift_check" ||
+          event.topic === "privacy_export" ||
+          event.topic === "household_deletion"
+            ? event.aggregateId
+            : event.id;
         await this.queue.add(event.topic, event.payload, durableJobOptions(durableId));
         await this.database.update(outboxEvents).set({ publishedAt: new Date(), attempts: sql`${outboxEvents.attempts} + 1`, lastError: null }).where(and(eq(outboxEvents.id, event.id), isNull(outboxEvents.publishedAt)));
         published += 1;

@@ -71,6 +71,13 @@
       "when": 1788108034567,
       "tag": "0009_dapper_microchip",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788111094533,
+      "tag": "0010_u8_privacy_storage",
+      "breakpoints": true
     }
   ]
 }

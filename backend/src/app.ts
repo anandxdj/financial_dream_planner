@@ -20,11 +20,19 @@ import { logger } from "./shared/logger/logger";
 import { createRunRouter } from "./modules/runs/run.route";
 import type { RunService } from "./modules/runs/run.service";
 import { protectCookieRequests } from "./shared/middleware/csrf";
+import { createStorageFromConfig, setGlobalStorage, type ObjectStorage } from "./modules/storage";
+import { privacyRouter } from "./modules/privacy/privacy.route";
+import { documentsRouter } from "./modules/documents/documents.route";
 
-export interface AppDependencies { runService?: RunService; }
+export interface AppDependencies {
+  runService?: RunService;
+  storage?: ObjectStorage;
+}
 
 export function createApp(dependencies: AppDependencies = {}) {
   const app = express();
+  const storage = dependencies.storage ?? createStorageFromConfig(env);
+  setGlobalStorage(storage);
 
   app.set("trust proxy", 1);
   app.use(helmet());
@@ -34,7 +42,7 @@ export function createApp(dependencies: AppDependencies = {}) {
       credentials: true,
     }),
   );
-  app.use(express.json({ limit: "1mb" }));
+  app.use(express.json({ limit: "15mb" }));
   app.use(cookieParser());
   app.use(protectCookieRequests);
   app.use(requestId);
@@ -63,6 +71,8 @@ export function createApp(dependencies: AppDependencies = {}) {
   app.use("/api/v1/planner", plannerRouter);
   app.use("/api/v1/research", researchRouter);
   app.use("/api/v1/drift", driftRouter);
+  app.use("/api/v1/privacy", privacyRouter);
+  app.use("/api/v1/documents", documentsRouter);
   if (dependencies.runService) app.use("/api/v1/runs", createRunRouter(dependencies.runService));
 
   app.use(errorHandler);

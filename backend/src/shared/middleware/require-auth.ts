@@ -37,7 +37,15 @@ export async function requireAuth(req: Request, _res: Response, next: () => void
     throw new AppError(401, "REAUTH_REQUIRED", "OIDC reauthentication required");
   }
   req.user = { id: payload.sub, email: row.email };
-  req.auth = { userId: payload.sub, sessionId: payload.sid, householdId: row.householdId, role: row.role, authMethod: row.authMethod, transport: selected.transport };
+  req.auth = {
+    userId: payload.sub,
+    sessionId: payload.sid,
+    householdId: row.householdId,
+    role: row.role,
+    authMethod: row.authMethod,
+    transport: selected.transport,
+    authenticatedAt: row.authenticatedAt,
+  };
   next();
 }
 

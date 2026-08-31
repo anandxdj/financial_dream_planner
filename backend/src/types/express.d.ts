@@ -15,6 +15,7 @@ declare global {
         role: "owner" | "member";
         authMethod: string;
         transport: "bearer" | "cookie";
+        authenticatedAt: Date;
       };
     }
   }

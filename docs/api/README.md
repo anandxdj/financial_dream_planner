@@ -74,3 +74,24 @@ All drift endpoints are authenticated and household scoped under `/api/v1/drift`
 - `POST /:id/keep` — With an empty body, idempotently keeps the existing baseline and creates no plan state.
 
 Only `accept` can advance the plan. Duplicate jobs, failures, no-change results, reads, and keep actions cannot mutate baseline history.
+
+## Documents & Privacy Endpoints (U8)
+
+All document and privacy endpoints are authenticated and household scoped under `/api/v1/documents` and `/api/v1/privacy`. Internal object keys, storage endpoints, credentials, and token hashes are never exposed across the service boundary.
+
+- **Documents (`/api/v1/documents`)**:
+  - `POST /` — Uploads a bounded private document (requires `document_storage` consent, validates base64 content and size <= 10MB); returns metadata without object key (`201`).
+  - `GET /` — Lists non-expired available documents for the authenticated household with cursor pagination (`200`).
+  - `GET /:id` — Returns tenant-scoped document metadata (`200`).
+  - `POST /:id/download` — Returns a short-lived download grant and expiry (maximum 5 minutes) without disclosing internal object keys (`200`).
+  - `DELETE /:id` — Deletes the physical object from storage and marks metadata deleted (`200`).
+
+- **Privacy & Consents (`/api/v1/privacy`)**:
+  - `POST /consents` — Records or withdraws versioned consent (`document_storage`, `privacy_export`, `household_deletion`) with idempotency key (`201` on create, `200` on identical replay).
+  - `GET /consents` — Returns effective consent states and caller's append-only consent history (`200`).
+  - `POST /exports` — Creates or deduplicates a durable export request (requires `privacy_export` consent); returns `202` while active and `200` when completed.
+  - `GET /exports/:id` — Returns export status and artifact metadata while unexpired (`200`).
+  - `POST /exports/:id/download` — Returns a short-lived download grant for the completed export artifact (`200`).
+  - `POST /deletions` — Initiates two-step household deletion (requires owner role and `household_deletion` consent); returns a one-time random confirmation token (`201`).
+  - `POST /deletions/:id/confirm` — Confirms deletion using the token; atomically consumes confirmation and queues the irreversible deletion worker job (`200`).
+  - `GET /deletions/:id` — Returns deletion request status while the account exists (`200`).

@@ -40,7 +40,27 @@ const envSchema = z.object({
   OIDC_ALLOWED_REDIRECTS: z.string().default(""),
   OIDC_REAUTH_HOURS: z.coerce.number().int().positive().default(24),
   COOKIE_DOMAIN: z.string().default(""),
+  STORAGE_ENABLED: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
+  STORAGE_ENDPOINT: z.string().default(""),
+  STORAGE_BUCKET: z.string().default(""),
+  STORAGE_ACCESS_KEY_ID: z.string().default(""),
+  STORAGE_SECRET_ACCESS_KEY: z.string().default(""),
+  STORAGE_REGION: z.string().default("auto"),
 }).superRefine((value, ctx) => {
+  if (value.STORAGE_ENABLED) {
+    if (!value.STORAGE_ENDPOINT || (value.NODE_ENV === "production" && !value.STORAGE_ENDPOINT.startsWith("https://"))) {
+      ctx.addIssue({ code: "custom", message: "STORAGE_ENDPOINT must be a valid HTTPS URL when storage is enabled" });
+    }
+    if (!value.STORAGE_BUCKET) {
+      ctx.addIssue({ code: "custom", message: "STORAGE_BUCKET is required when storage is enabled" });
+    }
+    if (!value.STORAGE_ACCESS_KEY_ID || !value.STORAGE_SECRET_ACCESS_KEY) {
+      ctx.addIssue({ code: "custom", message: "STORAGE credentials are required when storage is enabled" });
+    }
+  }
   if (value.NODE_ENV !== "production") return;
   if (!value.WEB_ORIGIN.startsWith("https://") || !value.API_ORIGIN.startsWith("https://")) {
     ctx.addIssue({ code: "custom", message: "Production auth origins must use HTTPS" });

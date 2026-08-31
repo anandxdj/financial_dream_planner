@@ -7,6 +7,8 @@ import { createDomainQueue, createDomainWorker, createRedisConnection } from "./
 import { RUN_EVENT_TYPE } from "./modules/runs/model";
 import { PostgresRunStore, RunService } from "./modules/runs/run.service";
 import { processDriftCheck } from "./modules/drift/drift.service";
+import { processPrivacyExport, processHouseholdDeletion } from "./modules/privacy/privacy.service";
+import { createStorageFromConfig, type ObjectStorage } from "./modules/storage";
 import { logger } from "./shared/logger/logger";
 
 export interface WorkerRuntime { close(): Promise<void>; }
@@ -15,6 +17,7 @@ export interface WorkerCompositionOptions {
   connect?: (url: string) => Promise<void>;
   disconnect?: () => Promise<void>;
   database?: () => Database;
+  storage?: ObjectStorage;
   redisFactory?: typeof createRedisConnection;
   queueFactory?: typeof createDomainQueue;
   workerFactory?: typeof createDomainWorker;
@@ -29,10 +32,41 @@ export async function composeWorker(options: WorkerCompositionOptions = {}): Pro
   const log = options.log ?? logger;
   await connect(config.DATABASE_URL);
   const database = options.database?.() ?? db;
+  const storage = options.storage ?? createStorageFromConfig(config);
   const redis = (options.redisFactory ?? createRedisConnection)(config.REDIS_URL);
   const queue = (options.queueFactory ?? createDomainQueue)(redis);
   const runService = new RunService(new PostgresRunStore(database));
   const worker = (options.workerFactory ?? createDomainWorker)(redis, async (job) => {
+    if (job.name === "privacy_export") {
+      const exportId =
+        typeof job.data?.exportId === "string"
+          ? job.data.exportId
+          : typeof job.id === "string"
+            ? job.id
+            : undefined;
+      if (exportId) {
+        log.info("privacy_export_job_started", { jobId: job.id, exportId });
+        await processPrivacyExport(exportId, database, storage);
+        log.info("privacy_export_job_completed", { jobId: job.id, exportId });
+        return;
+      }
+    }
+
+    if (job.name === "household_deletion") {
+      const deletionId =
+        typeof job.data?.deletionId === "string"
+          ? job.data.deletionId
+          : typeof job.id === "string"
+            ? job.id
+            : undefined;
+      if (deletionId) {
+        log.info("household_deletion_job_started", { jobId: job.id, deletionId });
+        await processHouseholdDeletion(deletionId, database, storage);
+        log.info("household_deletion_job_completed", { jobId: job.id, deletionId });
+        return;
+      }
+    }
+
     if (job.name === "drift_check") {
       const targetCheckId =
         typeof job.data?.checkId === "string"

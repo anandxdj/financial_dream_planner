@@ -65,6 +65,28 @@ import {
   DriftFindingSchema,
   KeepDriftResponseSchema,
 } from "./modules/drift/model";
+import {
+  ConfirmDeletionRequestSchema,
+  ConsentListResponseSchema,
+  ConsentRecordSchema,
+  ConsentResponseSchema,
+  CreateConsentRequestSchema,
+  CreateDeletionRequestSchema,
+  CreateDeletionResponseSchema,
+  CreateExportRequestSchema,
+  DeletionResponseSchema,
+  ExportResponseSchema,
+  HouseholdDeletionSchema,
+  PrivacyExportSchema,
+} from "./modules/privacy/model";
+import {
+  DocumentDeleteResponseSchema,
+  DocumentListResponseSchema,
+  DocumentMetadataSchema,
+  DocumentResponseSchema,
+  DownloadGrantResponseSchema,
+  UploadDocumentRequestSchema,
+} from "./modules/documents/model";
 
 extendZodWithOpenApi(z);
 const registry = new OpenAPIRegistry();
@@ -752,6 +774,195 @@ registry.registerPath({
     401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
     404: { description: "Drift event not found", content: json(ErrorResponseSchema) },
     409: { description: "Already resolved", content: json(ErrorResponseSchema) },
+  },
+});
+
+// Privacy & Consent Schemas
+registry.register("ConsentRecord", ConsentRecordSchema);
+const ConsentResponseApiSchema = registry.register("ConsentResponse", ConsentResponseSchema);
+const ConsentListResponseApiSchema = registry.register("ConsentListResponse", ConsentListResponseSchema);
+const CreateConsentRequestApiSchema = registry.register("CreateConsentRequest", CreateConsentRequestSchema);
+
+// Document Schemas
+registry.register("DocumentMetadata", DocumentMetadataSchema);
+const DocumentResponseApiSchema = registry.register("DocumentResponse", DocumentResponseSchema);
+const DocumentListResponseApiSchema = registry.register("DocumentListResponse", DocumentListResponseSchema);
+const UploadDocumentRequestApiSchema = registry.register("UploadDocumentRequest", UploadDocumentRequestSchema);
+const DownloadGrantResponseApiSchema = registry.register("DownloadGrantResponse", DownloadGrantResponseSchema);
+const DocumentDeleteResponseApiSchema = registry.register("DocumentDeleteResponse", DocumentDeleteResponseSchema);
+
+// Export Schemas
+registry.register("PrivacyExport", PrivacyExportSchema);
+const ExportResponseApiSchema = registry.register("ExportResponse", ExportResponseSchema);
+const CreateExportRequestApiSchema = registry.register("CreateExportRequest", CreateExportRequestSchema);
+
+// Deletion Schemas
+registry.register("HouseholdDeletion", HouseholdDeletionSchema);
+const CreateDeletionRequestApiSchema = registry.register("CreateDeletionRequest", CreateDeletionRequestSchema);
+const ConfirmDeletionRequestApiSchema = registry.register("ConfirmDeletionRequest", ConfirmDeletionRequestSchema);
+const CreateDeletionResponseApiSchema = registry.register("CreateDeletionResponse", CreateDeletionResponseSchema);
+const DeletionResponseApiSchema = registry.register("DeletionResponse", DeletionResponseSchema);
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/privacy/consents",
+  request: { body: { content: json(CreateConsentRequestApiSchema) } },
+  responses: {
+    200: { description: "Consent already recorded (idempotent replay)", content: json(ConsentResponseApiSchema) },
+    201: { description: "Consent recorded", content: json(ConsentResponseApiSchema) },
+    400: { description: "Validation error", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    409: { description: "Consent idempotency conflict", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/privacy/consents",
+  responses: {
+    200: { description: "Effective consent states and history", content: json(ConsentListResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/documents",
+  request: { body: { content: json(UploadDocumentRequestApiSchema) } },
+  responses: {
+    201: { description: "Document uploaded and available", content: json(DocumentResponseApiSchema) },
+    400: { description: "Validation or size error", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    403: { description: "Consent required", content: json(ErrorResponseSchema) },
+    503: { description: "Storage unavailable", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/documents",
+  request: {
+    query: z.object({
+      cursor: z.string().optional(),
+      limit: z.coerce.number().optional(),
+    }),
+  },
+  responses: {
+    200: { description: "List of household documents", content: json(DocumentListResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/documents/{id}",
+  request: { params: IdParamsSchema },
+  responses: {
+    200: { description: "Document metadata", content: json(DocumentResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Document not found", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/documents/{id}/download",
+  request: { params: IdParamsSchema },
+  responses: {
+    200: { description: "Short-lived download grant", content: json(DownloadGrantResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Document not found", content: json(ErrorResponseSchema) },
+    503: { description: "Storage unavailable", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "delete",
+  path: "/api/v1/documents/{id}",
+  request: { params: IdParamsSchema },
+  responses: {
+    200: { description: "Document deleted", content: json(DocumentDeleteResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Document not found", content: json(ErrorResponseSchema) },
+    503: { description: "Storage unavailable", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/privacy/exports",
+  request: { body: { content: json(CreateExportRequestApiSchema) } },
+  responses: {
+    200: { description: "Export request already terminal", content: json(ExportResponseApiSchema) },
+    202: { description: "Export request queued", content: json(ExportResponseApiSchema) },
+    400: { description: "Validation error", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    403: { description: "Consent required", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/privacy/exports/{id}",
+  request: { params: IdParamsSchema },
+  responses: {
+    200: { description: "Export status and artifact metadata", content: json(ExportResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Export not found", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/privacy/exports/{id}/download",
+  request: { params: IdParamsSchema },
+  responses: {
+    200: { description: "Short-lived artifact download grant", content: json(DownloadGrantResponseApiSchema) },
+    400: { description: "Export not ready", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Export not found", content: json(ErrorResponseSchema) },
+    410: { description: "Export expired", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/privacy/deletions",
+  request: { body: { content: json(CreateDeletionRequestApiSchema) } },
+  responses: {
+    200: { description: "Deletion request already exists", content: json(CreateDeletionResponseApiSchema) },
+    201: { description: "Deletion request initiated with single-use confirmation token", content: json(CreateDeletionResponseApiSchema) },
+    400: { description: "Validation error", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized or reauth required", content: json(ErrorResponseSchema) },
+    403: { description: "Forbidden - owner role or consent required", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/privacy/deletions/{id}/confirm",
+  request: {
+    params: IdParamsSchema,
+    body: { content: json(ConfirmDeletionRequestApiSchema) },
+  },
+  responses: {
+    200: { description: "Deletion request confirmed and queued", content: json(DeletionResponseApiSchema) },
+    400: { description: "Invalid confirmation token", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    403: { description: "Forbidden - owner role required", content: json(ErrorResponseSchema) },
+    404: { description: "Deletion request not found", content: json(ErrorResponseSchema) },
+    409: { description: "State conflict, token expired, or consent withdrawn", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/privacy/deletions/{id}",
+  request: { params: IdParamsSchema },
+  responses: {
+    200: { description: "Household deletion request status", content: json(DeletionResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Deletion request not found", content: json(ErrorResponseSchema) },
   },
 });
 
