@@ -42,6 +42,7 @@ The API listens on `http://localhost:4000`. Check it with:
 
 ```text
 GET http://localhost:4000/health
+GET http://localhost:4000/ready
 ```
 
 Start the BullMQ worker in a second terminal when exercising background jobs:
@@ -51,7 +52,7 @@ cd backend
 pnpm tsx src/worker.ts
 ```
 
-The default development configuration uses the local PostgreSQL and Redis containers. Optional Google OAuth and SMTP settings are documented in `backend/.env.example`.
+For production-like operations, see `docker-compose.prod.yml`, `monitoring/alerts.yml`, `scripts/backup.ts`, `scripts/restore.ts`, and `scripts/preflight.ts`.
 
 ## Run the web client
 

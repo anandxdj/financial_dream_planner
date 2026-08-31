@@ -49,7 +49,16 @@ const envSchema = z.object({
   STORAGE_ACCESS_KEY_ID: z.string().default(""),
   STORAGE_SECRET_ACCESS_KEY: z.string().default(""),
   STORAGE_REGION: z.string().default("auto"),
+  METRICS_ENABLED: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
+  METRICS_BEARER_TOKEN: z.string().default(""),
+  SHUTDOWN_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
 }).superRefine((value, ctx) => {
+  if (value.METRICS_ENABLED && value.NODE_ENV === "production" && value.METRICS_BEARER_TOKEN.length < 16) {
+    ctx.addIssue({ code: "custom", message: "METRICS_BEARER_TOKEN must be at least 16 characters in production when metrics are enabled" });
+  }
   if (value.STORAGE_ENABLED) {
     if (!value.STORAGE_ENDPOINT || (value.NODE_ENV === "production" && !value.STORAGE_ENDPOINT.startsWith("https://"))) {
       ctx.addIssue({ code: "custom", message: "STORAGE_ENDPOINT must be a valid HTTPS URL when storage is enabled" });

@@ -95,3 +95,8 @@ All document and privacy endpoints are authenticated and household scoped under 
   - `POST /deletions` — Initiates two-step household deletion (requires owner role and `household_deletion` consent); returns a one-time random confirmation token (`201`).
   - `POST /deletions/:id/confirm` — Confirms deletion using the token; atomically consumes confirmation and queues the irreversible deletion worker job (`200`).
   - `GET /deletions/:id` — Returns deletion request status while the account exists (`200`).
+## Operational Endpoints (U9)
+
+- `GET /health` — Unauthenticated liveness probe. Fast event-loop responsiveness check. Returns `{ "status": "ok" }` (`200`). Never accesses database, cache, or external providers.
+- `GET /ready` — Unauthenticated readiness probe. Bounded check against canonical PostgreSQL and Redis dependencies. Returns `200` only when all dependencies are ready: `{ "status": "ready", "checks": { "database": "ready", "redis": "ready" } }`, otherwise `503` with failed dependency indicators. Never leaks error details, endpoints, credentials, or internal latencies.
+- `GET /metrics` — Protected Prometheus metrics endpoint. Disabled by default unless `METRICS_ENABLED=true`. Requires timing-safe bearer token matching `METRICS_BEARER_TOKEN`. Returns `404` when disabled or unauthorized to prevent reconnaissance. Emits `fdp_` prefixed metrics with bounded enum labels.

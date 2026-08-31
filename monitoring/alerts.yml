@@ -1,0 +1,123 @@
+groups:
+  - name: financial_dream_planner_alerts
+    rules:
+      - alert: FDPReadinessUnavailable
+        expr: sum(fdp_readiness_state) < 2
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "API readiness probe failing for 2 minutes"
+          impact: "API is not ready to serve traffic; Traefik and orchestration will pull instances from rotation"
+          first_diagnostic_step: "Check PostgreSQL and Redis network connectivity and inspect fdp_readiness_probe_failures_total"
+          runbook_reference: "docs/operations/runbook.md#health-and-recovery"
+
+      - alert: FDPHttp5xxRateWarning
+        expr: (sum(rate(fdp_http_requests_total{status_class="5xx"}[5m])) / sum(rate(fdp_http_requests_total[5m])) > 0.05) and (sum(rate(fdp_http_requests_total[5m])) > 0.1)
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "HTTP 5xx error rate exceeds 5% for 5 minutes"
+          impact: "Users are experiencing elevated server errors"
+          first_diagnostic_step: "Inspect structured API logs filtered by level=error and check route error distributions"
+          runbook_reference: "docs/operations/runbook.md#health-and-recovery"
+
+      - alert: FDPHttp5xxRateCritical
+        expr: (sum(rate(fdp_http_requests_total{status_class="5xx"}[2m])) / sum(rate(fdp_http_requests_total[2m])) > 0.15) and (sum(rate(fdp_http_requests_total[2m])) > 0.1)
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "HTTP 5xx error rate exceeds 15% for 2 minutes"
+          impact: "Critical user-facing outage or degradation across API endpoints"
+          first_diagnostic_step: "Check upstream database/Redis status and evaluate rollback to previous image tag"
+          runbook_reference: "docs/operations/runbook.md#release-and-incident-rules"
+
+      - alert: FDPOldestPendingOutboxAgeWarning
+        expr: fdp_outbox_oldest_pending_age_seconds > 300
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Oldest pending outbox record age exceeds 5 minutes"
+          impact: "Background job dispatch and event processing is lagging"
+          first_diagnostic_step: "Verify worker processes are running and inspect outboxEvents table for un-dispatched rows"
+          runbook_reference: "docs/operations/runbook.md#health-and-recovery"
+
+      - alert: FDPOldestPendingOutboxAgeCritical
+        expr: fdp_outbox_oldest_pending_age_seconds > 900
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Oldest pending outbox record age exceeds 15 minutes"
+          impact: "Asynchronous workflows (exports, deletions, drift checks) are stalled"
+          first_diagnostic_step: "Restart worker processes and verify Redis queue connectivity"
+          runbook_reference: "docs/operations/runbook.md#health-and-recovery"
+
+      - alert: FDPJobFailureRateHigh
+        expr: (sum(rate(fdp_jobs_total{outcome="failed"}[10m])) / sum(rate(fdp_jobs_total[10m])) > 0.10) and (rate(fdp_job_recovery_retries_total[10m]) >= 0)
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Background job failure rate exceeds 10% for 10 minutes"
+          impact: "Asynchronous job failures are failing repeatedly"
+          first_diagnostic_step: "Inspect worker logs for job_execution_failed events and check jobRuns table"
+          runbook_reference: "docs/operations/runbook.md#health-and-recovery"
+
+      - alert: FDPStorageFailuresSustained
+        expr: sum(rate(fdp_storage_operations_total{status="failure"}[5m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Sustained object storage failures for 5 minutes"
+          impact: "Document uploads/downloads and privacy export artifact storage are failing"
+          first_diagnostic_step: "Check S3/R2 storage endpoint status and verify storage credentials in runtime environment"
+          runbook_reference: "docs/operations/runbook.md#health-and-recovery"
+
+      - alert: FDPPrivacyOperationFailedOrStuck
+        expr: sum(rate(fdp_privacy_operations_total{outcome="failed"}[5m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Privacy export or deletion operation failure detected"
+          impact: "Compliance export or deletion requests could not complete automatically"
+          first_diagnostic_step: "Inspect privacy_exports and household_deletions tables for failed records and retry"
+          runbook_reference: "docs/operations/runbook.md#health-and-recovery"
+
+      - alert: FDPAuthFailureSurge
+        expr: sum(rate(fdp_auth_failures_total[5m])) * 60 > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Authentication failure surge exceeding 10/min for closed beta"
+          impact: "Possible brute force attempt, expired credential flood, or misconfigured client"
+          first_diagnostic_step: "Inspect rate limiting logs and review auth failure reasons in fdp_auth_failures_total"
+          runbook_reference: "docs/operations/runbook.md#release-and-incident-rules"
+
+      - alert: FDPBackupStaleOrRestoreRehearsalMissing
+        expr: (time() - fdp_last_backup_timestamp_seconds > 93600) or (time() - fdp_last_restore_rehearsal_timestamp_seconds > 2592000)
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database backup is older than 26h or restore rehearsal older than 30 days"
+          impact: "Disaster recovery RPO/RTO SLAs at risk of breach"
+          first_diagnostic_step: "Run scripts/backup.ts immediately and schedule restore rehearsal per schedule"
+          runbook_reference: "docs/operations/runbook.md#backup-and-restore"
+
+      - alert: FDPDependencyReadinessFailed
+        expr: fdp_readiness_state{dependency=~"database|redis"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL or Redis readiness probe failing for 2 minutes"
+          impact: "Primary datastore or coordination cache is unreachable by the application"
+          first_diagnostic_step: "Check PostgreSQL and Redis service containers and network reachability"
+          runbook_reference: "docs/operations/runbook.md#health-and-recovery"

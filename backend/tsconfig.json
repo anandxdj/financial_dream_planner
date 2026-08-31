@@ -11,8 +11,9 @@
     "noEmit": true,
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
-    "types": ["node"]
+    "types": ["node"],
+    "baseUrl": "."
   },
-  "include": ["src", "tests", "vitest.config.ts"],
+  "include": ["src", "tests", "vitest.config.ts", "../scripts"],
   "exclude": ["src/database/drizzle.config.ts", "src/database/drizzle"]
 }

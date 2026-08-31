@@ -1,0 +1,149 @@
+x-backend-environment: &backend-environment
+  NODE_ENV: production
+  DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+  REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+  ACCESS_TOKEN_SECRET: ${ACCESS_TOKEN_SECRET:?ACCESS_TOKEN_SECRET is required}
+  WEB_ORIGIN: ${WEB_ORIGIN:?WEB_ORIGIN is required}
+  API_ORIGIN: ${API_ORIGIN:?API_ORIGIN is required}
+  METRICS_ENABLED: ${METRICS_ENABLED:-false}
+  METRICS_BEARER_TOKEN: ${METRICS_BEARER_TOKEN:-}
+
+services:
+  migrate:
+    image: financial-dream-planner-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: ["node", "dist/migrate.js"]
+    restart: "no"
+    env_file:
+      - path: ./backend/.env
+        required: false
+    environment: *backend-environment
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    networks:
+      - default
+    healthcheck:
+      disable: true
+
+  api:
+    image: financial-dream-planner-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: ["node", "dist/server.js"]
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    env_file:
+      - path: ./backend/.env
+        required: false
+    environment: *backend-environment
+    ports:
+      - "127.0.0.1:4000:4000"
+    stop_grace_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:' + (process.env.PORT || '4000') + '/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    networks:
+      - default
+      - traefik_net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.fdp-api.rule=Host(`${API_HOST:-api.financialdreamplanner.local}`)"
+      - "traefik.http.routers.fdp-api.entrypoints=websecure"
+      - "traefik.http.routers.fdp-api.tls=true"
+      - "traefik.http.services.fdp-api.loadbalancer.server.port=4000"
+
+  worker:
+    image: financial-dream-planner-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: ["node", "dist/worker.js"]
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    env_file:
+      - path: ./backend/.env
+        required: false
+    environment: *backend-environment
+    stop_grace_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    networks:
+      - default
+    healthcheck:
+      disable: true
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    restart: unless-stopped
+    volumes:
+      - redis_prod_data:/data
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - default
+
+  postgres:
+    profiles:
+      - operational-test
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-auth_starter_operations}
+    volumes:
+      - postgres_operational_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "127.0.0.1:5433:5432"
+    networks:
+      - default
+
+networks:
+  default:
+    driver: bridge
+  traefik_net:
+    name: ${TRAEFIK_NETWORK:-traefik-proxy}
+    external: true
+
+volumes:
+  redis_prod_data:
+  postgres_operational_data:

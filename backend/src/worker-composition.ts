@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { env, type Env } from "./config/env";
 import { connectDb, db, disconnectDb, type Database } from "./database";
@@ -10,8 +11,12 @@ import { processDriftCheck } from "./modules/drift/drift.service";
 import { processPrivacyExport, processHouseholdDeletion } from "./modules/privacy/privacy.service";
 import { createStorageFromConfig, type ObjectStorage } from "./modules/storage";
 import { logger } from "./shared/logger/logger";
+import { recordJobOutcome, recordPrivacyOperation } from "./modules/metrics/metrics";
 
-export interface WorkerRuntime { close(): Promise<void>; }
+export interface WorkerRuntime {
+  close(): Promise<void>;
+}
+
 export interface WorkerCompositionOptions {
   config?: Env;
   connect?: (url: string) => Promise<void>;
@@ -36,68 +41,118 @@ export async function composeWorker(options: WorkerCompositionOptions = {}): Pro
   const redis = (options.redisFactory ?? createRedisConnection)(config.REDIS_URL);
   const queue = (options.queueFactory ?? createDomainQueue)(redis);
   const runService = new RunService(new PostgresRunStore(database));
+
   const worker = (options.workerFactory ?? createDomainWorker)(redis, async (job) => {
-    if (job.name === "privacy_export") {
-      const exportId =
-        typeof job.data?.exportId === "string"
-          ? job.data.exportId
-          : typeof job.id === "string"
-            ? job.id
-            : undefined;
-      if (exportId) {
-        log.info("privacy_export_job_started", { jobId: job.id, exportId });
-        await processPrivacyExport(exportId, database, storage);
-        log.info("privacy_export_job_completed", { jobId: job.id, exportId });
+    const correlationId = randomUUID();
+    const jobId = job.id;
+    const name = job.name;
+
+    try {
+      if (name === "privacy_export") {
+        const exportId =
+          typeof job.data?.exportId === "string"
+            ? job.data.exportId
+            : typeof job.id === "string"
+              ? job.id
+              : undefined;
+        if (exportId) {
+          log.info("privacy_export_job_started", { correlationId, jobId, exportId });
+          await processPrivacyExport(exportId, database, storage);
+          recordJobOutcome("privacy_export", "completed");
+          recordPrivacyOperation("export", "completed");
+          log.info("privacy_export_job_completed", { correlationId, jobId, exportId });
+          return;
+        }
+      }
+
+      if (name === "household_deletion") {
+        const deletionId =
+          typeof job.data?.deletionId === "string"
+            ? job.data.deletionId
+            : typeof job.id === "string"
+              ? job.id
+              : undefined;
+        if (deletionId) {
+          log.info("household_deletion_job_started", { correlationId, jobId, deletionId });
+          await processHouseholdDeletion(deletionId, database, storage);
+          recordJobOutcome("household_deletion", "completed");
+          recordPrivacyOperation("deletion", "completed");
+          log.info("household_deletion_job_completed", { correlationId, jobId, deletionId });
+          return;
+        }
+      }
+
+      if (name === "drift_check") {
+        const targetCheckId =
+          typeof job.data?.checkId === "string"
+            ? job.data.checkId
+            : typeof job.id === "string"
+              ? job.id
+              : undefined;
+        if (targetCheckId) {
+          log.info("drift_job_started", { correlationId, jobId, checkId: targetCheckId });
+          await processDriftCheck(targetCheckId, database);
+          recordJobOutcome("drift_check", "completed");
+          log.info("drift_job_completed", { correlationId, jobId, checkId: targetCheckId });
+          return;
+        }
+      }
+
+      const runId = typeof job.data?.runId === "string" ? job.data.runId : undefined;
+      if (!runId) {
+        recordJobOutcome(name, "completed");
         return;
       }
-    }
-
-    if (job.name === "household_deletion") {
-      const deletionId =
-        typeof job.data?.deletionId === "string"
-          ? job.data.deletionId
-          : typeof job.id === "string"
-            ? job.id
-            : undefined;
-      if (deletionId) {
-        log.info("household_deletion_job_started", { jobId: job.id, deletionId });
-        await processHouseholdDeletion(deletionId, database, storage);
-        log.info("household_deletion_job_completed", { jobId: job.id, deletionId });
+      const run = (await database.select().from(jobRuns).where(eq(jobRuns.id, runId)).limit(1))[0];
+      if (!run || run.cancelRequestedAt) {
+        recordJobOutcome(name, "cancelled");
         return;
       }
+      await database.update(jobRuns).set({ status: "running", startedAt: new Date() }).where(eq(jobRuns.id, runId));
+      await runService.appendEvent(runId, RUN_EVENT_TYPE.started, { jobId: job.id, name: job.name });
+      log.info("job_started", { correlationId, jobId: job.id, runId, name: job.name });
+      await database.update(jobRuns).set({ status: "completed", completedAt: new Date(), result: {} }).where(eq(jobRuns.id, runId));
+      await runService.appendEvent(runId, RUN_EVENT_TYPE.completed, {});
+      recordJobOutcome(name, "completed");
+    } catch (err) {
+      recordJobOutcome(name, "failed");
+      if (name === "privacy_export") recordPrivacyOperation("export", "failed");
+      if (name === "household_deletion") recordPrivacyOperation("deletion", "failed");
+      log.error("job_execution_failed", {
+        correlationId,
+        jobId,
+        name,
+        error: err instanceof Error ? err.message : "unknown",
+      });
+      throw err;
     }
-
-    if (job.name === "drift_check") {
-      const targetCheckId =
-        typeof job.data?.checkId === "string"
-          ? job.data.checkId
-          : typeof job.id === "string"
-            ? job.id
-            : undefined;
-      if (targetCheckId) {
-        log.info("drift_job_started", { jobId: job.id, checkId: targetCheckId });
-        await processDriftCheck(targetCheckId, database);
-        log.info("drift_job_completed", { jobId: job.id, checkId: targetCheckId });
-        return;
-      }
-    }
-
-    const runId = typeof job.data?.runId === "string" ? job.data.runId : undefined;
-    if (!runId) return;
-    const run = (await database.select().from(jobRuns).where(eq(jobRuns.id, runId)).limit(1))[0];
-    if (!run || run.cancelRequestedAt) return;
-    await database.update(jobRuns).set({ status: "running", startedAt: new Date() }).where(eq(jobRuns.id, runId));
-    await runService.appendEvent(runId, RUN_EVENT_TYPE.started, { jobId: job.id, name: job.name });
-    log.info("job_started", { jobId: job.id, runId, name: job.name });
-    await database.update(jobRuns).set({ status: "completed", completedAt: new Date(), result: {} }).where(eq(jobRuns.id, runId));
-    await runService.appendEvent(runId, RUN_EVENT_TYPE.completed, {});
   });
+
   const dispatcher = options.dispatcherFactory?.(database, queue) ?? new OutboxDispatcher(database, queue);
-  const dispatchTimer = setInterval(() => void dispatcher.dispatchBatch().catch((error) => log.error("outbox_dispatch_failed", { error: error instanceof Error ? error.message : "unknown" })), 1000);
+
+  // Initial startup replay of undispatched outbox records
+  void dispatcher.dispatchBatch().catch((error) => {
+    log.error("startup_outbox_replay_failed", {
+      error: error instanceof Error ? error.message : "unknown",
+    });
+  });
+
+  const dispatchTimer = setInterval(() => {
+    void dispatcher.dispatchBatch().catch((error) => {
+      log.error("outbox_dispatch_failed", {
+        error: error instanceof Error ? error.message : "unknown",
+      });
+    });
+  }, 1000);
 
   return {
     async close() {
       clearInterval(dispatchTimer);
+      try {
+        await worker.pause(true);
+      } catch {
+        // worker may already be stopping
+      }
       await worker.close();
       await queue.close();
       await redis.quit();

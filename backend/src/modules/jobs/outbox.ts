@@ -4,6 +4,8 @@ import type { Database } from "../../database";
 import { outboxEvents } from "../../database/schema";
 import { durableJobOptions } from "./queue";
 
+import { recordOutboxDispatch, metrics } from "../metrics/metrics";
+
 export class OutboxDispatcher {
   private activeDispatch?: Promise<number>;
 
@@ -17,6 +19,20 @@ export class OutboxDispatcher {
 
   private async dispatch(limit: number) {
     const events = await this.database.select().from(outboxEvents).where(and(isNull(outboxEvents.publishedAt), lte(outboxEvents.availableAt, new Date()))).orderBy(asc(outboxEvents.createdAt)).limit(limit);
+    if (events.length > 0 && events[0]?.createdAt) {
+      const oldestAgeSec = Math.max(0, (Date.now() - new Date(events[0].createdAt).getTime()) / 1000);
+      metrics.outboxOldestPendingAgeSeconds.set(oldestAgeSec);
+    } else {
+      metrics.outboxOldestPendingAgeSeconds.set(0);
+    }
+
+    try {
+      const depth = await this.queue.count();
+      metrics.queueDepth.set(depth);
+    } catch {
+      // queue check is best-effort
+    }
+
     let published = 0;
     for (const event of events) {
       try {
@@ -28,8 +44,10 @@ export class OutboxDispatcher {
             : event.id;
         await this.queue.add(event.topic, event.payload, durableJobOptions(durableId));
         await this.database.update(outboxEvents).set({ publishedAt: new Date(), attempts: sql`${outboxEvents.attempts} + 1`, lastError: null }).where(and(eq(outboxEvents.id, event.id), isNull(outboxEvents.publishedAt)));
+        recordOutboxDispatch("success");
         published += 1;
       } catch (error) {
+        recordOutboxDispatch("failure");
         await this.database.update(outboxEvents).set({ attempts: sql`${outboxEvents.attempts} + 1`, lastError: error instanceof Error ? error.message.slice(0, 1000) : "Unknown queue error", availableAt: new Date(Date.now() + 5000) }).where(eq(outboxEvents.id, event.id));
       }
     }

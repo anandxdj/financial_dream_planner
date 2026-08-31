@@ -23,10 +23,14 @@ import { protectCookieRequests } from "./shared/middleware/csrf";
 import { createStorageFromConfig, setGlobalStorage, type ObjectStorage } from "./modules/storage";
 import { privacyRouter } from "./modules/privacy/privacy.route";
 import { documentsRouter } from "./modules/documents/documents.route";
+import { createHealthRouter } from "./modules/health/health.route";
+import type { HealthDependencies } from "./modules/health/health.service";
+import { recordHttpRequest } from "./modules/metrics/metrics";
 
 export interface AppDependencies {
   runService?: RunService;
   storage?: ObjectStorage;
+  health?: HealthDependencies;
 }
 
 export function createApp(dependencies: AppDependencies = {}) {
@@ -46,19 +50,29 @@ export function createApp(dependencies: AppDependencies = {}) {
   app.use(cookieParser());
   app.use(protectCookieRequests);
   app.use(requestId);
-  app.use((req, _res, next) => {
-    logger.info("request", {
-      requestId: req.requestId,
-      method: req.method,
-      path: req.path,
-      userId: req.user?.id,
+  app.use((req, res, next) => {
+    const start = process.hrtime.bigint();
+    res.on("finish", () => {
+      const durationSec = Number(process.hrtime.bigint() - start) / 1e9;
+      const routePath = typeof req.route?.path === "string" ? req.route.path : undefined;
+      const metricRoute = routePath
+        ? `${req.baseUrl}${routePath}`
+        : res.statusCode === 404
+          ? "/unmatched"
+          : "/other";
+      recordHttpRequest(req.method, metricRoute, res.statusCode, durationSec);
+      logger.info("http_request", {
+        requestId: req.requestId,
+        method: req.method,
+        route: metricRoute,
+        statusCode: res.statusCode,
+        durationMs: Math.round(durationSec * 1000),
+      });
     });
     next();
   });
 
-  app.get("/health", (_req, res) => {
-    res.json({ status: "ok" });
-  });
+  app.use(createHealthRouter(dependencies.health));
 
   app.use("/api/v1/auth", authRouter);
   app.use("/api/v1/users", usersRouter);

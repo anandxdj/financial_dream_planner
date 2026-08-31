@@ -38,11 +38,37 @@ const SENSITIVE_KEYS = new Set([
   "codecontent",
   "privatekey",
   "private_key",
+  "body",
+  "requestbody",
+  "request_body",
+  "prompt",
+  "email",
+  "payload",
+  "outboxpayload",
+  "outbox_payload",
+  "storagekey",
+  "storage_key",
 ]);
 
 export function redactSensitiveData(value: unknown, seen = new WeakSet<object>()): unknown {
   if (value === null || value === undefined) {
     return value;
+  }
+
+  if (value instanceof Error) {
+    if (process.env.NODE_ENV === "production") {
+      return {
+        name: value.name,
+        message: value.message,
+        code: (value as { code?: string }).code || "INTERNAL_ERROR",
+      };
+    }
+    return {
+      name: value.name,
+      message: value.message,
+      stack: value.stack,
+      code: (value as { code?: string }).code,
+    };
   }
 
   if (typeof value === "string") {

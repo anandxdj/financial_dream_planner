@@ -966,6 +966,59 @@ registry.registerPath({
   },
 });
 
+// --- Operational Routes ---
+const HealthResponseSchema = registry.register(
+  "HealthResponse",
+  z.object({
+    status: z.literal("ok"),
+  }),
+);
+
+const ReadinessResponseSchema = registry.register(
+  "ReadinessResponse",
+  z.object({
+    status: z.enum(["ready", "not_ready"]),
+    checks: z.object({
+      database: z.enum(["ready", "not_ready"]),
+      redis: z.enum(["ready", "not_ready"]),
+    }),
+  }),
+);
+
+registry.registerPath({
+  method: "get",
+  path: "/health",
+  responses: {
+    200: { description: "Liveness probe verifying event loop responsiveness", content: json(HealthResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/ready",
+  responses: {
+    200: { description: "Readiness probe verifying canonical datastore and queue dependencies", content: json(ReadinessResponseSchema) },
+    503: { description: "Readiness probe failure or shutting down", content: json(ReadinessResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/metrics",
+  request: {
+    headers: z.object({
+      authorization: z.string().optional(),
+    }),
+  },
+  responses: {
+    200: {
+      description: "Prometheus text metrics (requires METRICS_ENABLED and bearer token)",
+      content: { "text/plain": { schema: z.string() } },
+    },
+    404: { description: "Metrics endpoint disabled or unauthorized" },
+  },
+});
+
 export function generateOpenApiDocument() {
   return new OpenApiGeneratorV31(registry.definitions).generateDocument({
     openapi: "3.1.0",
