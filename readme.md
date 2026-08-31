@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/readme/story/01-hero.svg" alt="Financial Dream Planner — see your financial life before you live it" width="100%" />
+  <img src="docs/readme/story/01-hero.webp" alt="Financial Dream Planner — see your financial life before you live it" width="100%" />
 </p>
 
 <h1 align="center">Financial Dream Planner</h1>
@@ -34,7 +34,7 @@ The backend owns financial truth. Clients collect and present information. The d
 The product direction is deliberately conversational: start with goals and the minimum useful financial state, then progressively enrich the plan from accounts, observed transactions, documents, and targeted follow-up questions.
 
 <p align="center">
-  <img src="docs/readme/story/02-conversation.svg" alt="Conversational onboarding for Financial Dream Planner" width="100%" />
+  <img src="docs/readme/story/02-onboarding.webp" alt="Conversational onboarding for Financial Dream Planner" width="100%" />
 </p>
 
 The planned mobile onboarding mirrors the backend's progressive model: create an account → choose goals → enter minimum financial information → generate the first snapshot → enrich it with observed data.
@@ -44,7 +44,7 @@ The planned mobile onboarding mirrors the backend's progressive model: create an
 A financial plan is only useful if the underlying data is coherent. The repository models household-scoped accounts, canonical transactions, source provenance, categories, immutable snapshots, plans, and version history instead of stuffing the user's entire financial life into one AI prompt or a single JSON blob.
 
 <p align="center">
-  <img src="docs/readme/story/03-structured-state.svg" alt="Scattered financial data becoming a connected financial state" width="100%" />
+  <img src="docs/readme/story/03-structured-state.webp" alt="Scattered financial data becoming a connected financial state" width="100%" />
 </p>
 
 ### A distinctive India-first ingestion path: private SMS → canonical ledger
@@ -52,7 +52,7 @@ A financial plan is only useful if the underlying data is coherent. The reposito
 The Android product plan treats SMS ingestion as a first-class privacy boundary: scan and classify on-device, upload normalized financial observations rather than the raw personal inbox, then let the backend deduplicate and reconcile them into one canonical ledger.
 
 <p align="center">
-  <img src="docs/readme/story/11-sms-ledger.svg" alt="Private Android SMS ingestion into a canonical financial ledger" width="100%" />
+  <img src="docs/readme/story/05-sms-ledger.webp" alt="Private Android SMS ingestion into a canonical financial ledger" width="100%" />
 </p>
 
 Strong identifiers such as UTR/RRN/reference IDs win first; conservative fingerprint matching handles the fallback case. One transaction may later have multiple provenance sources, but the user should still see one real transaction.
@@ -62,84 +62,58 @@ Strong identifiers such as UTR/RRN/reference IDs win first; conservative fingerp
 The planned Home experience is a **daily financial pulse**, not a giant analytics report: financial health, one next-best action, income/spend/surplus, meaningful drift, upcoming obligations, goal previews, and recent transactions.
 
 <p align="center">
-  <img src="docs/readme/story/04-daily-pulse.svg" alt="Financial Dream Planner daily financial pulse dashboard" width="100%" />
+  <img src="docs/readme/story/04-daily-pulse.webp" alt="Financial Dream Planner daily financial pulse dashboard" width="100%" />
 </p>
 
 The financial health and core financial metrics are intended to be backend-calculated and deterministic. The client renders them; it does not independently reinvent financial math.
 
-## 04 — Plan every goal against real constraints
+## 04 — Plan every goal and project the future
 
-Goals are not isolated progress bars. The planning model is meant to reason about target cost, inflation, existing funding, required contribution, flexibility, liabilities, and competing goals together.
-
-<p align="center">
-  <img src="docs/readme/story/05-goals.svg" alt="Financial goals planning across home, emergency fund, travel and retirement" width="100%" />
-</p>
-
-The deterministic engine already supports goal future cost/funding, required contribution and feasibility calculations alongside cash flow, emergency funds, loans and investment projections.
-
-## 05 — Project the future with explicit assumptions
-
-Long-term projections should be explainable and reproducible. Financial calculations use base-10 decimal inputs, typed output rounding, immutable published policy versions, and explicit completeness metadata when required inputs are missing.
+Goals are not isolated progress bars. The planning model reasons about target cost, inflation, existing funding, required contribution, flexibility, liabilities, competing goals, and the long-term trajectory together.
 
 <p align="center">
-  <img src="docs/readme/story/06-projection.svg" alt="Projected net worth and financial milestone timeline" width="100%" />
+  <img src="docs/readme/story/06-goals-projection.webp" alt="Goal planning and long-term net-worth projection" width="100%" />
 </p>
 
-The first published financial policy is `IN-2026.1`; projection assumptions are versioned so a historical plan never silently inherits a later policy.
+The deterministic engine supports goal future cost/funding, required contribution, feasibility, cash flow, emergency reserves, loans and investment projections. Long-term calculations use explicit assumptions and immutable policy versions so historical plans never silently inherit newer defaults.
 
-## 06 — Ask “what if?” without touching the baseline
+## 05 — Ask “what if?” without touching the baseline
 
 A scenario is an overlay on an immutable baseline. Running a scenario has no side effect; applying one is an explicit operation with stale-baseline protection and idempotent/concurrency-safe semantics.
 
 <p align="center">
-  <img src="docs/readme/story/07-scenarios.svg" alt="What-if financial scenario simulator" width="100%" />
+  <img src="docs/readme/story/07-scenarios.webp" alt="What-if financial scenario simulator" width="100%" />
 </p>
 
 The API supports creating scenario drafts, running them, comparing multiple scenarios, and explicitly applying one to create a new snapshot and plan version.
 
-## 07 — Let the plan notice when real life drifts
+## 06 — Let the plan notice when real life drifts
 
 This is one of the project's defining ideas. The backend compares **accepted planned state** with **observed financial state**, computes material impact, and surfaces a drift event — but detection alone can never rewrite the plan.
 
 <p align="center">
-  <img src="docs/readme/story/12-living-plan-drift.svg" alt="Living plan drift detection and explicit baseline acceptance" width="100%" />
+  <img src="docs/readme/story/08-living-plan-drift.webp" alt="Living plan drift detection and explicit baseline acceptance" width="100%" />
 </p>
 
 Only an explicit **Accept** action can advance the baseline. **Keep** preserves the existing plan, and competing stale events cannot overwrite newer plan history.
 
-## 08 — Understand the trade-offs, not just the answer
+## 07 — See the trade-offs and compare futures
 
-A useful planner should expose the consequence chain: monthly flexibility, emergency runway, debt burden, goal timing, long-term corpus, and the assumptions behind those changes.
-
-<p align="center">
-  <img src="docs/readme/story/08-tradeoffs.svg" alt="Financial scenario trade-off analysis and recommendation" width="100%" />
-</p>
-
-## 09 — Compare futures side by side
-
-The scenario API can compare multiple scenarios against the same baseline, preserving caller order and rejecting mixed baselines. That supports a UI where the decision is not “AI says yes/no,” but **Current vs. Option A vs. Option B vs. a better-balanced path**.
+A useful planner should expose the consequence chain: monthly flexibility, emergency runway, debt burden, goal timing, long-term corpus, and the assumptions behind those changes. The scenario API can compare multiple options against the same baseline, so the decision becomes **Current vs. Option A vs. Option B vs. a better-balanced path** — not “AI says yes/no.”
 
 <p align="center">
-  <img src="docs/readme/story/09-compare-futures.svg" alt="Side-by-side comparison of financial futures" width="100%" />
+  <img src="docs/readme/story/09-compare-futures.webp" alt="Side-by-side financial future and trade-off comparison" width="100%" />
 </p>
 
-## 10 — Use AI as a guarded copilot
+## 08 — Guarded AI, cited research, deterministic finance
 
-The AI layer is intentionally bounded. The planner uses a LangGraph workflow, a closed typed tool registry, deterministic finance tools, cited research, a deterministic risk validator, and a critic that validates citations/freshness before a guarded answer is returned.
+The AI layer is intentionally bounded. The planner uses LangGraph orchestration, a closed typed tool registry, deterministic finance tools, cited research, a deterministic risk validator, and a critic that validates citation ownership and freshness before a guarded answer is returned.
 
 <p align="center">
-  <img src="docs/readme/story/13-ai-guardrails.svg" alt="Guarded AI planner using deterministic finance tools and cited research" width="100%" />
+  <img src="docs/readme/story/10-ai-system.webp" alt="Financial Dream Planner AI, research, deterministic engine and system architecture" width="100%" />
 </p>
 
-The primary OpenAI-compatible provider can fall back to Gemini only for bounded transient/structured-output failures and only before user-visible output has begun. Prompt injection or policy failures fail closed rather than triggering provider switching.
-
-## 11 — One system, not an AI wrapper
-
-<p align="center">
-  <img src="docs/readme/story/10-architecture.svg" alt="Financial Dream Planner product architecture" width="100%" />
-</p>
-
-The production architecture is a **standalone modular monolith**: versioned REST + resumable SSE, PostgreSQL as the durable source of truth, deterministic domain logic, BullMQ workers for asynchronous work, vendor-neutral storage, and separate client applications.
+The primary OpenAI-compatible provider can fall back to Gemini only for bounded transient or structured-output failures and only before user-visible output begins. Prompt injection and policy failures fail closed. Underneath, the product is a standalone modular monolith: versioned REST + resumable SSE, PostgreSQL as durable source of truth, deterministic domain logic, BullMQ workers for asynchronous work, vendor-neutral storage, and separate clients.
 
 ---
 
@@ -251,7 +225,7 @@ financial_dream_planner/
 │   ├── implementation/
 │   ├── operations/
 │   ├── frontend_mobile/      # Android-first Expo feature specifications
-│   └── readme/story/         # this README's visual storyboard assets
+│   └── readme/story/         # high-detail raster README storyboard assets
 ├── postman/                  # starter API collection/environment
 └── docker-compose.yml        # PostgreSQL + Redis + app/worker local topology
 ```
