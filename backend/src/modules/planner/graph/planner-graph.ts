@@ -173,14 +173,13 @@ export function createPlannerGraph(dependencies: PlannerGraphDependencies) {
       return {
         financialContext: {
           hasCurrentPlan: true,
+          // Only pass pre-computed output and completeness — NOT raw inputs or internal IDs.
+          // This prevents the LLM from having two overlapping sources of truth.
           planSummary: {
-            planId: current.plan.id,
-            versionNumber: current.currentVersion.versionNumber,
             asOf: current.snapshot.asOf.toISOString(),
-            engineVersion: current.snapshot.engineVersion,
             policyVersion: current.snapshot.policyVersion,
+            completeness: current.snapshot.completeness,
             calculatedOutput: current.snapshot.calculatedOutput,
-            inputs: current.snapshot.inputs,
           },
         },
         stepCount: 1,
@@ -241,6 +240,87 @@ export function createPlannerGraph(dependencies: PlannerGraphDependencies) {
     }
   };
 
+  // Helper: formats the household's financial snapshot into a clear, labeled text block
+  // for the LLM. Only uses pre-computed calculatedOutput — no raw inputs or internal IDs.
+  function buildFinancialContextBlock(financialContext: PlannerState["financialContext"]): string {
+    if (!financialContext?.hasCurrentPlan || !financialContext.planSummary) {
+      return "No active financial plan found for this household.";
+    }
+
+    const summary = financialContext.planSummary as {
+      asOf: string;
+      policyVersion: string;
+      completeness: { status: string; missing: string[]; warnings: string[] };
+      calculatedOutput: Record<string, any>;
+    };
+
+    const { asOf, policyVersion, completeness, calculatedOutput } = summary;
+    const lines: string[] = [
+      `Plan as of: ${asOf} | Policy: ${policyVersion}`,
+      `Data completeness: ${completeness.status}`,
+    ];
+
+    if (completeness.missing.length > 0) {
+      lines.push(`⚠ Missing fields: ${completeness.missing.join(", ")}`);
+    }
+    if (completeness.warnings.length > 0) {
+      lines.push(`⚠ Warnings: ${completeness.warnings.join(", ")}`);
+    }
+
+    const cf = calculatedOutput?.cashFlow;
+    if (cf) {
+      lines.push("\n--- Monthly Cash Flow (pre-computed, authoritative) ---");
+      lines.push(`  Monthly Income:               ${cf.monthlyIncome ?? "N/A"}`);
+      lines.push(`  Essential Expenses:           ${cf.essentialExpenses ?? "N/A"}`);
+      lines.push(`  Discretionary Expenses:       ${cf.discretionaryExpenses ?? "N/A"}`);
+      lines.push(`  Loan EMIs:                    ${cf.emis ?? "N/A"}`);
+      lines.push(`  Mandatory Obligations:        ${cf.mandatoryObligations ?? "N/A"}`);
+      lines.push(`  Total Monthly Outflows:       ${cf.totalOutflows ?? "N/A"}`);
+      lines.push(`  Monthly Net Surplus/Deficit:  ${cf.monthlySurplus ?? "N/A"}`);
+      lines.push(`  Savings Rate:                 ${cf.savingsRate ?? "N/A"}`);
+      lines.push(`  Investable Capacity:          ${cf.investableCapacity ?? "N/A"}`);
+    }
+
+    const ef = calculatedOutput?.emergencyFund;
+    if (ef) {
+      lines.push("\n--- Emergency Fund ---");
+      lines.push(`  Monthly Need:        ${ef.monthlyNeed ?? "N/A"}`);
+      lines.push(`  Target Amount:       ${ef.targetAmount ?? "N/A"}`);
+      lines.push(`  Current Reserves:    ${ef.currentReserves ?? "N/A"}`);
+      lines.push(`  Shortfall:           ${ef.shortfall ?? "N/A"}`);
+      lines.push(`  Months to Complete:  ${ef.completionMonths ?? "N/A"}`);
+    }
+
+    const nw = calculatedOutput?.netWorth;
+    if (nw) {
+      lines.push("\n--- Net Worth ---");
+      lines.push(`  Total Assets:       ${nw.totalAssets ?? "N/A"}`);
+      lines.push(`  Total Liabilities:  ${nw.totalLiabilities ?? "N/A"}`);
+      lines.push(`  Net Worth:          ${nw.netWorth ?? "N/A"}`);
+    }
+
+    const loan = calculatedOutput?.loan;
+    if (loan) {
+      lines.push("\n--- Loan ---");
+      lines.push(`  Monthly EMI:    ${loan.monthlyEmi ?? "N/A"}`);
+      lines.push(`  Total Interest: ${loan.totalInterest ?? "N/A"}`);
+      lines.push(`  Total Payment:  ${loan.totalPayment ?? "N/A"}`);
+    }
+
+    const inv = calculatedOutput?.investment;
+    if (inv) {
+      lines.push("\n--- Investment Projection ---");
+      const exp = inv.scenarios?.expected;
+      if (exp) {
+        lines.push(`  Expected Future Value: ${exp.futureValue ?? "N/A"}`);
+        lines.push(`  Total Invested:        ${exp.totalInvested ?? "N/A"}`);
+        lines.push(`  Total Gains:           ${exp.totalGains ?? "N/A"}`);
+      }
+    }
+
+    return lines.join("\n");
+  }
+
   // 4. Planner Node
   const plannerNode = async (state: PlannerState) => {
     const untrustedUserMessage = wrapUntrustedContent("user_input", state.userMessage);
@@ -260,8 +340,15 @@ You NEVER recommend specific individual stocks or securities to buy or sell.
 You NEVER execute transactions or offer guaranteed investment returns.
 When citing external factual rates, tax rules, or market data, reference the available evidence ID.
 
+IMPORTANT INSTRUCTIONS FOR USING FINANCIAL CONTEXT:
+- All numbers in the Financial Context below are PRE-COMPUTED and authoritative. Do NOT re-derive or re-calculate them.
+- Currency is Indian Rupees (INR, ₹). All monetary values are in INR per month unless stated otherwise.
+- A negative Monthly Net Surplus/Deficit means the household is in a CASH FLOW DEFICIT — treat this as the highest-priority issue to address first.
+- If data completeness is "incomplete" or fields are marked missing, acknowledge the gaps and caveat your analysis accordingly.
+- Do NOT mention policyVersion, engineVersion, internal IDs, or technical metadata in your response to the user.
+
 Financial Context:
-${JSON.stringify(state.financialContext?.planSummary ?? { note: "No active plan yet" }, null, 2)}
+${buildFinancialContextBlock(state.financialContext)}
 
 Available Research Evidence:
 ${evidenceContext || "No external evidence retrieved."}`;

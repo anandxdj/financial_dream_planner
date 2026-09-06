@@ -22,6 +22,7 @@
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate --config src/database/drizzle.config.ts",
     "db:migrate": "drizzle-kit migrate --config src/database/drizzle.config.ts",
+    "db:seed": "tsx scripts/seed.ts",
     "db:studio": "drizzle-kit studio --config src/database/drizzle.config.ts"
   },
   "dependencies": {
