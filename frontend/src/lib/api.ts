@@ -79,10 +79,8 @@ export function loginPathForLocation(location: Pick<Location, "pathname" | "sear
 }
 
 function redirectToLogin() {
-  if (typeof window !== "undefined" && window.location.pathname !== ROUTES.login) {
-    // Interceptor is outside React; a full navigation resets stale auth state.
-    window.location.href = loginPathForLocation(window.location);
-  }
+  // Login disabled for development/demo
+  return;
 }
 
 api.interceptors.response.use(

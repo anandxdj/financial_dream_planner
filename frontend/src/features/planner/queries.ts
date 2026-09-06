@@ -2,10 +2,25 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { sdk } from "@/lib/sdk";
 
+export class PlannerApiError extends Error {
+  code?: string;
+  status: number;
+  details?: unknown;
+
+  constructor(message: string, status: number, code?: string, details?: unknown) {
+    super(message);
+    this.name = "PlannerApiError";
+    this.status = status;
+    this.code = code;
+    this.details = details;
+  }
+}
+
 export function unwrap<T>(result: { data?: T; error?: unknown; response: Response }): T {
   if (result.error || !result.response.ok) {
-    const error = result.error as { error?: { message?: string } } | undefined;
-    throw new Error(error?.error?.message ?? `Request failed (${result.response.status}). Please try again.`);
+    const error = result.error as { error?: { message?: string; code?: string; details?: unknown } } | undefined;
+    const msg = error?.error?.message ?? `Request failed (${result.response.status}). Please try again.`;
+    throw new PlannerApiError(msg, result.response.status, error?.error?.code, error?.error?.details);
   }
   return result.data as T;
 }

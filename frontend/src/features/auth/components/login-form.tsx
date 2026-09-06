@@ -33,7 +33,7 @@ export function LoginForm() {
       <div className="grid gap-2">
         <div className="flex items-center justify-between">
           <Label htmlFor="password">Password</Label>
-          <Link href={ROUTES.forgotPassword} className="text-xs text-muted-foreground hover:text-foreground">
+          <Link href={ROUTES.forgotPassword} className="inline-flex min-h-[44px] items-center text-xs text-muted-foreground hover:text-foreground">
             Forgot password?
           </Link>
         </div>
@@ -48,7 +48,7 @@ export function LoginForm() {
       <GoogleButton label="Sign in with Google" />
       <p className="text-center text-sm text-muted-foreground">
         No account?{" "}
-        <Link href={ROUTES.register} className="font-medium text-foreground hover:underline">
+        <Link href={ROUTES.register} className="inline-flex min-h-[44px] items-center font-medium text-foreground hover:underline">
           Create one
         </Link>
       </p>

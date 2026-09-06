@@ -15,6 +15,14 @@ import {
   Sparkles,
   User,
   LogOut,
+  GitBranch,
+  TrendingUp,
+  Wallet,
+  MessageCircleMore,
+  FileText,
+  Bell,
+  Smartphone,
+  Sliders,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,7 +38,15 @@ export const DEFAULT_PLANNER_NAV: NavItem[] = [
   { label: "Transactions", href: "/dashboard/transactions", icon: ReceiptText },
   { label: "Goals", href: "/dashboard/goals", icon: Target },
   { label: "Plan", href: "/dashboard/plan", icon: Compass },
-  { label: "Accounts", href: "/dashboard/accounts", icon: Landmark },
+  { label: "Scenarios", href: "/dashboard/scenarios", icon: GitBranch },
+  { label: "Loans", href: "/dashboard/loans", icon: Landmark },
+  { label: "Investments", href: "/dashboard/investments", icon: TrendingUp },
+  { label: "Reports", href: "/dashboard/reports", icon: FileText },
+  { label: "AI planner", href: "/dashboard/ai", icon: MessageCircleMore },
+  { label: "Accounts", href: "/dashboard/accounts", icon: Wallet },
+  { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
+  { label: "Data sources", href: "/dashboard/settings/data-sources", icon: Smartphone },
+  { label: "Notification preferences", href: "/dashboard/settings/notifications", icon: Sliders },
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
@@ -137,8 +153,8 @@ export function AppShell({
       {navigation.map((item) => {
         const Icon = item.icon;
         const isActive =
-          item.href === "/dashboard"
-            ? effectivePath === "/dashboard"
+          item.href === "/dashboard" || item.href === "/dashboard/settings"
+            ? effectivePath === item.href
             : effectivePath.startsWith(item.href);
 
         return (
@@ -336,7 +352,7 @@ export function AppShell({
         )}
 
         {/* Page Content Body */}
-        <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-[1440px] w-full mx-auto">
           {children}
         </main>
       </div>

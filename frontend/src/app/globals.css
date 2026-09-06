@@ -9,15 +9,16 @@
   --color-surface: #FFFCF8;
   --color-navy: #1F2A44;
   --color-body: #344054;
+  --color-muted-ink: #475467;
   --color-purple: #5E55C9;
-  --color-sage: #7CA690;
-  --color-blue: #7090C8;
-  --color-gold: #E6B46A;
+  --color-sage: #3D5C4A;
+  --color-blue: #3B5B8C;
+  --color-gold: #7D5200;
   --color-border-warm: #E8E1D6;
 
   --color-functional-sage: #3D5C4A;
   --color-functional-blue: #3B5B8C;
-  --color-functional-warning: #8A531D;
+  --color-functional-warning: #7D5200;
   --color-functional-danger: #A13F39;
 
   --color-background: var(--background);
@@ -52,6 +53,7 @@
   --font-serif: var(--font-dm-serif), "DM Serif Display", Georgia, serif;
   --font-sans: var(--font-manrope), "Manrope", system-ui, -apple-system, sans-serif;
   --font-heading: var(--font-dm-serif), "DM Serif Display", Georgia, serif;
+  --font-script: var(--font-script), "Kalam", cursive, sans-serif;
 
   --radius-panel: 16px;
   --radius-control: 10px;

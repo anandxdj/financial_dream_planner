@@ -14,6 +14,11 @@ export interface AssetImageProps extends Omit<React.ImgHTMLAttributes<HTMLImageE
   sizes?: string;
 }
 
+/**
+ * Responsive image wrapper for cataloged raster assets.
+ * Encodes URI paths safely (handling spaces in folder names like "Finance UI").
+ * Ensures decorative assets receive empty alt and aria-hidden="true".
+ */
 export function AssetImage({
   src,
   alt,
@@ -28,9 +33,11 @@ export function AssetImage({
   const assetMeta: AssetMetadata | undefined =
     typeof src === "string" ? getAsset(src) : src;
 
-  const imageSrc = typeof src === "string" ? src : src.path;
+  const rawPath = typeof src === "string" ? src : src.path;
+  // Safely encode URI paths (handling spaces in folders without double-encoding)
+  const imageSrc = encodeURI(decodeURI(rawPath));
   const isDeco = decorative ?? (assetMeta ? assetMeta.isDecorative : false);
-  const resolvedAlt = isDeco ? "" : alt || assetMeta?.alt || "Financial Dream Planner illustration";
+  const resolvedAlt = isDeco ? "" : alt || assetMeta?.alt || "";
 
   const resolvedWidth = width ?? assetMeta?.width ?? 400;
   const resolvedHeight = height ?? assetMeta?.height ?? 300;

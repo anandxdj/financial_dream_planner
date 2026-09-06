@@ -1,3 +1,11 @@
 import { Affordability } from "@/features/planner/affordability";
-export const metadata = { title: "Can I afford this? | Financial Dream Planner" };
-export default function Page() { return <Affordability />; }
+
+export const metadata = {
+  title: "Can I afford this? | Financial Dream Planner",
+  description:
+    "See what a purchase could mean for your monthly money and emergency buffer. No account needed.",
+};
+
+export default function AffordabilityPage() {
+  return <Affordability />;
+}

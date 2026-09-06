@@ -33,7 +33,7 @@ export function ForgotPasswordForm() {
         {forgot.isPending ? "Sending..." : "Send reset link"}
       </Button>
       <p className="text-center text-sm text-muted-foreground">
-        <Link href={ROUTES.login} className="font-medium text-foreground hover:underline">
+        <Link href={ROUTES.login} className="inline-flex min-h-[44px] items-center font-medium text-foreground hover:underline">
           Back to sign in
         </Link>
       </p>

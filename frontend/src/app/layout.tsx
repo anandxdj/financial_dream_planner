@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { DM_Serif_Display, Manrope } from "next/font/google";
+import { DM_Serif_Display, Manrope, Kalam } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryProvider } from "@/providers/query-provider";
 import { AppThemeProvider } from "@/providers/theme-provider";
@@ -20,6 +20,13 @@ const manrope = Manrope({
   display: "swap",
 });
 
+const kalam = Kalam({
+  weight: ["400", "700"],
+  subsets: ["latin"],
+  variable: "--font-script",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Financial Dream Planner — See the trade-offs before you decide",
   description:
@@ -30,7 +37,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="en"
-      className={`${dmSerifDisplay.variable} ${manrope.variable} h-full antialiased`}
+      className={`${dmSerifDisplay.variable} ${manrope.variable} ${kalam.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-sans bg-[#FFF9F0] text-[#344054] selection:bg-[#E6B46A]/30">

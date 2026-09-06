@@ -50,7 +50,7 @@ export function RegisterForm() {
       <GoogleButton label="Sign up with Google" />
       <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}
-        <Link href={ROUTES.login} className="font-medium text-foreground hover:underline">
+        <Link href={ROUTES.login} className="inline-flex min-h-[44px] items-center font-medium text-foreground hover:underline">
           Sign in
         </Link>
       </p>

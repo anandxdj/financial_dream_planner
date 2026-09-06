@@ -388,8 +388,8 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
     aspectRatio: 0.5484,
     folder: "Botanical",
     purpose: "product-artifact",
-    isDecorative: false,
-    alt: "Botanical illustration",
+    isDecorative: true,
+    alt: "",
   },
   "/Assets/Botanical/asset_027.png": {
     path: "/Assets/Botanical/asset_027.png",
@@ -398,8 +398,8 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
     aspectRatio: 0.4657,
     folder: "Botanical",
     purpose: "product-artifact",
-    isDecorative: false,
-    alt: "Botanical illustration",
+    isDecorative: true,
+    alt: "",
   },
   "/Assets/Botanical/asset_028.png": {
     path: "/Assets/Botanical/asset_028.png",
@@ -408,8 +408,8 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
     aspectRatio: 0.5767,
     folder: "Botanical",
     purpose: "product-artifact",
-    isDecorative: false,
-    alt: "Botanical illustration",
+    isDecorative: true,
+    alt: "",
   },
   "/Assets/Botanical/asset_029.png": {
     path: "/Assets/Botanical/asset_029.png",
@@ -418,8 +418,8 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
     aspectRatio: 0.5143,
     folder: "Botanical",
     purpose: "product-artifact",
-    isDecorative: false,
-    alt: "Botanical illustration",
+    isDecorative: true,
+    alt: "",
   },
   "/Assets/Cards And Charts/emergency_fund_card.png": {
     path: "/Assets/Cards And Charts/emergency_fund_card.png",
@@ -1019,7 +1019,7 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
     folder: "Effects",
     purpose: "brand-accent",
     isDecorative: true,
-    alt: "Blue watercolor stroke",
+    alt: "",
   },
   "/Assets/Effects/green_watercolor_stroke.png": {
     path: "/Assets/Effects/green_watercolor_stroke.png",
@@ -1029,7 +1029,7 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
     folder: "Effects",
     purpose: "brand-accent",
     isDecorative: true,
-    alt: "Green watercolor stroke",
+    alt: "",
   },
   "/Assets/Effects/purple_watercolor_stroke.png": {
     path: "/Assets/Effects/purple_watercolor_stroke.png",
@@ -1039,7 +1039,7 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
     folder: "Effects",
     purpose: "brand-accent",
     isDecorative: true,
-    alt: "Purple watercolor stroke",
+    alt: "",
   },
   "/Assets/Effects/watercolor_cloud.png": {
     path: "/Assets/Effects/watercolor_cloud.png",
@@ -1049,7 +1049,7 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
     folder: "Effects",
     purpose: "brand-accent",
     isDecorative: true,
-    alt: "Watercolor cloud",
+    alt: "",
   },
   "/Assets/Effects/watercolor_cloud_blue.png": {
     path: "/Assets/Effects/watercolor_cloud_blue.png",
@@ -1059,7 +1059,7 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
     folder: "Effects",
     purpose: "brand-accent",
     isDecorative: true,
-    alt: "Watercolor cloud blue",
+    alt: "",
   },
   "/Assets/Effects/watercolor_cloud_cyan.png": {
     path: "/Assets/Effects/watercolor_cloud_cyan.png",
@@ -1069,7 +1069,7 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
     folder: "Effects",
     purpose: "brand-accent",
     isDecorative: true,
-    alt: "Watercolor cloud cyan",
+    alt: "",
   },
   "/Assets/Effects/watercolor_splash_orange.png": {
     path: "/Assets/Effects/watercolor_splash_orange.png",
@@ -1079,7 +1079,7 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
     folder: "Effects",
     purpose: "brand-accent",
     isDecorative: true,
-    alt: "Watercolor splash orange",
+    alt: "",
   },
   "/Assets/Elements/asset_026.png": {
     path: "/Assets/Elements/asset_026.png",
@@ -1589,7 +1589,7 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
     folder: "Nature And Accents",
     purpose: "brand-accent",
     isDecorative: true,
-    alt: "Nature and accents illustration",
+    alt: "",
   },
   "/Assets/Nature And Accents/leafy_branch.png": {
     path: "/Assets/Nature And Accents/leafy_branch.png",
@@ -1599,7 +1599,7 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
     folder: "Nature And Accents",
     purpose: "brand-accent",
     isDecorative: true,
-    alt: "Leafy branch",
+    alt: "",
   },
   "/Assets/Nature And Accents/sparkle_accent.png": {
     path: "/Assets/Nature And Accents/sparkle_accent.png",
@@ -1609,7 +1609,7 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
     folder: "Nature And Accents",
     purpose: "brand-accent",
     isDecorative: true,
-    alt: "Sparkle accent",
+    alt: "",
   },
   "/Assets/Nature Elements/green_leaves.png": {
     path: "/Assets/Nature Elements/green_leaves.png",
@@ -1619,7 +1619,7 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
     folder: "Nature Elements",
     purpose: "brand-accent",
     isDecorative: true,
-    alt: "Green leaves",
+    alt: "",
   },
   "/Assets/Nature Elements/lavender_branch.png": {
     path: "/Assets/Nature Elements/lavender_branch.png",
@@ -1629,7 +1629,7 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
     folder: "Nature Elements",
     purpose: "brand-accent",
     isDecorative: true,
-    alt: "Lavender branch",
+    alt: "",
   },
   "/Assets/Nature Elements/leafy_twig.png": {
     path: "/Assets/Nature Elements/leafy_twig.png",
@@ -1639,7 +1639,7 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
     folder: "Nature Elements",
     purpose: "brand-accent",
     isDecorative: true,
-    alt: "Leafy twig",
+    alt: "",
   },
   "/Assets/Nature Elements/mountain_landscape.png": {
     path: "/Assets/Nature Elements/mountain_landscape.png",
@@ -1649,7 +1649,7 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
     folder: "Nature Elements",
     purpose: "brand-accent",
     isDecorative: true,
-    alt: "Mountain landscape",
+    alt: "",
   },
   "/Assets/Objects/beach_chair_sea.png": {
     path: "/Assets/Objects/beach_chair_sea.png",
@@ -1739,7 +1739,7 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
     folder: "Palettes",
     purpose: "palette-swatch",
     isDecorative: true,
-    alt: "Palettes illustration",
+    alt: "",
   },
   "/Assets/Palettes/asset_047.png": {
     path: "/Assets/Palettes/asset_047.png",
@@ -1749,7 +1749,7 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
     folder: "Palettes",
     purpose: "palette-swatch",
     isDecorative: true,
-    alt: "Palettes illustration",
+    alt: "",
   },
   "/Assets/Palettes/asset_048.png": {
     path: "/Assets/Palettes/asset_048.png",
@@ -1759,7 +1759,7 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
     folder: "Palettes",
     purpose: "palette-swatch",
     isDecorative: true,
-    alt: "Palettes illustration",
+    alt: "",
   },
   "/Assets/Palettes/asset_049.png": {
     path: "/Assets/Palettes/asset_049.png",
@@ -1769,7 +1769,7 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
     folder: "Palettes",
     purpose: "palette-swatch",
     isDecorative: true,
-    alt: "Palettes illustration",
+    alt: "",
   },
   "/Assets/Palettes/asset_050.png": {
     path: "/Assets/Palettes/asset_050.png",
@@ -1779,7 +1779,7 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
     folder: "Palettes",
     purpose: "palette-swatch",
     isDecorative: true,
-    alt: "Palettes illustration",
+    alt: "",
   },
   "/Assets/Palettes/asset_051.png": {
     path: "/Assets/Palettes/asset_051.png",
@@ -1789,7 +1789,7 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
     folder: "Palettes",
     purpose: "palette-swatch",
     isDecorative: true,
-    alt: "Palettes illustration",
+    alt: "",
   },
   "/Assets/Palettes/asset_052.png": {
     path: "/Assets/Palettes/asset_052.png",
@@ -1799,7 +1799,7 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
     folder: "Palettes",
     purpose: "palette-swatch",
     isDecorative: true,
-    alt: "Palettes illustration",
+    alt: "",
   },
   "/Assets/Palettes/asset_053.png": {
     path: "/Assets/Palettes/asset_053.png",
@@ -1809,7 +1809,7 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
     folder: "Palettes",
     purpose: "palette-swatch",
     isDecorative: true,
-    alt: "Palettes illustration",
+    alt: "",
   },
   "/Assets/Piggy Banks/graduate_piggy_bank.png": {
     path: "/Assets/Piggy Banks/graduate_piggy_bank.png",
@@ -2446,7 +2446,10 @@ export const ASSET_REGISTRY: Record<string, AssetMetadata> = {
 export const ALL_ASSETS: AssetMetadata[] = Object.values(ASSET_REGISTRY);
 
 export function getAsset(path: string): AssetMetadata | undefined {
-  return ASSET_REGISTRY[path];
+  if (!path) return undefined;
+  const decoded = decodeURI(path);
+  const encoded = encodeURI(decoded);
+  return ASSET_REGISTRY[path] || ASSET_REGISTRY[decoded] || ASSET_REGISTRY[encoded];
 }
 
 export function getAssetsByFolder(folder: string): AssetMetadata[] {

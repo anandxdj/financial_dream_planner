@@ -1,2 +1,11 @@
-import { redirect } from "next/navigation";
-export default function Page() { redirect("/affordability"); }
+import { Affordability } from "@/features/planner/affordability";
+
+export const metadata = {
+  title: "Can I afford this? | Financial Dream Planner",
+  description:
+    "See what a purchase could mean for your monthly money and emergency buffer. No account needed.",
+};
+
+export default function CanIAffordThisPage() {
+  return <Affordability />;
+}

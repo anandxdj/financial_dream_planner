@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
   // The browser always talks to the Next origin. This preserves cookie
   // semantics and lets the proxy carry SSE response streams unchanged.
   async rewrites() {
-    const apiOrigin = process.env.API_ORIGIN ?? "http://localhost:4000";
+    const apiOrigin = process.env.API_ORIGIN ?? "http://localhost:4005";
     return [{ source: "/api/v1/:path*", destination: `${apiOrigin.replace(/\/$/, "")}/api/v1/:path*` }];
   },
 };
