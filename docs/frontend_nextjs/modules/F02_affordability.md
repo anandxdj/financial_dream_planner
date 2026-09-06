@@ -1,23 +1,27 @@
-# F02 - Anonymous Affordability Tool
+# F02 — Anonymous affordability
 
-## Route
-`/can-i-afford-this`
+## Release phase
 
-## Inputs
-Decision name, amount, take-home income, recurring obligations, liquid savings, optional target date.
+Release 1.
 
-## Output before signup
-Safe/Tight/Risky, monthly surplus, buffer impact, time-to-afford, one recommendation, Buy now vs Wait comparison.
+## Dependencies
 
-## Backend boundary
-No finance math in React. Call anonymous deterministic scenario endpoint. Preserve result through short-lived backend draft token rather than persistent sensitive browser storage.
+F00 F03.
 
-## Conversion
-After useful result: `Build my full plan`. Signup should preserve supplied context.
+## Screens and behavior
+
+Purchase amount and monthly inputs; result before signup; expiring opaque draft handoff.
+
+## Screen states
+
+Loading; populated; empty with a next action; partial error with retry; stale/refetch while retaining populated content; offline read state. Forms add validation, saving, saved, failed save retaining edits, and recoverable revision conflict where applicable. Unknown and estimated values are labeled explicitly.
+
+## API mapping
+
+POST /api/v1/affordability; /api/v1/planning/drafts and authenticated claim.
 
 ## Acceptance criteria
-- <~1 minute completion path
-- useful result without signup
-- error/retry state
-- accessible amount fields
-- signup continuity works
+
+Backend verdict, surplus, buffer impact, time-to-afford and buy/wait comparison; expired reference recoverable; no finance values in URL/analytics.
+
+F21 applies. A fixture-only implementation does not meet release acceptance.

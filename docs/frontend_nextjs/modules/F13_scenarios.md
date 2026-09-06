@@ -1,13 +1,27 @@
-# F13 - Scenarios
+# F13 — Saved scenarios
 
-## Routes
-List, new, detail.
+## Release phase
 
-## Inputs
-Income, expenses, SIP, loan prepayment, goal amount/date.
+Release 2.
 
-## Desktop composition
-Left input panel; right baseline-vs-scenario metrics and chart.
+## Dependencies
 
-## Actions
-Save / Apply to plan / Discard. Apply requires confirmation and new plan version.
+F11 F12.
+
+## Screens and behavior
+
+Create, save, compare and explicitly apply a bounded decision.
+
+## Screen states
+
+Loading; populated; empty with a next action; partial error with retry; stale/refetch while retaining populated content; offline read state. Forms add validation, saving, saved, failed save retaining edits, and recoverable revision conflict where applicable. Unknown and estimated values are labeled explicitly.
+
+## API mapping
+
+Existing /api/v1/scenarios contracts; application creates traceable plan version.
+
+## Acceptance criteria
+
+Compare without baseline mutation; duplicate/conflict recovery; accepted changes versioned.
+
+F21 applies. A fixture-only implementation does not meet release acceptance.

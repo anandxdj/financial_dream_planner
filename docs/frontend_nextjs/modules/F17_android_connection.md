@@ -1,13 +1,27 @@
-# F17 - Android Connection
+# F17 — Android connection
 
-## Route
-Settings -> Data Sources.
+## Release phase
 
-## Disconnected
-Explain benefit + QR/download + same-account login steps.
+Release 3.
 
-## Connected
-Device name, last sync, transaction count, review count.
+## Dependencies
 
-## MVP truth
-Do not imply web can remotely read SMS. If Android foreground sync is needed, say Open Android app to sync.
+F09.
+
+## Screens and behavior
+
+Optional automation handoff and sync provenance.
+
+## Screen states
+
+Loading; populated; empty with a next action; partial error with retry; stale/refetch while retaining populated content; offline read state. Forms add validation, saving, saved, failed save retaining edits, and recoverable revision conflict where applicable. Unknown and estimated values are labeled explicitly.
+
+## API mapping
+
+Existing ingestion/sync/device contracts; add only missing summaries.
+
+## Acceptance criteria
+
+All Release 1 flows work without Android; web never reads SMS; sync freshness explicit.
+
+F21 applies. A fixture-only implementation does not meet release acceptance.

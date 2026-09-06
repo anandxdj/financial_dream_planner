@@ -1,13 +1,27 @@
-# F14 - Loans
+# F14 — Loan analysis
 
-## Overview
-Outstanding debt, monthly EMI, debt-free date.
+## Release phase
 
-## Detail
-Outstanding, rate, EMI, tenure, principal vs interest, repayment timeline, plan impact.
+Release 2.
 
-## Prepayment
-Input amount -> payoff date / estimated interest saved / cash-buffer impact / goal impact -> Create Scenario.
+## Dependencies
 
-## Rule
-Simulation never mutates loan data.
+F11 F13.
+
+## Screens and behavior
+
+Repayment and prepayment analysis with accessible amortization alternative.
+
+## Screen states
+
+Loading; populated; empty with a next action; partial error with retry; stale/refetch while retaining populated content; offline read state. Forms add validation, saving, saved, failed save retaining edits, and recoverable revision conflict where applicable. Unknown and estimated values are labeled explicitly.
+
+## API mapping
+
+Financial engine loan and scenario contracts; backend remains calculation owner.
+
+## Acceptance criteria
+
+Baseline preserved; assumptions/fees explicit; result not presented as a lender offer.
+
+F21 applies. A fixture-only implementation does not meet release acceptance.

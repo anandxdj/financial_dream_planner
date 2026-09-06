@@ -1,16 +1,27 @@
-# F08 - Accounts & Data Confidence
+# F08 — Accounts
 
-## Routes
-`/dashboard/accounts`, `/dashboard/accounts/[id]`
+## Release phase
 
-## List
-Group Cash & Bank, Credit, Investments, Other. Always show balance provenance/freshness.
+Release 1.
 
-## Balance semantics
-Confirmed vs Estimated vs future Authoritative/Live.
+## Dependencies
 
-## Freshness
-<7 days normal; 7-30 warning; >30 strong warning before serious plan generation.
+F03 F06.
 
-## Done when
-Add/edit/detail, source badges, stale states, recent transactions and balance-as-of data work.
+## Screens and behavior
+
+Manual account list/add/edit; currency, balance and freshness.
+
+## Screen states
+
+Loading; populated; empty with a next action; partial error with retry; stale/refetch while retaining populated content; offline read state. Forms add validation, saving, saved, failed save retaining edits, and recoverable revision conflict where applicable. Unknown and estimated values are labeled explicitly.
+
+## API mapping
+
+GET/POST /api/v1/accounts; GET/PATCH/DELETE /api/v1/accounts/{id}.
+
+## Acceptance criteria
+
+Unknown balances not zero; saved changes refresh relevant views; no automatic replacement of saved planning assumptions.
+
+F21 applies. A fixture-only implementation does not meet release acceptance.

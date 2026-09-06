@@ -1,16 +1,27 @@
-# F16 - AI Copilot
+# F16 — AI assistance
 
-## Route
-`/dashboard/ai`
+## Release phase
 
-## Layout
-Chat-first main pane + compact financial context/source pane.
+Release 3.
 
-## Components
-Recommendation, Risk, Scenario, Research, PlanChange, GoalDraft, Action cards.
+## Dependencies
 
-## Streaming
-Reusable SSE client, cancel, partial-answer preservation, retry.
+F11 F13.
 
-## Mutation boundary
-AI drafts; user explicitly applies/approves canonical changes.
+## Screens and behavior
+
+Narrative assistance with structured reviewable proposals.
+
+## Screen states
+
+Loading; populated; empty with a next action; partial error with retry; stale/refetch while retaining populated content; offline read state. Forms add validation, saving, saved, failed save retaining edits, and recoverable revision conflict where applicable. Unknown and estimated values are labeled explicitly.
+
+## API mapping
+
+Planner/run endpoints and credentialed SSE subscription.
+
+## Acceptance criteria
+
+Cancellation/reconnection recover; source attribution; any mutation requires reviewed confirmation.
+
+F21 applies. A fixture-only implementation does not meet release acceptance.

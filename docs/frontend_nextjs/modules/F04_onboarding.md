@@ -1,19 +1,27 @@
-# F04 - Web Onboarding
+# F04 — Progressive onboarding
 
-## Route sequence
-Goals -> Income -> Obligations -> Balances -> Loans -> Investments -> Review -> Generating -> Ready.
+## Release phase
 
-## Principle
-Progressive setup, not a financial census. Estimates are allowed.
+Release 1.
 
-## UI
-Centered 640-760px workflow, clear progress, autosave, resume.
+## Dependencies
 
-## Data
-Goals max 3 active; basic monthly income; recurring obligations; savings; loan basics; investment total/SIP.
+F02 F03 F10.
 
-## Done when
-- resume exact step
-- optional unknown values can be skipped
-- review screen supports editing each section
-- Generate my plan is the final action
+## Screens and behavior
+
+Four steps: Goals; Monthly money; Balances and details; Review. Backend autosave and resume.
+
+## Screen states
+
+Loading; populated; empty with a next action; partial error with retry; stale/refetch while retaining populated content; offline read state. Forms add validation, saving, saved, failed save retaining edits, and recoverable revision conflict where applicable. Unknown and estimated values are labeled explicitly.
+
+## API mapping
+
+GET/PUT /api/v1/households/planning; goals CRUD.
+
+## Acceptance criteria
+
+Saving/Saved/Couldn’t save; unsaved edits survive failure; conflict offers reload; unknown remains unknown; estimates labeled; user assigns contributions.
+
+F21 applies. A fixture-only implementation does not meet release acceptance.

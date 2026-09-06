@@ -1,10 +1,27 @@
-# F06 - Authenticated App Shell
+# F06 — App shell
 
-## Navigation groups
-Overview/Transactions; Planning: Goals/Plan/Scenarios; Finances: Accounts/Loans/Investments; AI Copilot; Reports.
+## Release phase
 
-## Layout
-~248px sidebar, ~68px top bar, max 1440px content, responsive collapse on tablet.
+Release 1.
 
-## Rules
-No global search MVP. Notifications/profile in top bar. Small browser widths remain usable but do not duplicate native mobile UX.
+## Dependencies
+
+F00 F03.
+
+## Screens and behavior
+
+Overview, Transactions, Goals, Plan, Accounts, Settings. Drawer below 1024px.
+
+## Screen states
+
+Loading; populated; empty with a next action; partial error with retry; stale/refetch while retaining populated content; offline read state. Forms add validation, saving, saved, failed save retaining edits, and recoverable revision conflict where applicable. Unknown and estimated values are labeled explicitly.
+
+## API mapping
+
+Authenticated user and logout endpoints.
+
+## Acceptance criteria
+
+248px sidebar, 68px header, max 1440px content; 24px tablet/16px phone gutters; focus restoration and active route.
+
+F21 applies. A fixture-only implementation does not meet release acceptance.

@@ -1,26 +1,27 @@
-# F01 - Marketing & Conversion
+# F01 — Marketing
 
-## Routes
-`/`, `/how-it-works`, `/features`, `/security`
+## Release phase
 
-## Goal
-Explain the product using the Try -> Plan -> Automate story and move visitors toward either the anonymous affordability tool or full-plan creation.
+Release 1.
 
-## Landing structure
-Hero -> Problem -> How it works -> Product pillars -> Anonymous tool CTA -> Android automation -> Trust -> Final CTA.
+## Dependencies
 
-## Visual direction
-Editorial product storytelling, real finance outcomes, no generic 3D dashboard mockups, no technical implementation jargon.
+F00.
 
-## Primary CTA
-Build my financial plan.
+## Screens and behavior
 
-## Secondary CTA
-Try "Can I afford this?"
+Editorial landing with laptop watercolor and explicitly labeled HTML example; Try → Plan → Automate.
 
-## Done when
-- responsive
-- SEO metadata
-- fast initial render
-- security copy matches real implementation
-- no unavailable features presented as live
+## Screen states
+
+Loading; populated; empty with a next action; partial error with retry; stale/refetch while retaining populated content; offline read state. Forms add validation, saving, saved, failed save retaining edits, and recoverable revision conflict where applicable. Unknown and estimated values are labeled explicitly.
+
+## API mapping
+
+No live user API on landing; CTA /affordability and /onboarding.
+
+## Acceptance criteria
+
+Phone and desktop composition reviewed; no unsupported capability claims; optional Android.
+
+F21 applies. A fixture-only implementation does not meet release acceptance.

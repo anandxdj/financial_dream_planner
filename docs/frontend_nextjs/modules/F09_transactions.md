@@ -1,16 +1,27 @@
-# F09 - Transactions
+# F09 — Transactions
 
-## Route
-`/dashboard/transactions`
+## Release phase
 
-## Desktop UX
-Period totals, search, date/account/category/type/source/review filters, large table, side-panel detail, manual add, quick category edit, multi-select review when useful.
+Release 1.
 
-## Accounting semantics
-Self-transfer excluded from spending. Credit-card purchase is expense; bill payment is liability settlement/transfer.
+## Dependencies
 
-## No-Android empty state
-Allow manual transactions; offer Connect Android secondarily.
+F08.
 
-## URL state
-Important filters live in query params.
+## Screens and behavior
+
+Manual entry; labeled phone rows; details and supported review fields.
+
+## Screen states
+
+Loading; populated; empty with a next action; partial error with retry; stale/refetch while retaining populated content; offline read state. Forms add validation, saving, saved, failed save retaining edits, and recoverable revision conflict where applicable. Unknown and estimated values are labeled explicitly.
+
+## API mapping
+
+GET/POST /api/v1/transactions; GET/PATCH/DELETE /{id}; /cash-flow; category/account APIs.
+
+## Acceptance criteria
+
+URL filters accountId/categoryId/direction/status/startDate/endDate plus cursor/limit; no search; no amount/date editing after creation; refresh recorded views only.
+
+F21 applies. A fixture-only implementation does not meet release acceptance.
