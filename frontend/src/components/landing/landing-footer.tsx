@@ -67,7 +67,7 @@ export function LandingFooter() {
                 </a>
               </li>
               <li>
-                <a href="#calculator-demo" className="hover:text-[#1F2A44] transition-colors">
+                <a href="#calculator-preview" className="hover:text-[#1F2A44] transition-colors">
                   Can I Afford This?
                 </a>
               </li>

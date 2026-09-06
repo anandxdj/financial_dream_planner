@@ -5,8 +5,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-canvas: #FFF9F0;
-  --color-surface: #FFFCF8;
+  --color-canvas: #FAF8F5;
+  --color-surface: #FFFFFF;
   --color-navy: #1F2A44;
   --color-body: #344054;
   --color-muted-ink: #475467;
@@ -14,7 +14,7 @@
   --color-sage: #3D5C4A;
   --color-blue: #3B5B8C;
   --color-gold: #7D5200;
-  --color-border-warm: #E8E1D6;
+  --color-border-warm: #EAE5DE;
 
   --color-functional-sage: #3D5C4A;
   --color-functional-blue: #3B5B8C;
@@ -50,10 +50,16 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --font-serif: var(--font-dm-serif), "DM Serif Display", Georgia, serif;
-  --font-sans: var(--font-manrope), "Manrope", system-ui, -apple-system, sans-serif;
-  --font-heading: var(--font-dm-serif), "DM Serif Display", Georgia, serif;
-  --font-script: var(--font-script), "Kalam", cursive, sans-serif;
+  --font-serif: var(--font-playfair), var(--font-dm-serif), "Playfair Display", "DM Serif Display", Georgia, serif;
+  --font-sans: var(--font-plus-jakarta), var(--font-manrope), "Plus Jakarta Sans", "Manrope", system-ui, -apple-system, sans-serif;
+  --font-heading: var(--font-playfair), var(--font-dm-serif), "Playfair Display", "DM Serif Display", Georgia, serif;
+  --font-script: var(--font-script), var(--font-caveat), "Kalam", "Caveat", cursive, sans-serif;
+  --font-playfair: var(--font-playfair), "Playfair Display", Georgia, serif;
+  --font-dm-serif: var(--font-dm-serif), "DM Serif Display", Georgia, serif;
+  --font-plus-jakarta: var(--font-plus-jakarta), "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-manrope: var(--font-manrope), "Manrope", system-ui, -apple-system, sans-serif;
+  --font-kalam: var(--font-script), "Kalam", cursive, sans-serif;
+  --font-caveat: var(--font-caveat), "Caveat", cursive, sans-serif;
 
   --radius-panel: 16px;
   --radius-control: 10px;
@@ -65,44 +71,44 @@
 }
 
 :root {
-  --background: #FFF9F0;
+  --background: #FAF8F5;
   --foreground: #344054;
-  --card: #FFFCF8;
+  --card: #FFFFFF;
   --card-foreground: #1F2A44;
-  --popover: #FFFCF8;
+  --popover: #FFFFFF;
   --popover-foreground: #1F2A44;
   --primary: #1F2A44;
-  --primary-foreground: #FFFCF8;
-  --secondary: #F5EFE6;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F4EFEA;
   --secondary-foreground: #1F2A44;
-  --muted: #F5EFE6;
+  --muted: #F4EFEA;
   --muted-foreground: #475467;
-  --accent: #F5EFE6;
+  --accent: #F4EFEA;
   --accent-foreground: #1F2A44;
   --destructive: #A13F39;
-  --destructive-foreground: #FFFCF8;
-  --border: #E8E1D6;
-  --input: #E8E1D6;
+  --destructive-foreground: #FFFFFF;
+  --border: #EAE5DE;
+  --input: #EAE5DE;
   --ring: #5E55C9;
-  --radius: 10px;
+  --radius: 12px;
 
-  --sidebar: #FFFCF8;
+  --sidebar: #FFFFFF;
   --sidebar-foreground: #1F2A44;
   --sidebar-primary: #5E55C9;
-  --sidebar-primary-foreground: #FFFCF8;
-  --sidebar-accent: #FFF9F0;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #FAF8F5;
   --sidebar-accent-foreground: #1F2A44;
-  --sidebar-border: #E8E1D6;
+  --sidebar-border: #EAE5DE;
   --sidebar-ring: #5E55C9;
 }
 
 /* Light-only design: keep warm palette in dark mode */
 .dark {
-  --background: #FFF9F0;
+  --background: #FAF8F5;
   --foreground: #344054;
-  --card: #FFFCF8;
+  --card: #FFFFFF;
   --card-foreground: #1F2A44;
-  --popover: #FFFCF8;
+  --popover: #FFFFFF;
   --popover-foreground: #1F2A44;
   --primary: #1F2A44;
   --primary-foreground: #FFFCF8;
@@ -140,12 +146,12 @@
   body {
     background-color: #FFF9F0;
     color: #344054;
-    font-family: var(--font-manrope), "Manrope", system-ui, -apple-system, sans-serif;
+    font-family: var(--font-plus-jakarta), var(--font-manrope), "Plus Jakarta Sans", "Manrope", system-ui, -apple-system, sans-serif;
     max-width: 100%;
     overflow-x: clip;
   }
   h1, h2, h3, .font-heading {
-    font-family: var(--font-dm-serif), "DM Serif Display", Georgia, serif;
+    font-family: var(--font-playfair), var(--font-dm-serif), "Playfair Display", "DM Serif Display", Georgia, serif;
     color: #1F2A44;
   }
   :focus-visible {
@@ -179,4 +185,33 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border-width: 0;
+}
+
+/* Cross-browser scrollbar hiding for horizontal chip rails */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Sleek subtle scrollbar for chat message stream */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(232, 225, 214, 0.8);
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(94, 85, 201, 0.4);
+}
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(232, 225, 214, 0.8) transparent;
 }

@@ -16,7 +16,7 @@ export function ExamplePlanCard() {
             ILLUSTRATIVE PREVIEW
           </Badge>
           <span className="text-[11px] font-medium tracking-tight text-[#475467]">
-            Sample planning snapshot · Not real account data
+            Illustrative Planning Snapshot
           </span>
         </div>
         <Badge tone="sage" size="sm">
@@ -28,7 +28,7 @@ export function ExamplePlanCard() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <span className="text-[11px] font-semibold uppercase tracking-wider text-[#475467]">
-            Sample Goal
+            Primary Goal
           </span>
           <h4 className="font-serif text-xl font-normal text-[#1F2A44]">
             First Home Down Payment

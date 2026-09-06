@@ -23,6 +23,8 @@ import {
   Bell,
   Smartphone,
   Sliders,
+  Search,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -35,18 +37,11 @@ export interface NavItem {
 
 export const DEFAULT_PLANNER_NAV: NavItem[] = [
   { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Transactions", href: "/dashboard/transactions", icon: ReceiptText },
   { label: "Goals", href: "/dashboard/goals", icon: Target },
+  { label: "Transactions", href: "/dashboard/transactions", icon: ReceiptText },
   { label: "Plan", href: "/dashboard/plan", icon: Compass },
-  { label: "Scenarios", href: "/dashboard/scenarios", icon: GitBranch },
-  { label: "Loans", href: "/dashboard/loans", icon: Landmark },
-  { label: "Investments", href: "/dashboard/investments", icon: TrendingUp },
+  { label: "AI Copilot", href: "/dashboard/ai", icon: MessageCircleMore },
   { label: "Reports", href: "/dashboard/reports", icon: FileText },
-  { label: "AI planner", href: "/dashboard/ai", icon: MessageCircleMore },
-  { label: "Accounts", href: "/dashboard/accounts", icon: Wallet },
-  { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
-  { label: "Data sources", href: "/dashboard/settings/data-sources", icon: Smartphone },
-  { label: "Notification preferences", href: "/dashboard/settings/notifications", icon: Sliders },
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
@@ -63,6 +58,8 @@ export interface AppShellProps {
   title?: React.ReactNode;
   subtitle?: React.ReactNode;
   className?: string;
+  onLogout?: () => void;
+  isLoggingOut?: boolean;
 }
 
 export function AppShell({
@@ -74,6 +71,8 @@ export function AppShell({
   title,
   subtitle,
   className,
+  onLogout,
+  isLoggingOut,
 }: AppShellProps) {
   const currentPathname = usePathname();
   const effectivePath = activePath ?? currentPathname ?? "/dashboard";
@@ -152,10 +151,26 @@ export function AppShell({
     <nav className="space-y-1.5 px-3" aria-label="Main Navigation">
       {navigation.map((item) => {
         const Icon = item.icon;
+        const isPlanningRoute =
+          item.href === "/dashboard/plan" &&
+          (effectivePath.startsWith("/dashboard/plan") ||
+            effectivePath.startsWith("/dashboard/scenarios") ||
+            effectivePath.startsWith("/dashboard/loans") ||
+            effectivePath.startsWith("/dashboard/investments"));
+
+        const isTransactionsRoute =
+          item.href === "/dashboard/transactions" &&
+          (effectivePath.startsWith("/dashboard/transactions") ||
+            effectivePath.startsWith("/dashboard/accounts"));
+
+        const isSettingsRoute =
+          item.href === "/dashboard/settings" &&
+          effectivePath.startsWith("/dashboard/settings");
+
         const isActive =
-          item.href === "/dashboard" || item.href === "/dashboard/settings"
-            ? effectivePath === item.href
-            : effectivePath.startsWith(item.href);
+          item.href === "/dashboard"
+            ? effectivePath === "/dashboard"
+            : isPlanningRoute || isTransactionsRoute || isSettingsRoute || effectivePath.startsWith(item.href);
 
         return (
           <Link
@@ -224,12 +239,22 @@ export function AppShell({
         </div>
 
         {/* User profile / Footer section */}
-        <div className="p-3 border-t border-[#E8E1D6] bg-[#FFF9F0]/40">
+        <div className="p-3 border-t border-[#E8E1D6] bg-[#FFF9F0]/60 space-y-2">
+          <div className="px-2 py-1.5 rounded-lg bg-[#FFFCF8] border border-[#E8E1D6]/80 text-center">
+            <p className="text-[11px] font-serif italic text-[#7D5200]/90 leading-snug">
+              &ldquo;A clearer tomorrow, one thoughtful step today.&rdquo;
+            </p>
+          </div>
+
           {user ? (
-            <div className="flex items-center justify-between gap-2 p-2 rounded-[10px] hover:bg-[#FFF9F0]">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="size-8 rounded-full bg-[#E8E1D6] flex items-center justify-center text-[#1F2A44] shrink-0">
-                  <User className="size-4" />
+            <div className="flex items-center justify-between gap-1 p-2 rounded-[10px] bg-[#FFFCF8] border border-[#E8E1D6]/80 hover:border-[#E8E1D6] transition-colors">
+              <Link
+                href="/dashboard/settings"
+                className="flex items-center gap-2.5 min-w-0 flex-1 hover:opacity-85 transition-opacity"
+                title="View settings"
+              >
+                <div className="size-8 rounded-full bg-[#E8E1D6] flex items-center justify-center text-[#1F2A44] shrink-0 font-medium text-xs">
+                  {user.name ? user.name.charAt(0).toUpperCase() : <User className="size-4" />}
                 </div>
                 <div className="min-w-0 truncate">
                   <p className="text-xs font-semibold text-[#1F2A44] truncate">
@@ -239,10 +264,37 @@ export function AppShell({
                     {user.email || ""}
                   </p>
                 </div>
+              </Link>
+
+              <div className="flex items-center gap-0.5 shrink-0">
+                {/* Notifications Bell in Sidebar */}
+                <Link
+                  href="/dashboard/notifications"
+                  className="relative p-1.5 rounded-lg text-[#475467] hover:bg-[#FFF9F0] hover:text-[#1F2A44] transition-colors"
+                  aria-label="Notifications"
+                  title="Notifications"
+                >
+                  <Bell className="size-4" />
+                  <span className="absolute top-1 right-1 size-2 bg-[#5E55C9] rounded-full ring-1 ring-white" />
+                </Link>
+
+                {/* Sign Out Button in Sidebar */}
+                {onLogout && (
+                  <button
+                    type="button"
+                    onClick={onLogout}
+                    disabled={isLoggingOut}
+                    className="p-1.5 rounded-lg text-[#667085] hover:text-[#B42318] hover:bg-[#FEF3F2] transition-colors cursor-pointer disabled:opacity-50"
+                    aria-label="Sign out"
+                    title="Sign out"
+                  >
+                    <LogOut className="size-4" />
+                  </button>
+                )}
               </div>
             </div>
           ) : (
-            <div className="text-[11px] text-[#475467] px-2 py-1 flex items-center justify-between">
+            <div className="text-[11px] text-[#475467] px-2 py-0.5 flex items-center justify-between">
               <span>Financial Dream Planner</span>
               <span className="text-[#3D5C4A] font-medium">v1.0</span>
             </div>
@@ -252,41 +304,46 @@ export function AppShell({
 
       {/* Main Container */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Header (68px height) */}
-        <header className="h-[68px] shrink-0 sticky top-0 z-20 border-b border-[#E8E1D6] bg-[#FFFCF8]/90 backdrop-blur-md px-4 md:px-6 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
+        {/* Minimal Mobile-Only Header (Viewport < 1024px, completely hidden on lg desktop screens) */}
+        <header className="lg:hidden h-12 shrink-0 sticky top-0 z-20 border-b border-[#E8E1D6] bg-[#FFFCF8]/95 backdrop-blur-md px-4 flex items-center justify-between gap-3">
+          <Link
+            href="/"
+            className="flex items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-[#5E55C9] rounded-md min-h-[40px]"
+          >
+            <div className="flex size-7 items-center justify-center rounded-[7px] bg-[#1F2A44] text-[#E6B46A]">
+              <Sparkles className="size-3.5" />
+            </div>
+            <div className="leading-tight">
+              <span className="font-serif text-sm font-medium tracking-tight text-[#1F2A44] block">
+                Dream Planner
+              </span>
+            </div>
+          </Link>
+
+          <div className="flex items-center gap-2">
+            {/* Mobile Notifications Link */}
+            <Link
+              href="/dashboard/notifications"
+              className="relative p-2 rounded-lg text-[#475467] hover:bg-[#FFF9F0] hover:text-[#1F2A44] transition-colors"
+              aria-label="Notifications"
+            >
+              <Bell className="size-4" />
+              <span className="absolute top-1.5 right-1.5 size-2 bg-[#5E55C9] rounded-full ring-2 ring-[#FFFCF8]" />
+            </Link>
+
             {/* Mobile Drawer Trigger (visible under 1024px) */}
             <button
               ref={triggerRef}
               type="button"
               onClick={() => setDrawerOpen(true)}
-              className="lg:hidden min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-[10px] border border-[#E8E1D6] bg-[#FFFCF8] text-[#1F2A44] hover:bg-[#FFF9F0] focus-visible:ring-2 focus-visible:ring-[#5E55C9] cursor-pointer"
+              className="min-h-[40px] min-w-[40px] inline-flex items-center justify-center rounded-[10px] border border-[#E8E1D6] bg-[#FFFCF8] text-[#1F2A44] hover:bg-[#FFF9F0] focus-visible:ring-2 focus-visible:ring-[#5E55C9] cursor-pointer shrink-0"
               aria-label="Open navigation drawer"
               aria-expanded={drawerOpen}
               aria-controls="mobile-nav-drawer"
             >
               <Menu className="size-5" />
             </button>
-
-            {/* Title / Subtitle */}
-            <div className="min-w-0">
-              {title && (
-                <h1 className="font-serif text-lg md:text-xl font-normal text-[#1F2A44] truncate leading-tight">
-                  {title}
-                </h1>
-              )}
-              {subtitle && (
-                <p className="text-xs text-[#475467] truncate hidden sm:block">
-                  {subtitle}
-                </p>
-              )}
-            </div>
           </div>
-
-          {/* Header Action Slot */}
-          {headerActions && (
-            <div className="flex items-center gap-2.5 shrink-0">{headerActions}</div>
-          )}
         </header>
 
         {/* Mobile Navigation Drawer (Viewport < 1024px) */}

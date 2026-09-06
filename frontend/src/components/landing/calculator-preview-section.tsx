@@ -98,13 +98,13 @@ export function CalculatorPreviewSection() {
   const loanAmount = Math.max(0, price - downPayment);
   const emi = calculateEMI(loanAmount, interestRate, tenure);
 
-  // Assumed household monthly income benchmark for demo illustration
-  const demoIncome = 150000;
-  const emiPercent = demoIncome > 0 ? Math.min(100, Math.round((emi / demoIncome) * 100)) : 0;
+  // Assumed household monthly income benchmark for illustration
+  const benchmarkIncome = 150000;
+  const emiPercent = benchmarkIncome > 0 ? Math.min(100, Math.round((emi / benchmarkIncome) * 100)) : 0;
   const isAffordable = emiPercent <= 40;
 
   return (
-    <section id="calculator-demo" className="py-16 md:py-24 border-b border-[#E8E1D6] bg-[#FFFDF9] relative">
+    <section id="calculator-preview" className="py-16 md:py-24 border-b border-[#E8E1D6] bg-[#FFFDF9] relative">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center mb-12 space-y-3">
@@ -293,7 +293,7 @@ export function CalculatorPreviewSection() {
           </div>
         </div>
 
-        {/* Interactive Tradeoff Demo Sandbox */}
+        {/* Interactive Tradeoff Sandbox */}
         <div className="pt-6">
           <InteractiveTradeoffDemo />
         </div>

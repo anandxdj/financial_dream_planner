@@ -159,7 +159,7 @@ export function InteractiveTradeoffDemo() {
             </span>
           </div>
           <span className="text-[11px] text-[#475467] font-mono hidden md:inline shrink-0">
-            Engine: Fixed-Point Decimal · Policy v2.4
+            Engine: Fixed-Point Decimal · Policy Active
           </span>
         </div>
       </div>

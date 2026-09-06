@@ -20,21 +20,20 @@ describe("AppShell", () => {
 
     expect(screen.getByText("Content Area")).toBeInTheDocument();
 
-    // Check all 9 default nav items are rendered
+    // Check all primary default nav items are rendered
+    expect(DEFAULT_PLANNER_NAV).toHaveLength(7);
     for (const item of DEFAULT_PLANNER_NAV) {
       expect(screen.getAllByText(item.label).length).toBeGreaterThan(0);
     }
 
-    // Verify Release 2 routes are present
-    expect(screen.getAllByText("Scenarios").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Loans").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Investments").length).toBeGreaterThan(0);
-
-    // Verify F17-F20 routes are present
+    // Verify key core hubs are present in primary navigation
+    expect(screen.getAllByText("Overview").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Goals").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Transactions").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Plan").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("AI Copilot").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Reports").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Notifications").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Data sources").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Notification preferences").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Settings").length).toBeGreaterThan(0);
   });
 
   it("handles mobile drawer opening and closing with focus management", async () => {

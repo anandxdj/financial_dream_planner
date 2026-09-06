@@ -133,7 +133,7 @@ export function LandingNavbar() {
               About
             </a>
             <a
-              href="#calculator-demo"
+              href="#calculator-preview"
               onClick={() => setMobileMenuOpen(false)}
               className="min-h-[44px] flex items-center px-3 rounded-lg hover:bg-[#F5EFE6]"
             >

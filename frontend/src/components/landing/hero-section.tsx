@@ -46,13 +46,13 @@ export function HeroSection() {
               </Link>
 
               <a
-                href="#calculator-demo"
+                href="#calculator-preview"
                 className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[12px] border border-[#E8E1D6] bg-[#FFFCF8] px-6 py-3.5 text-sm font-semibold text-[#1F2A44] shadow-xs hover:bg-[#F5EFE6]/70 transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#5855D6]"
               >
                 <div className="flex size-6 items-center justify-center rounded-full bg-[#5855D6]/10 text-[#5855D6]">
                   <Play className="size-3 fill-current ml-0.5" />
                 </div>
-                <span>Watch demo</span>
+                <span>Try Interactive Calculator</span>
               </a>
             </div>
 
