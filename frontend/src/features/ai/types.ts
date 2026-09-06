@@ -1,9 +1,7 @@
 import type {
   ScenarioDomainInputs,
-  runScenario,
+  ScenarioEvaluation,
 } from "@/features/scenarios/services/scenario.service";
-
-export type ScenarioEvaluation = Awaited<ReturnType<typeof runScenario>>;
 
 export interface PlannerScenarioProposal {
   type: "scenario_draft";
