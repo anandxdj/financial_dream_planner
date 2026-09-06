@@ -11,6 +11,7 @@ import {
 import {
   scenarios,
   type SelectScenario,
+  type InsertScenario,
 } from "./model";
 import {
   evaluateScenario,
@@ -19,6 +20,7 @@ import {
 } from "../financial-engine";
 import { computeCanonicalHash } from "../../shared/utils/canonical-json";
 import { AppError } from "../../shared/errors/app-error";
+import { householdPlanning } from "../planning/model";
 
 export interface CreateScenarioInput {
   name: string;
@@ -46,6 +48,7 @@ export function serializeScenario(scenario: SelectScenario) {
     description: scenario.description ?? null,
     overlay: scenario.overlay,
     status: scenario.status as "draft" | "applied",
+    revision: scenario.revision,
     appliedVersionId: scenario.appliedVersionId ?? null,
     appliedAt: scenario.appliedAt ? scenario.appliedAt.toISOString() : null,
     createdAt: scenario.createdAt.toISOString(),
@@ -133,6 +136,84 @@ export async function getScenarioById(
   }
 
   return scenario;
+}
+
+export interface UpdateScenarioInput {
+  name?: string;
+  description?: string | null;
+  overlay?: ScenarioDomainInputs;
+}
+
+export async function updateScenario(
+  householdId: string,
+  id: string,
+  input: UpdateScenarioInput,
+  expectedRevision?: number,
+): Promise<SelectScenario> {
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${householdId}))`);
+
+    const [scenario] = await tx
+      .select()
+      .from(scenarios)
+      .where(and(eq(scenarios.id, id), eq(scenarios.householdId, householdId)))
+      .for("update");
+
+    if (!scenario) {
+      throw new AppError(404, "SCENARIO_NOT_FOUND", "Scenario not found");
+    }
+
+    if (scenario.status === "applied") {
+      throw new AppError(409, "SCENARIO_ALREADY_APPLIED", "Cannot modify an already applied scenario");
+    }
+
+    if (expectedRevision !== undefined && scenario.revision !== expectedRevision) {
+      throw new AppError(409, "REVISION_CONFLICT", "Scenario revision conflict");
+    }
+
+    const updates: Partial<InsertScenario> = {
+      ...(input.name !== undefined ? { name: input.name } : {}),
+      ...(input.description !== undefined ? { description: input.description } : {}),
+      ...(input.overlay !== undefined ? { overlay: input.overlay } : {}),
+      revision: scenario.revision + 1,
+      updatedAt: new Date(),
+    };
+
+    const [updated] = await tx
+      .update(scenarios)
+      .set(updates)
+      .where(and(eq(scenarios.id, id), eq(scenarios.householdId, householdId)))
+      .returning();
+
+    return updated;
+  });
+}
+
+export async function deleteScenario(
+  householdId: string,
+  id: string,
+): Promise<void> {
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${householdId}))`);
+
+    const [scenario] = await tx
+      .select()
+      .from(scenarios)
+      .where(and(eq(scenarios.id, id), eq(scenarios.householdId, householdId)))
+      .for("update");
+
+    if (!scenario) {
+      throw new AppError(404, "SCENARIO_NOT_FOUND", "Scenario not found");
+    }
+
+    if (scenario.status === "applied") {
+      throw new AppError(409, "SCENARIO_CANNOT_DELETE_APPLIED", "Cannot delete an applied scenario");
+    }
+
+    await tx
+      .delete(scenarios)
+      .where(and(eq(scenarios.id, id), eq(scenarios.householdId, householdId)));
+  });
 }
 
 export async function runScenario(
@@ -236,9 +317,16 @@ export async function compareScenarios(
   };
 }
 
+export interface ApplyScenarioOptions {
+  expectedRevision?: number;
+  expectedPlanningRevision?: number;
+  userId?: string;
+}
+
 export async function applyScenario(
   householdId: string,
   id: string,
+  options: ApplyScenarioOptions = {},
 ): Promise<AppliedScenarioResult> {
   return db.transaction(async (tx) => {
     // 1. Transaction-level advisory lock on household
@@ -253,6 +341,10 @@ export async function applyScenario(
 
     if (!scenario) {
       throw new AppError(404, "SCENARIO_NOT_FOUND", "Scenario not found");
+    }
+
+    if (options.expectedRevision !== undefined && scenario.revision !== options.expectedRevision) {
+      throw new AppError(409, "REVISION_CONFLICT", "Scenario revision conflict");
     }
 
     // 3. Lock plan row
@@ -331,7 +423,21 @@ export async function applyScenario(
       throw new AppError(404, "SNAPSHOT_NOT_FOUND", "Baseline snapshot not found");
     }
 
-    // 7. Merge inputs and evaluate
+    // 7. Check and lock householdPlanning
+    const [planning] = await tx
+      .select()
+      .from(householdPlanning)
+      .where(eq(householdPlanning.householdId, householdId))
+      .for("update")
+      .limit(1);
+
+    if (options.expectedPlanningRevision !== undefined) {
+      if ((planning?.revision ?? 0) !== options.expectedPlanningRevision) {
+        throw new AppError(409, "REVISION_CONFLICT", "Planning revision conflict");
+      }
+    }
+
+    // 8. Merge inputs and evaluate
     const mergedInputs = mergeScenarioInputs(baselineSnapshot.inputs, scenario.overlay);
     const evalResult = evaluateScenario({
       name: scenario.name,
@@ -344,7 +450,30 @@ export async function applyScenario(
     const inputHash = computeCanonicalHash(mergedInputs);
     const outputHash = computeCanonicalHash(evalResult.baseline);
 
-    // 8. Next version number
+    // 9. Update householdPlanning inputs
+    const nextPlanningRev = (planning?.revision ?? 0) + 1;
+    if (planning) {
+      await tx
+        .update(householdPlanning)
+        .set({
+          inputs: mergedInputs,
+          revision: nextPlanningRev,
+          updatedBy: options.userId ?? planning.updatedBy,
+          updatedAt: new Date(),
+        })
+        .where(eq(householdPlanning.householdId, householdId));
+    } else {
+      await tx.insert(householdPlanning).values({
+        householdId,
+        inputs: mergedInputs,
+        completedStep: 3,
+        estimates: [],
+        revision: nextPlanningRev,
+        updatedBy: options.userId ?? null,
+      });
+    }
+
+    // 10. Next version number
     const [maxVerRow] = await tx
       .select({
         maxVer: sql<number>`coalesce(max(${planVersions.versionNumber}), 0)`,
@@ -354,13 +483,13 @@ export async function applyScenario(
 
     const nextVersionNumber = Number(maxVerRow?.maxVer ?? 0) + 1;
 
-    // 9. Insert new snapshot
+    // 11. Insert new snapshot
     const [newSnapshot] = await tx
       .insert(financialSnapshots)
       .values({
         householdId,
         asOf: baselineSnapshot.asOf,
-        revision: baselineSnapshot.revision,
+        revision: nextPlanningRev,
         engineVersion: baselineSnapshot.engineVersion,
         policyVersion: evalResult.policyVersion,
         inputs: mergedInputs,
@@ -372,7 +501,7 @@ export async function applyScenario(
       })
       .returning();
 
-    // 10. Insert new plan version
+    // 12. Insert new plan version
     const [newVersion] = await tx
       .insert(planVersions)
       .values({
@@ -380,12 +509,16 @@ export async function applyScenario(
         planId: plan.id,
         versionNumber: nextVersionNumber,
         snapshotId: newSnapshot.id,
-        assumptions: evalResult.resolvedAssumptions,
+        assumptions: {
+          ...evalResult.resolvedAssumptions,
+          appliedScenarioId: scenario.id,
+          appliedScenarioName: scenario.name,
+        } as any,
         scenarioOutput: evalResult,
       })
       .returning();
 
-    // 11. Advance plan's currentVersionId
+    // 13. Advance plan's currentVersionId
     const [updatedPlan] = await tx
       .update(plans)
       .set({
@@ -395,11 +528,12 @@ export async function applyScenario(
       .where(eq(plans.id, plan.id))
       .returning();
 
-    // 12. Mark scenario as applied
+    // 14. Mark scenario as applied
     await tx
       .update(scenarios)
       .set({
         status: "applied",
+        revision: scenario.revision + 1,
         appliedVersionId: newVersion.id,
         appliedAt: new Date(),
         updatedAt: new Date(),

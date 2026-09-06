@@ -1,6 +1,6 @@
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
 import { sql } from "drizzle-orm";
-import { check, foreignKey, index, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { check, foreignKey, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { z } from "zod";
 import { households } from "../households/model";
 import { planVersions, PlanSchema, PlanVersionSchema, FinancialSnapshotSchema } from "../plans/model";
@@ -23,6 +23,7 @@ export const scenarios = pgTable(
     description: text("description"),
     overlay: jsonb("overlay").$type<ScenarioDomainInputs>().notNull(),
     status: text("status").notNull().default("draft"),
+    revision: integer("revision").notNull().default(0),
     appliedVersionId: uuid("applied_version_id").references(() => planVersions.id, {
       onDelete: "set null",
     }),
@@ -46,6 +47,7 @@ export const scenarios = pgTable(
       name: "scenarios_household_applied_fk",
     }).onDelete("set null"),
     check("scenarios_status_check", sql`${table.status} IN ('draft', 'applied')`),
+    check("scenarios_revision_check", sql`${table.revision} >= 0`),
     check(
       "scenarios_applied_state_check",
       sql`(${table.status} = 'draft' AND ${table.appliedVersionId} IS NULL AND ${table.appliedAt} IS NULL) OR (${table.status} = 'applied' AND ${table.appliedVersionId} IS NOT NULL AND ${table.appliedAt} IS NOT NULL)`,
@@ -77,6 +79,7 @@ export const ScenarioSchema = z.object({
   description: z.string().nullable(),
   overlay: ScenarioDomainInputsSchema,
   status: z.enum(["draft", "applied"]),
+  revision: z.number().int().min(0),
   appliedVersionId: z.string().uuid().nullable(),
   appliedAt: z.string().datetime().nullable(),
   createdAt: z.string().datetime(),
@@ -90,6 +93,15 @@ export const ScenarioResponseSchema = z.object({
 export const ScenarioListResponseSchema = z.object({
   data: z.array(ScenarioSchema),
 });
+
+export const UpdateScenarioRequestSchema = z
+  .object({
+    name: z.string().trim().min(1, { message: "Name is required" }).max(100).optional(),
+    description: z.string().trim().max(500).optional().nullable(),
+    overlay: ScenarioDomainInputsSchema.optional(),
+    expectedRevision: z.number().int().min(0).optional(),
+  })
+  .strict();
 
 export const CompareScenariosRequestSchema = z
   .object({
@@ -115,6 +127,13 @@ export const CompareScenariosResponseSchema = z.object({
 export const RunScenarioResponseSchema = z.object({
   data: ScenarioEvaluationResponseSchema,
 });
+
+export const ApplyScenarioRequestSchema = z
+  .object({
+    expectedRevision: z.number().int().min(0).optional(),
+    expectedPlanningRevision: z.number().int().min(0).optional(),
+  })
+  .strict();
 
 export const ApplyScenarioResponseDataSchema = z.object({
   plan: PlanSchema,

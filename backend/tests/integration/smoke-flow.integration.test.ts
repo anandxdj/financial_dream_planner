@@ -7,6 +7,7 @@ import { db } from "../../src/database";
 import { processDriftCheck } from "../../src/modules/drift/drift.service";
 import { processHouseholdDeletion, processPrivacyExport } from "../../src/modules/privacy/privacy.service";
 import {
+  isDockerAvailable,
   resetTestDb,
   startTestDb,
   stopTestDb,
@@ -24,7 +25,7 @@ function csrfHeaders(response: request.Response) {
   return { Origin: "http://localhost:3000", "X-CSRF-Token": csrf };
 }
 
-describe("Closed-Beta 8-step Smoke Flow Acceptance", () => {
+describe.skipIf(!isDockerAvailable())("Closed-Beta 8-step Smoke Flow Acceptance", () => {
   let fakeStorage: FakeObjectStorage;
   let app: ReturnType<typeof createApp>;
 

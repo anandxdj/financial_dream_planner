@@ -17,6 +17,8 @@ import { computeCanonicalHash } from "../../shared/utils/canonical-json";
 import { AppError } from "../../shared/errors/app-error";
 import { parseCursor, serializeCursor, type Cursor } from "../../shared/api/primitives";
 import type { Database } from "../../database/client";
+import { compareDrift } from "../drift/comparator";
+import { householdPlanning } from "../planning/model";
 
 type PlanTransaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
@@ -33,9 +35,26 @@ export interface PlanWithVersionAndSnapshot {
   snapshot: SelectFinancialSnapshot;
 }
 
+export interface PlanHistoryDriftSummary {
+  comparedToVersionId: string;
+  isMaterial: boolean;
+  findingCodes: string[];
+  findingsCount: number;
+  findings: any[];
+  deltas: any;
+}
+
 export interface PlanHistoryItem {
   version: SelectPlanVersion;
   snapshot: SelectFinancialSnapshot;
+  driftSummary?: PlanHistoryDriftSummary | null;
+}
+
+export interface PlanVersionDetail {
+  version: SelectPlanVersion;
+  snapshot: SelectFinancialSnapshot;
+  isCurrent: boolean;
+  drift: any | null;
 }
 
 export interface PlanHistoryResult {
@@ -256,5 +275,179 @@ export async function getPlanHistory(
     nextCursor = serializeCursor(cursorObj);
   }
 
-  return { data: items, nextCursor };
+  const [currentPlan] = await db
+    .select()
+    .from(plans)
+    .where(eq(plans.householdId, householdId))
+    .limit(1);
+
+  let currentSnapshot: SelectFinancialSnapshot | null = null;
+  if (currentPlan?.currentVersionId) {
+    const [currSnapRow] = await db
+      .select({ snapshot: financialSnapshots })
+      .from(planVersions)
+      .innerJoin(financialSnapshots, eq(financialSnapshots.id, planVersions.snapshotId))
+      .where(and(eq(planVersions.id, currentPlan.currentVersionId), eq(planVersions.householdId, householdId)))
+      .limit(1);
+    currentSnapshot = currSnapRow?.snapshot ?? null;
+  }
+
+  const itemsWithDrift: PlanHistoryItem[] = items.map((item) => {
+    let driftSummary: PlanHistoryDriftSummary | null = null;
+    if (currentPlan?.currentVersionId && currentSnapshot) {
+      if (item.version.id === currentPlan.currentVersionId) {
+        driftSummary = {
+          comparedToVersionId: currentPlan.currentVersionId,
+          isMaterial: false,
+          findingCodes: [],
+          findingsCount: 0,
+          findings: [],
+          deltas: null,
+        };
+      } else {
+        const driftResult = compareDrift({
+          baselineInputs: currentSnapshot.inputs,
+          observedInputs: item.snapshot.inputs,
+          financialPolicyVersion: currentSnapshot.policyVersion,
+        });
+        driftSummary = {
+          comparedToVersionId: currentPlan.currentVersionId,
+          isMaterial: driftResult.isMaterial,
+          findingCodes: driftResult.findings.map((f) => f.code),
+          findingsCount: driftResult.findings.length,
+          findings: driftResult.findings,
+          deltas: driftResult.deltas,
+        };
+      }
+    }
+    return {
+      version: item.version,
+      snapshot: item.snapshot,
+      driftSummary,
+    };
+  });
+
+  return { data: itemsWithDrift, nextCursor };
+}
+
+export async function getPlanVersionById(
+  householdId: string,
+  versionId: string,
+): Promise<PlanVersionDetail> {
+  const [row] = await db
+    .select({
+      version: planVersions,
+      snapshot: financialSnapshots,
+    })
+    .from(planVersions)
+    .innerJoin(financialSnapshots, eq(financialSnapshots.id, planVersions.snapshotId))
+    .where(and(eq(planVersions.id, versionId), eq(planVersions.householdId, householdId)))
+    .limit(1);
+
+  if (!row) {
+    throw new AppError(404, "PLAN_VERSION_NOT_FOUND", "Plan version not found");
+  }
+
+  const [currentPlan] = await db
+    .select()
+    .from(plans)
+    .where(eq(plans.householdId, householdId))
+    .limit(1);
+
+  const isCurrent = currentPlan?.currentVersionId === versionId;
+  let drift: any = null;
+
+  if (!isCurrent && currentPlan?.currentVersionId) {
+    const [currentVersionRow] = await db
+      .select({ snapshot: financialSnapshots })
+      .from(planVersions)
+      .innerJoin(financialSnapshots, eq(financialSnapshots.id, planVersions.snapshotId))
+      .where(and(eq(planVersions.id, currentPlan.currentVersionId), eq(planVersions.householdId, householdId)))
+      .limit(1);
+
+    if (currentVersionRow?.snapshot) {
+      drift = compareDrift({
+        baselineInputs: currentVersionRow.snapshot.inputs,
+        observedInputs: row.snapshot.inputs,
+        mode: "deep",
+        financialPolicyVersion: currentVersionRow.snapshot.policyVersion,
+      });
+    }
+  }
+
+  return {
+    version: row.version,
+    snapshot: row.snapshot,
+    isCurrent,
+    drift,
+  };
+}
+
+export async function restorePlanVersion(
+  householdId: string,
+  versionId: string,
+  options: { expectedRevision?: number; userId?: string } = {},
+): Promise<PlanWithVersionAndSnapshot> {
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${householdId}))`);
+
+    const [target] = await tx
+      .select({
+        version: planVersions,
+        snapshot: financialSnapshots,
+      })
+      .from(planVersions)
+      .innerJoin(financialSnapshots, eq(financialSnapshots.id, planVersions.snapshotId))
+      .where(and(eq(planVersions.id, versionId), eq(planVersions.householdId, householdId)))
+      .for("update");
+
+    if (!target) {
+      throw new AppError(404, "PLAN_VERSION_NOT_FOUND", "Plan version not found");
+    }
+
+    const [planning] = await tx
+      .select()
+      .from(householdPlanning)
+      .where(eq(householdPlanning.householdId, householdId))
+      .for("update")
+      .limit(1);
+
+    if (options.expectedRevision !== undefined) {
+      const currentRev = planning?.revision ?? 0;
+      if (currentRev !== options.expectedRevision) {
+        throw new AppError(409, "REVISION_CONFLICT", "Planning revision conflict");
+      }
+    }
+
+    const nextRevision = (planning?.revision ?? 0) + 1;
+    if (planning) {
+      await tx
+        .update(householdPlanning)
+        .set({
+          inputs: target.snapshot.inputs,
+          revision: nextRevision,
+          updatedBy: options.userId ?? planning.updatedBy,
+          updatedAt: new Date(),
+        })
+        .where(eq(householdPlanning.householdId, householdId));
+    } else {
+      await tx.insert(householdPlanning).values({
+        householdId,
+        inputs: target.snapshot.inputs,
+        completedStep: 3,
+        estimates: [],
+        revision: nextRevision,
+        updatedBy: options.userId ?? null,
+      });
+    }
+
+    const result = await recalculatePlanInTransaction(tx, householdId, {
+      asOf: new Date().toISOString(),
+      revision: nextRevision,
+      inputs: target.snapshot.inputs,
+      policyVersion: target.snapshot.policyVersion,
+    });
+
+    return result;
+  });
 }

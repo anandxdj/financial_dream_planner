@@ -5,12 +5,13 @@ import { outboxEvents } from "../../src/database/schema";
 import { checkReadiness } from "../../src/modules/health/health.service";
 import { OutboxDispatcher } from "../../src/modules/jobs/outbox";
 import {
+  isDockerAvailable,
   resetTestDb,
   startTestDb,
   stopTestDb,
 } from "../helpers/db";
 
-describe("operations & outbox recovery integration", () => {
+describe.skipIf(!isDockerAvailable())("operations & outbox recovery integration", () => {
   beforeAll(async () => {
     await startTestDb();
   });

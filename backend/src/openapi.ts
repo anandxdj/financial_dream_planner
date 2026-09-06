@@ -23,6 +23,9 @@ import {
   PlanSchema,
   PlanVersionSchema,
   RecalculatePlanRequestSchema,
+  PlanVersionDetailResponseSchema,
+  RestorePlanVersionRequestSchema,
+  RestorePlanVersionResponseSchema,
 } from "./modules/plans/model";
 import {
   ApplyScenarioResponseSchema,
@@ -33,7 +36,26 @@ import {
   ScenarioListResponseSchema,
   ScenarioResponseSchema,
   ScenarioSchema,
+  UpdateScenarioRequestSchema,
+  ApplyScenarioRequestSchema,
 } from "./modules/scenarios/model";
+import {
+  CreateLoanRequestSchema,
+  UpdateLoanRequestSchema,
+  LoanSchema,
+  LoanResponseSchema,
+  LoanListResponseSchema,
+  LoanAnalysisResponseSchema,
+  PrepaymentSimulationRequestSchema,
+  PrepaymentSimulationResponseSchema,
+  CreatePrepaymentScenarioRequestSchema,
+} from "./modules/loans/model";
+import {
+  UpdateInvestmentInputsRequestSchema,
+  SimulateInvestmentRequestSchema,
+  InvestmentSummaryResponseSchema,
+  InvestmentSimulationResponseSchema,
+} from "./modules/investments/model";
 import {
   CitationSchema,
   PlannerAnalyzeRequestSchema,
@@ -552,6 +574,8 @@ registry.register("PlanVersion", PlanVersionSchema);
 registry.register("Plan", PlanSchema);
 const CurrentPlanResponseApiSchema = registry.register("CurrentPlanResponse", CurrentPlanResponseSchema);
 const PlanHistoryResponseApiSchema = registry.register("PlanHistoryResponse", PlanHistoryResponseSchema);
+const PlanVersionDetailResponseApiSchema = registry.register("PlanVersionDetailResponse", PlanVersionDetailResponseSchema);
+const RestorePlanVersionResponseApiSchema = registry.register("RestorePlanVersionResponse", RestorePlanVersionResponseSchema);
 
 // --- Scenarios Schemas ---
 registry.register("Scenario", ScenarioSchema);
@@ -593,8 +617,75 @@ registry.registerPath({
     }),
   },
   responses: {
-    200: { description: "Household plan version history", content: json(PlanHistoryResponseApiSchema) },
+    200: { description: "Household plan version history with drift summaries", content: json(PlanHistoryResponseApiSchema) },
     401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/plans/history/{id}",
+  request: { params: IdParamsSchema },
+  responses: {
+    200: { description: "Specific historical plan version detail", content: json(PlanVersionDetailResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Plan version not found", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/plans/versions/{id}",
+  request: { params: IdParamsSchema },
+  responses: {
+    200: { description: "Specific historical plan version detail", content: json(PlanVersionDetailResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Plan version not found", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/plans/history/{id}/restore",
+  request: {
+    params: IdParamsSchema,
+    body: { content: json(RestorePlanVersionRequestSchema.optional()) },
+  },
+  responses: {
+    200: { description: "Restored plan version creating a new version", content: json(RestorePlanVersionResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Target plan version not found", content: json(ErrorResponseSchema) },
+    409: { description: "Revision conflict on current planning inputs", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/plans/versions/{id}/restore",
+  request: {
+    params: IdParamsSchema,
+    body: { content: json(RestorePlanVersionRequestSchema.optional()) },
+  },
+  responses: {
+    200: { description: "Restored plan version creating a new version", content: json(RestorePlanVersionResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Target plan version not found", content: json(ErrorResponseSchema) },
+    409: { description: "Revision conflict on current planning inputs", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/plans/restore",
+  request: {
+    body: { content: json(RestorePlanVersionRequestSchema) },
+  },
+  responses: {
+    200: { description: "Restored plan version creating a new version", content: json(RestorePlanVersionResponseApiSchema) },
+    400: { description: "Missing target version ID", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Target plan version not found", content: json(ErrorResponseSchema) },
+    409: { description: "Revision conflict on current planning inputs", content: json(ErrorResponseSchema) },
   },
 });
 
@@ -643,6 +734,34 @@ registry.registerPath({
 });
 
 registry.registerPath({
+  method: "patch",
+  path: "/api/v1/scenarios/{id}",
+  request: {
+    params: IdParamsSchema,
+    body: { content: json(UpdateScenarioRequestSchema) },
+  },
+  responses: {
+    200: { description: "Updated scenario draft", content: json(ScenarioResponseApiSchema) },
+    400: { description: "Invalid input", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Scenario not found", content: json(ErrorResponseSchema) },
+    409: { description: "Scenario is already applied or revision conflict", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "delete",
+  path: "/api/v1/scenarios/{id}",
+  request: { params: IdParamsSchema },
+  responses: {
+    204: { description: "Scenario deleted" },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Scenario not found", content: json(ErrorResponseSchema) },
+    409: { description: "Applied scenario cannot be deleted", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
   method: "post",
   path: "/api/v1/scenarios/{id}/run",
   request: { params: IdParamsSchema },
@@ -656,12 +775,202 @@ registry.registerPath({
 registry.registerPath({
   method: "post",
   path: "/api/v1/scenarios/{id}/apply",
-  request: { params: IdParamsSchema },
+  request: {
+    params: IdParamsSchema,
+    body: { content: json(ApplyScenarioRequestSchema.optional()) },
+  },
   responses: {
     200: { description: "Scenario applied; returns updated plan, new version, and snapshot", content: json(ApplyScenarioResponseApiSchema) },
     401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
     404: { description: "Scenario or plan not found", content: json(ErrorResponseSchema) },
-    409: { description: "Scenario baseline is stale", content: json(ErrorResponseSchema) },
+    409: { description: "Scenario baseline is stale or revision conflict", content: json(ErrorResponseSchema) },
+  },
+});
+
+// --- Loans Schemas ---
+registry.register("Loan", LoanSchema);
+const LoanResponseApiSchema = registry.register("LoanResponse", LoanResponseSchema);
+const LoanListResponseApiSchema = registry.register("LoanListResponse", LoanListResponseSchema);
+const LoanAnalysisResponseApiSchema = registry.register("LoanAnalysisResponse", LoanAnalysisResponseSchema);
+const PrepaymentSimulationResponseApiSchema = registry.register("PrepaymentSimulationResponse", PrepaymentSimulationResponseSchema);
+
+// --- Loans Routes ---
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/loans",
+  responses: {
+    200: { description: "List of household loans", content: json(LoanListResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/loans",
+  request: { body: { content: json(CreateLoanRequestSchema) } },
+  responses: {
+    201: { description: "Loan created", content: json(LoanResponseApiSchema) },
+    400: { description: "Invalid input", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/loans/{id}",
+  request: { params: IdParamsSchema },
+  responses: {
+    200: { description: "Loan details", content: json(LoanResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Loan not found", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "patch",
+  path: "/api/v1/loans/{id}",
+  request: {
+    params: IdParamsSchema,
+    body: { content: json(UpdateLoanRequestSchema) },
+  },
+  responses: {
+    200: { description: "Updated loan", content: json(LoanResponseApiSchema) },
+    400: { description: "Invalid input", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Loan not found", content: json(ErrorResponseSchema) },
+    409: { description: "Revision conflict", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "delete",
+  path: "/api/v1/loans/{id}",
+  request: { params: IdParamsSchema },
+  responses: {
+    204: { description: "Loan deleted" },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Loan not found", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/loans/{id}/analysis",
+  request: { params: IdParamsSchema },
+  responses: {
+    200: { description: "Loan analysis and amortization schedule", content: json(LoanAnalysisResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Loan not found", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/loans/{id}/calculate",
+  request: { params: IdParamsSchema },
+  responses: {
+    200: { description: "Loan analysis and amortization schedule", content: json(LoanAnalysisResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Loan not found", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/loans/{id}/prepayment-simulation",
+  request: {
+    params: IdParamsSchema,
+    body: { content: json(PrepaymentSimulationRequestSchema.optional()) },
+  },
+  responses: {
+    200: { description: "Loan prepayment simulation with buffer and surplus impact", content: json(PrepaymentSimulationResponseApiSchema) },
+    400: { description: "Invalid input", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Loan not found", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/loans/{id}/prepayment-scenario",
+  request: {
+    params: IdParamsSchema,
+    body: { content: json(PrepaymentSimulationRequestSchema.optional()) },
+  },
+  responses: {
+    200: { description: "Loan prepayment simulation with buffer and surplus impact", content: json(PrepaymentSimulationResponseApiSchema) },
+    400: { description: "Invalid input", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Loan not found", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/loans/{id}/create-scenario",
+  request: {
+    params: IdParamsSchema,
+    body: { content: json(CreatePrepaymentScenarioRequestSchema) },
+  },
+  responses: {
+    201: { description: "Prepayment comparison scenario draft created", content: json(ScenarioResponseApiSchema) },
+    400: { description: "Invalid input or missing active baseline plan", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    404: { description: "Loan not found", content: json(ErrorResponseSchema) },
+  },
+});
+
+// --- Investments Schemas ---
+const InvestmentSummaryResponseApiSchema = registry.register("InvestmentSummaryResponse", InvestmentSummaryResponseSchema);
+const InvestmentSimulationResponseApiSchema = registry.register("InvestmentSimulationResponse", InvestmentSimulationResponseSchema);
+
+// --- Investments Routes ---
+registry.registerPath({
+  method: "get",
+  path: "/api/v1/investments",
+  responses: {
+    200: { description: "Household investment summary with explicit unavailable values", content: json(InvestmentSummaryResponseApiSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "put",
+  path: "/api/v1/investments",
+  request: {
+    body: { content: json(UpdateInvestmentInputsRequestSchema) },
+  },
+  responses: {
+    200: { description: "Updated household investment planning inputs", content: json(InvestmentSummaryResponseApiSchema) },
+    400: { description: "Invalid input", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+    409: { description: "Revision conflict on household planning inputs", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/investments/simulate",
+  request: {
+    body: { content: json(SimulateInvestmentRequestSchema) },
+  },
+  responses: {
+    200: { description: "Stateless investment projection simulation", content: json(InvestmentSimulationResponseApiSchema) },
+    400: { description: "Invalid input", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/api/v1/investments/projection",
+  request: {
+    body: { content: json(SimulateInvestmentRequestSchema) },
+  },
+  responses: {
+    200: { description: "Stateless investment projection simulation", content: json(InvestmentSimulationResponseApiSchema) },
+    400: { description: "Invalid input", content: json(ErrorResponseSchema) },
+    401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
   },
 });
 

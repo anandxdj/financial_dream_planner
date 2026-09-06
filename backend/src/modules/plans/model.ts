@@ -201,12 +201,61 @@ export const CurrentPlanResponseSchema = z.object({
   data: CurrentPlanResponseDataSchema,
 });
 
+export const PlanDriftFindingSchema = z.object({
+  code: z.string(),
+  description: z.string(),
+  baselineValue: z.string().nullable(),
+  observedValue: z.string().nullable(),
+  absoluteDelta: z.string().nullable(),
+  relativeDelta: z.string().nullable(),
+  severity: z.enum(["notice", "warning", "critical"]),
+  affectedOutputPaths: z.array(z.string()),
+});
+
+export const PlanDriftSummarySchema = z.object({
+  comparedToVersionId: z.string().uuid(),
+  isMaterial: z.boolean(),
+  findingCodes: z.array(z.string()),
+  findingsCount: z.number().int().min(0),
+  findings: z.array(PlanDriftFindingSchema),
+  deltas: z.record(z.string(), z.any()).nullable(),
+});
+
 export const PlanHistoryItemSchema = z.object({
   version: PlanVersionSchema,
   snapshot: FinancialSnapshotSchema,
+  driftSummary: PlanDriftSummarySchema.nullable().optional(),
 });
 
 export const PlanHistoryResponseSchema = z.object({
   data: z.array(PlanHistoryItemSchema),
   nextCursor: z.string().optional(),
+});
+
+export const PlanVersionDetailDataSchema = z.object({
+  version: PlanVersionSchema,
+  snapshot: FinancialSnapshotSchema,
+  isCurrent: z.boolean(),
+  drift: z.object({
+    policyVersion: z.string(),
+    engineVersion: z.string(),
+    isMaterial: z.boolean(),
+    findings: z.array(PlanDriftFindingSchema),
+    baselineOutput: SnapshotCalculatedOutputSchema,
+    observedOutput: SnapshotCalculatedOutputSchema,
+    deltas: z.record(z.string(), z.any()).nullable(),
+  }).nullable(),
+});
+
+export const PlanVersionDetailResponseSchema = z.object({
+  data: PlanVersionDetailDataSchema,
+});
+
+export const RestorePlanVersionRequestSchema = z.object({
+  versionId: z.string().uuid().optional(),
+  expectedRevision: z.number().int().min(0).optional(),
+}).strict();
+
+export const RestorePlanVersionResponseSchema = z.object({
+  data: CurrentPlanResponseDataSchema,
 });

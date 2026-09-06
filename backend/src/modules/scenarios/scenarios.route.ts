@@ -10,5 +10,7 @@ scenariosRouter.post("/", scenariosController.create);
 scenariosRouter.get("/", scenariosController.list);
 scenariosRouter.post("/compare", scenariosController.compare);
 scenariosRouter.get("/:id", scenariosController.getById);
+scenariosRouter.patch("/:id", scenariosController.update);
+scenariosRouter.delete("/:id", scenariosController.remove);
 scenariosRouter.post("/:id/run", scenariosController.run);
 scenariosRouter.post("/:id/apply", scenariosController.apply);

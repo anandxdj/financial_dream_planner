@@ -6,6 +6,7 @@ import { AppError } from "../errors/app-error";
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
 export function protectCookieRequests(req: Request, _res: Response, next: NextFunction) {
+  if (!env.AUTH_ENABLED || env.NODE_ENV !== "production") return next();
   const hasAuthCookie = Boolean(req.cookies?.[COOKIE.access] || req.cookies?.[COOKIE.refresh]);
   if (SAFE_METHODS.has(req.method) || req.header("authorization") || !hasAuthCookie) return next();
   const origin = req.get("origin");

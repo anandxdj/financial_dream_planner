@@ -11,12 +11,13 @@ import {
 } from "../../src/database/schema";
 import { runIntegrityProbes } from "../../../scripts/restore";
 import {
+  isDockerAvailable,
   resetTestDb,
   startTestDb,
   stopTestDb,
 } from "../helpers/db";
 
-describe("backup and restore rehearsal integration", () => {
+describe.skipIf(!isDockerAvailable())("backup and restore rehearsal integration", () => {
   beforeAll(async () => {
     await startTestDb();
   });

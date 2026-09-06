@@ -17,3 +17,4 @@ export * from "../modules/drift/model";
 export * from "../modules/privacy/model";
 export * from "../modules/documents/model";
 export * from "../modules/planning/model";
+export * from "../modules/loans/model";
