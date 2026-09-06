@@ -129,7 +129,6 @@ export async function postChatMessage(
   });
 
   if (graphResult.error) {
-    // Preserve the user's message for continuity and retry, but never write a fake assistant response.
     throw graphResult.error;
   }
 
@@ -149,6 +148,7 @@ export async function postChatMessage(
         content: finalAnswer.content,
         sequenceNumber: assistantSeq,
         citations: finalAnswer.citations,
+        metadata: finalAnswer.metadata,
         createdAt: new Date(),
         retentionExpiresAt,
       })
@@ -290,6 +290,7 @@ export async function analyzePlan(
         content: finalAnswer.content,
         sequenceNumber: assistantSeq,
         citations: finalAnswer.citations,
+        metadata: finalAnswer.metadata,
         createdAt: new Date(),
         retentionExpiresAt,
       })
