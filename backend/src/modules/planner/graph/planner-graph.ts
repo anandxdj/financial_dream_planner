@@ -420,7 +420,9 @@ ${evidenceContext || "No external evidence retrieved."}`;
         citations: criticResult.validatedCitations,
         metadata: {
           grounding: "engine-backed",
+          planVersionNumber: state.financialContext?.planSummary?.versionNumber,
           planAsOf: state.financialContext?.planSummary?.asOf,
+          engineVersion: state.financialContext?.planSummary?.engineVersion,
           policyVersion: state.financialContext?.planSummary?.policyVersion,
           toolExecutions: state.plannerOutput.toolExecutions,
           proposals: state.plannerOutput.proposals,
