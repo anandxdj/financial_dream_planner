@@ -87,6 +87,8 @@ import {
   DownloadGrantResponseSchema,
   UploadDocumentRequestSchema,
 } from "./modules/documents/model";
+import { affordabilitySchema, goalCategory, goalSchema, planningInputsSchema, planningMetadataSchema } from "./modules/planning/model";
+import { idempotencyKeySchema } from "./shared/api/primitives";
 
 extendZodWithOpenApi(z);
 const registry = new OpenAPIRegistry();
@@ -129,10 +131,9 @@ const AuthUserSchema = registry.register(
     email: z.string().email(),
     displayName: z.string(),
     avatarUrl: z.string().nullable(),
-    status: z.string(),
-    emailVerified: z.boolean(),
+    status: z.enum(["active", "disabled", "pending_verification"]),
+    emailVerifiedAt: z.string().nullable(),
     roles: z.array(z.string()),
-    createdAt: z.string(),
   }),
 );
 
@@ -382,7 +383,7 @@ const FinancialEngineScenarioResponseSchema = registry.register(
 // --- Transactions Routes ---
 registry.registerPath({ method: "post", path: "/api/v1/transactions/sync", request: { body: { content: json(SyncTransactionsRequestSchema) } }, responses: { 200: { description: "Sync batch result", content: json(SyncTransactionsResponseSchema) }, 400: { description: "Invalid input", content: json(ErrorResponseSchema) }, 401: { description: "Unauthorized", content: json(ErrorResponseSchema) } } });
 registry.registerPath({ method: "get", path: "/api/v1/transactions/cash-flow", request: { query: z.object({ startDate: z.string().datetime().optional(), endDate: z.string().datetime().optional(), accountId: z.string().uuid().optional(), currency: z.string().length(3).optional() }) }, responses: { 200: { description: "Single-currency cash flow snapshot (defaults to INR)", content: json(CashFlowResponseSchema) }, 401: { description: "Unauthorized", content: json(ErrorResponseSchema) } } });
-registry.registerPath({ method: "get", path: "/api/v1/transactions", request: { query: z.object({ cursor: z.string().optional(), limit: z.coerce.number().optional(), accountId: z.string().uuid().optional(), categoryId: z.string().uuid().optional(), direction: TransactionDirectionEnum.optional(), status: TransactionStatusEnum.optional(), startDate: z.string().datetime().optional(), endDate: z.string().datetime().optional() }) }, responses: { 200: { description: "List transactions", content: json(TransactionListResponseSchema) }, 401: { description: "Unauthorized", content: json(ErrorResponseSchema) } } });
+registry.registerPath({ method: "get", path: "/api/v1/transactions", request: { query: z.object({ cursor: z.string().optional(), limit: z.coerce.number().int().min(1).max(100).default(25), accountId: z.string().uuid().optional(), categoryId: z.string().uuid().optional(), direction: TransactionDirectionEnum.optional(), status: TransactionStatusEnum.optional(), startDate: z.string().datetime().optional(), endDate: z.string().datetime().optional() }) }, responses: { 200: { description: "List transactions", content: json(TransactionListResponseSchema) }, 401: { description: "Unauthorized", content: json(ErrorResponseSchema) } } });
 registry.registerPath({ method: "post", path: "/api/v1/transactions", request: { body: { content: json(CreateTransactionSchema) } }, responses: { 201: { description: "Transaction created", content: json(TransactionResponseSchema) }, 400: { description: "Invalid input", content: json(ErrorResponseSchema) }, 401: { description: "Unauthorized", content: json(ErrorResponseSchema) } } });
 registry.registerPath({ method: "get", path: "/api/v1/transactions/{id}", request: { params: IdParamsSchema }, responses: { 200: { description: "Transaction details with provenance", content: json(TransactionWithProvenanceResponseSchema) }, 404: { description: "Transaction not found", content: json(ErrorResponseSchema) }, 401: { description: "Unauthorized", content: json(ErrorResponseSchema) } } });
 registry.registerPath({ method: "patch", path: "/api/v1/transactions/{id}", request: { params: IdParamsSchema, body: { content: json(UpdateTransactionSchema) } }, responses: { 200: { description: "Updated transaction", content: json(TransactionResponseSchema) }, 404: { description: "Transaction not found", content: json(ErrorResponseSchema) }, 401: { description: "Unauthorized", content: json(ErrorResponseSchema) } } });
@@ -399,6 +400,85 @@ registry.registerPath({
     401: { description: "Unauthorized", content: json(ErrorResponseSchema) },
   },
 });
+
+// --- Release 1 planning ---
+const AffordabilityResponse = registry.register(
+  "AffordabilityResponse",
+  z.object({
+    data: z.object({
+      verdict: z.enum(["safe", "tight", "risky", "insufficient_data"]),
+      monthlySurplus: z.string().nullable(),
+      bufferImpact: z.string().nullable(),
+      timeToAffordMonths: z.number().nullable(),
+      comparison: z.object({ buyNow: z.string(), waitThreeMonths: z.string() }).strict(),
+      explanation: z.string(),
+    }).strict(),
+  }).strict(),
+);
+const PlanningData = z.object({
+  householdId: z.string().uuid(),
+  inputs: planningInputsSchema,
+  completedStep: z.number().int().min(0).max(3),
+  estimates: planningMetadataSchema.shape.estimates,
+  revision: z.number().int().min(0),
+  updatedBy: z.string().uuid().nullable(),
+  updatedAt: z.string().datetime(),
+}).strict();
+const PlanningResponse = registry.register("PlanningResponse", z.object({ data: PlanningData }).strict());
+const DraftData = planningMetadataSchema.extend({ revision: z.number().int().min(0), expiresAt: z.string().datetime() }).strict();
+const DraftResponse = registry.register("PlanningDraftResponse", z.object({ data: DraftData }).strict());
+const CreateDraftResponse = registry.register("CreatePlanningDraftResponse", z.object({ data: DraftData.extend({ draftToken: z.string() }).strict() }).strict());
+const GoalBody = goalSchema;
+const Goal = registry.register(
+  "PlanningGoal",
+  z.object({
+    id: z.string().uuid(),
+    householdId: z.string().uuid(),
+    name: z.string(),
+    category: goalCategory,
+    targetAmount: z.string(),
+    currentSavings: z.string(),
+    monthlyContribution: z.string(),
+    targetDate: z.string(),
+    horizonMonths: z.number().int().min(1),
+    status: z.enum(["active", "archived"]),
+    revision: z.number().int().min(0),
+    createdAt: z.string().datetime(),
+    updatedAt: z.string().datetime(),
+  }).strict(),
+);
+const GoalResponse = registry.register("PlanningGoalResponse", z.object({ data: Goal }).strict());
+const GoalListResponse = registry.register("PlanningGoalListResponse", z.object({ data: z.array(Goal) }).strict());
+const FeasibilityResponse = registry.register(
+  "PlanningGoalFeasibilityResponse",
+  z.object({
+    data: z.object({
+      goals: z.array(
+        z.object({
+          id: z.string().uuid(),
+          result: FinancialEngineGoalFundingOutputSchema,
+          monthlyContribution: z.string(),
+        }).strict(),
+      ),
+      availableMonthlyCapacity: z.string().nullable(),
+      combinedMonthlyContribution: z.string(),
+      overAllocated: z.boolean(),
+    }).strict(),
+  }).strict(),
+);
+registry.registerPath({ method: "post", path: "/api/v1/affordability", request: { body: { content: json(affordabilitySchema) } }, responses: { 200: { description: "Anonymous affordability verdict", content: json(AffordabilityResponse) }, 429: { description: "Rate limited", content: json(ErrorResponseSchema) } } });
+registry.registerPath({ method: "post", path: "/api/v1/planning/drafts", request: { body: { content: json(planningMetadataSchema) } }, responses: { 201: { description: "Opaque expiring draft", content: json(CreateDraftResponse) } } });
+registry.registerPath({ method: "get", path: "/api/v1/planning/drafts/{token}", request: { params: z.object({ token: z.string() }) }, responses: { 200: { description: "Draft", content: json(DraftResponse) }, 404: { description: "Expired or unknown draft", content: json(ErrorResponseSchema) } } });
+registry.registerPath({ method: "patch", path: "/api/v1/planning/drafts/{token}", request: { params: z.object({ token: z.string() }), body: { content: json(planningMetadataSchema.extend({ expectedRevision: z.number().int().min(0) }).strict()) } }, responses: { 200: { description: "Updated draft", content: json(DraftResponse) }, 409: { description: "Revision conflict", content: json(ErrorResponseSchema) } } });
+registry.registerPath({ method: "post", path: "/api/v1/planning/drafts/{token}/claim", request: { params: z.object({ token: z.string() }) }, responses: { 200: { description: "Claimed draft", content: json(PlanningResponse) }, 401: { description: "Unauthorized", content: json(ErrorResponseSchema) }, 409: { description: "Draft is claimed or household planning is not empty", content: json(ErrorResponseSchema) } } });
+registry.registerPath({ method: "get", path: "/api/v1/households/planning", responses: { 200: { description: "Saved household planning inputs", content: json(PlanningResponse) } } });
+registry.registerPath({ method: "put", path: "/api/v1/households/planning", request: { body: { content: json(planningMetadataSchema.extend({ expectedRevision: z.number().int().min(0) }).strict()) } }, responses: { 200: { description: "Saved inputs", content: json(PlanningResponse) }, 409: { description: "Revision conflict", content: json(ErrorResponseSchema) } } });
+registry.registerPath({ method: "post", path: "/api/v1/households/planning/generate", request: { headers: z.object({ "Idempotency-Key": idempotencyKeySchema }), body: { content: json(z.object({ expectedRevision: z.number().int().min(0) }).strict()) } }, responses: { 200: { description: "Synchronous generated plan", content: json(CurrentPlanResponseSchema) }, 409: { description: "Revision conflict", content: json(ErrorResponseSchema) } } });
+registry.registerPath({ method: "get", path: "/api/v1/goals", responses: { 200: { description: "Active goals (maximum three)", content: json(GoalListResponse) } } });
+registry.registerPath({ method: "post", path: "/api/v1/goals", request: { body: { content: json(GoalBody) } }, responses: { 201: { description: "Goal", content: json(GoalResponse) }, 409: { description: "Goal limit", content: json(ErrorResponseSchema) } } });
+registry.registerPath({ method: "get", path: "/api/v1/goals/feasibility", responses: { 200: { description: "Per-goal and combined allocation feasibility", content: json(FeasibilityResponse) } } });
+registry.registerPath({ method: "patch", path: "/api/v1/goals/{id}", request: { params: IdParamsSchema, body: { content: json(GoalBody.partial().extend({ expectedRevision: z.number().int().min(0) }).strict()) } }, responses: { 200: { description: "Updated goal", content: json(GoalResponse) }, 409: { description: "Revision conflict", content: json(ErrorResponseSchema) } } });
+registry.registerPath({ method: "delete", path: "/api/v1/goals/{id}", request: { params: IdParamsSchema }, responses: { 204: { description: "Archived goal" } } });
 
 registry.registerPath({
   method: "post",

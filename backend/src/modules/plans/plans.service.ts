@@ -16,6 +16,9 @@ import {
 import { computeCanonicalHash } from "../../shared/utils/canonical-json";
 import { AppError } from "../../shared/errors/app-error";
 import { parseCursor, serializeCursor, type Cursor } from "../../shared/api/primitives";
+import type { Database } from "../../database/client";
+
+type PlanTransaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
 export interface RecalculatePlanInput {
   asOf: string;
@@ -82,7 +85,8 @@ export function serializeSnapshot(snapshot: SelectFinancialSnapshot) {
   };
 }
 
-export async function recalculatePlan(
+export async function recalculatePlanInTransaction(
+  tx: PlanTransaction,
   householdId: string,
   input: RecalculatePlanInput,
 ): Promise<PlanWithVersionAndSnapshot> {
@@ -96,9 +100,9 @@ export async function recalculatePlan(
   const inputHash = computeCanonicalHash(input.inputs);
   const outputHash = computeCanonicalHash(evalResult.baseline);
 
-  return db.transaction(async (tx) => {
-    // Acquire advisory xact lock on household to prevent concurrent creation/mutation races
-    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${householdId}))`);
+  // The caller owns the transaction so planning generation can compose revision,
+  // idempotency, snapshot, version, and current-pointer writes atomically.
+  await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${householdId}))`);
 
     let [planRow] = await tx
       .select()
@@ -164,11 +168,19 @@ export async function recalculatePlan(
       .where(eq(plans.id, planRow.id))
       .returning();
 
-    return {
-      plan: updatedPlan,
-      currentVersion: versionRow,
-      snapshot: snapshotRow,
-    };
+  return {
+    plan: updatedPlan,
+    currentVersion: versionRow,
+    snapshot: snapshotRow,
+  };
+}
+
+export async function recalculatePlan(
+  householdId: string,
+  input: RecalculatePlanInput,
+): Promise<PlanWithVersionAndSnapshot> {
+  return db.transaction(async (tx) => {
+    return recalculatePlanInTransaction(tx, householdId, input);
   });
 }
 

@@ -78,6 +78,13 @@
       "when": 1788111094533,
       "tag": "0010_u8_privacy_storage",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1788112000000,
+      "tag": "0011_release1_planning",
+      "breakpoints": true
     }
   ]
 }

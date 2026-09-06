@@ -26,6 +26,7 @@ import { documentsRouter } from "./modules/documents/documents.route";
 import { createHealthRouter } from "./modules/health/health.route";
 import type { HealthDependencies } from "./modules/health/health.service";
 import { recordHttpRequest } from "./modules/metrics/metrics";
+import { planningRouter } from "./modules/planning/planning.route";
 
 export interface AppDependencies {
   runService?: RunService;
@@ -87,6 +88,7 @@ export function createApp(dependencies: AppDependencies = {}) {
   app.use("/api/v1/drift", driftRouter);
   app.use("/api/v1/privacy", privacyRouter);
   app.use("/api/v1/documents", documentsRouter);
+  app.use("/api/v1", planningRouter);
   if (dependencies.runService) app.use("/api/v1/runs", createRunRouter(dependencies.runService));
 
   app.use(errorHandler);

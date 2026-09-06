@@ -1,0 +1,18 @@
+import { Router } from "express";
+import { requireAuth } from "../../shared/middleware/require-auth";
+import { authRateLimiter } from "../../shared/middleware/rate-limit";
+import * as c from "./planning.controller";
+export const planningRouter = Router();
+planningRouter.post("/affordability", authRateLimiter, c.affordability);
+planningRouter.post("/planning/drafts", c.createDraft);
+planningRouter.get("/planning/drafts/:token", c.getDraft);
+planningRouter.patch("/planning/drafts/:token", c.updateDraft);
+planningRouter.post("/planning/drafts/:token/claim", requireAuth, c.claimDraft);
+planningRouter.get("/households/planning", requireAuth, c.getPlanning);
+planningRouter.put("/households/planning", requireAuth, c.savePlanning);
+planningRouter.post("/households/planning/generate", requireAuth, c.generate);
+planningRouter.get("/goals", requireAuth, c.listGoals);
+planningRouter.post("/goals", requireAuth, c.createGoal);
+planningRouter.get("/goals/feasibility", requireAuth, c.feasibility);
+planningRouter.patch("/goals/:id", requireAuth, c.updateGoal);
+planningRouter.delete("/goals/:id", requireAuth, c.deleteGoal);
