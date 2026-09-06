@@ -48,3 +48,12 @@ export async function verifyEmail(token: string) {
 export function getGoogleAuthUrl() {
   return `${API_BASE_URL}${API_PATHS.google}`;
 }
+
+export async function startOidcAuth() {
+  const { data } = await api.post<{ authorizationUrl: string }>(API_PATHS.oidcStart, {
+    redirectUri: `${window.location.origin}${"/auth/callback"}`,
+    clientId: process.env.NEXT_PUBLIC_OIDC_CLIENT_ID ?? "web",
+    mode: "browser",
+  });
+  return data.authorizationUrl;
+}

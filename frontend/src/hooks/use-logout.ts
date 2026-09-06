@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { QUERY_KEYS, ROUTES } from "@/constants/api";
+import { clearReturnPath, ROUTES } from "@/constants/api";
 import { getApiErrorMessage } from "@/lib/api";
 import { logout } from "@/services/auth.service";
 
@@ -14,9 +14,10 @@ export function useLogout() {
   return useMutation({
     mutationFn: logout,
     onSuccess: () => {
-      queryClient.removeQueries({ queryKey: QUERY_KEYS.me });
+      queryClient.clear();
+      clearReturnPath();
       toast.success("Signed out");
-      router.push(ROUTES.login);
+      router.replace(ROUTES.login);
       router.refresh();
     },
     onError: (error) => {

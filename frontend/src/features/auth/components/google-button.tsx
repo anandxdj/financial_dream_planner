@@ -1,7 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { getGoogleAuthUrl } from "@/services/auth.service";
+import { rememberReturnPath } from "@/constants/api";
+import { startOidcAuth } from "@/services/auth.service";
 
 export function GoogleButton({ label }: { label: string }) {
   return (
@@ -9,8 +10,10 @@ export function GoogleButton({ label }: { label: string }) {
       type="button"
       variant="outline"
       className="w-full"
-      onClick={() => {
-        window.location.assign(getGoogleAuthUrl());
+      onClick={async () => {
+        rememberReturnPath(new URLSearchParams(window.location.search).get("next"));
+        const url = await startOidcAuth();
+        window.location.assign(url);
       }}
     >
       Continue with Google
