@@ -17,7 +17,9 @@ export interface PlannerFinancialContext {
   hasCurrentPlan: boolean;
   goals: PlannerGoalContext[];
   planSummary?: {
+    versionNumber: number;
     asOf: string;
+    engineVersion: string;
     policyVersion: string;
     completeness: {
       status: string;
@@ -54,7 +56,9 @@ export async function loadFinancialContext(
       hasCurrentPlan: true,
       goals,
       planSummary: {
+        versionNumber: current.currentVersion.versionNumber,
         asOf: current.snapshot.asOf.toISOString(),
+        engineVersion: current.snapshot.engineVersion,
         policyVersion: current.snapshot.policyVersion,
         completeness: current.snapshot.completeness,
         calculatedOutput: current.snapshot.calculatedOutput as Record<string, any>,
@@ -86,9 +90,9 @@ export function buildFinancialContextBlock(financialContext?: PlannerFinancialCo
   if (!financialContext.hasCurrentPlan || !financialContext.planSummary) {
     lines.push("No active financial plan found for this household.");
   } else {
-    const { asOf, policyVersion, completeness, calculatedOutput } = financialContext.planSummary;
+    const { versionNumber, asOf, policyVersion, completeness, calculatedOutput } = financialContext.planSummary;
     lines.push(
-      `Plan as of: ${asOf} | Policy: ${policyVersion}`,
+      `Plan version: ${versionNumber} | Plan as of: ${asOf} | Policy: ${policyVersion}`,
       `Data completeness: ${completeness.status}`,
     );
 
