@@ -9,6 +9,35 @@ x-backend-environment: &backend-environment
   METRICS_BEARER_TOKEN: ${METRICS_BEARER_TOKEN:-}
 
 services:
+  web:
+    image: financial-dream-planner-frontend:latest
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      API_ORIGIN: http://api:4000
+    ports:
+      - "127.0.0.1:3000:3000"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    networks:
+      - default
+      - traefik_net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.fdp-web.rule=Host(`${WEB_HOST:-financialdreamplanner.local}`)"
+      - "traefik.http.routers.fdp-web.entrypoints=websecure"
+      - "traefik.http.routers.fdp-web.tls=true"
+      - "traefik.http.services.fdp-web.loadbalancer.server.port=3000"
+
   migrate:
     image: financial-dream-planner-backend:latest
     build:
