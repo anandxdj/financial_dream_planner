@@ -30,7 +30,9 @@ export interface PlannerToolExecutionMetadata {
 
 export interface PlannerMessageMetadata {
   grounding?: string;
+  planVersionNumber?: number;
   planAsOf?: string;
+  engineVersion?: string;
   policyVersion?: string;
   toolExecutions?: PlannerToolExecutionMetadata[];
   proposals?: PlannerScenarioProposal[];
@@ -67,7 +69,10 @@ export function getPlannerMessageMetadata(metadata: unknown): PlannerMessageMeta
 
   return {
     grounding: typeof metadata.grounding === "string" ? metadata.grounding : undefined,
+    planVersionNumber:
+      typeof metadata.planVersionNumber === "number" ? metadata.planVersionNumber : undefined,
     planAsOf: typeof metadata.planAsOf === "string" ? metadata.planAsOf : undefined,
+    engineVersion: typeof metadata.engineVersion === "string" ? metadata.engineVersion : undefined,
     policyVersion: typeof metadata.policyVersion === "string" ? metadata.policyVersion : undefined,
     proposals,
     toolExecutions,
