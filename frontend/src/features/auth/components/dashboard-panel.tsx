@@ -21,7 +21,7 @@ export function DashboardPanel() {
     <Card className="w-full max-w-lg">
       <CardHeader>
         <CardTitle>Signed in</CardTitle>
-        <CardDescription>This page is the protected sample surface for the starter.</CardDescription>
+        <CardDescription>Your authenticated financial planning dashboard.</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <dl className="grid gap-2 text-sm">

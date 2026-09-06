@@ -4,8 +4,8 @@ import { VerifyEmailPanel } from "@/features/auth/components/verify-email-panel"
 
 export default function VerifyEmailPage() {
   return (
-    <AuthShell title="Verify email" description="Confirming the address on your account.">
-      <Suspense fallback={<p className="text-sm text-muted-foreground">Loading...</p>}>
+    <AuthShell mode="verify-email" title="Verify email" description="Confirming the address on your account.">
+      <Suspense fallback={<p className="text-sm text-muted-foreground p-8 text-center">Loading...</p>}>
         <VerifyEmailPanel />
       </Suspense>
     </AuthShell>
