@@ -1,4 +1,4 @@
-import { AiPlanner } from "@/features/planner/ai";
+import { AiPlanner } from "@/features/ai";
 
 export default function AiPlannerPage() {
   return <AiPlanner />;

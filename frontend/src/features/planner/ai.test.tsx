@@ -85,6 +85,32 @@ describe("AI planner", () => {
     expect(await screen.findByText("No conversations yet.")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Start with a planning question" })).toBeInTheDocument();
 
+    // Verify quick starter prompt pills
+    expect(screen.getByRole("button", { name: "Can I afford a dream vacation?" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "How can I reach ₹1 Cr net worth?" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Review my loan prepayment options" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Analyze monthly cash flow drift" })).toBeInTheDocument();
+
+    // Verify compliance disclaimer
+    expect(
+      screen.getByText(
+        "AI provides deterministic decision assistance. It does not provide SEBI-registered investment advice or auto-execute trades."
+      )
+    ).toBeInTheDocument();
+
+    // Verify structured proposal preview cards with explicit Review & Apply / Dismiss buttons
+    const reviewButtons = screen.getAllByRole("button", { name: "Review & Apply to Plan" });
+    const dismissButtons = screen.getAllByRole("button", { name: "Dismiss" });
+    expect(reviewButtons.length).toBeGreaterThan(0);
+    expect(dismissButtons.length).toBeGreaterThan(0);
+
+    // Verify opening review modal does not auto-mutate state silently
+    fireEvent.click(reviewButtons[0]);
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Confirm & Stage in Scenarios" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
     fireEvent.change(screen.getByLabelText("Ask the AI planner"), { target: { value: "  Review my buffer  " } });
     fireEvent.click(screen.getByRole("button", { name: "Send question" }));
 
@@ -99,6 +125,11 @@ describe("AI planner", () => {
 
     expect(await screen.findByText("Is my emergency fund safe?")).toBeInTheDocument();
     expect(screen.getByText("Keep the money accessible and review the insured limit.")).toBeInTheDocument();
+
+    // Verify attributable source chips for AI responses
+    expect(screen.getAllByText("Derived from Active Plan")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("Based on May 2026 savings rate")[0]).toBeInTheDocument();
+
     const sources = screen.getByText("Sources (1)").closest("details");
     expect(sources).not.toBeNull();
     const link = within(sources!).getByRole("link", { name: /Reserve Bank of India: deposit insurance/i });
@@ -140,5 +171,31 @@ describe("AI planner", () => {
 
     await waitFor(() => expect(post).toHaveBeenCalledTimes(2));
     expect(post).toHaveBeenLastCalledWith("/api/v1/planner/chat", { body: { message: "Check this assumption" } });
+  });
+
+  it("renders dynamically generated proposals and scales modal projections to active plan data", async () => {
+    get.mockImplementation((path: string) => {
+      if (path === "/api/v1/planner/conversations") {
+        return Promise.resolve(ok({ data: [] }));
+      }
+      return Promise.resolve(ok({ data: [] }));
+    });
+    renderPlanner();
+
+    expect(await screen.findByText("Personalized for your goals")).toBeInTheDocument();
+    expect(screen.getByText("Increase Monthly SIP Contributions")).toBeInTheDocument();
+    expect(screen.getByText("Strengthen Emergency Buffer to 6 Months")).toBeInTheDocument();
+
+    const reviewButtons = screen.getAllByRole("button", { name: "Review & Apply to Plan" });
+    fireEvent.click(reviewButtons[0]);
+
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toBeInTheDocument();
+    expect(within(dialog).getByText("Projected Portfolio Value")).toBeInTheDocument();
+    expect(within(dialog).getByRole("slider")).toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Confirm & Stage in Scenarios" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(await screen.findByText(/staged in Scenarios workbench/i)).toBeInTheDocument();
   });
 });
