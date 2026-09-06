@@ -23,6 +23,11 @@ import {
   type ResearchExecutionOptions,
 } from "../../research/research.service";
 import type { LlmToolDefinition } from "../llm/llm-provider";
+import {
+  evaluatePlannerScenarioProposal,
+  PLANNER_SCENARIO_OVERLAY_JSON_SCHEMA,
+  PlannerScenarioProposalInputSchema,
+} from "../proposals/scenario-proposal";
 
 export interface ToolExecutionContext {
   researchOptions?: ResearchExecutionOptions;
@@ -100,7 +105,6 @@ export class ToolRegistry {
   }
 
   private registerDefaults() {
-    // 1. get_current_plan
     this.registerTool({
       name: "get_current_plan",
       description: "Retrieves the authenticated household's active financial plan, latest version, and calculated snapshot.",
@@ -131,7 +135,6 @@ export class ToolRegistry {
       },
     });
 
-    // 2. calculate_cash_flow
     this.registerTool({
       name: "calculate_cash_flow",
       description: "Calculates monthly net cash flow, debt-to-income ratio, and savings capacity deterministically.",
@@ -153,7 +156,6 @@ export class ToolRegistry {
       },
     });
 
-    // 3. calculate_emergency_fund
     this.registerTool({
       name: "calculate_emergency_fund",
       description: "Calculates target emergency fund requirements, target range, and funding gap.",
@@ -178,7 +180,6 @@ export class ToolRegistry {
       },
     });
 
-    // 4. calculate_loan_amortization
     this.registerTool({
       name: "calculate_loan_amortization",
       description: "Calculates loan EMI, total interest payable, total payment, and amortization schedule.",
@@ -199,7 +200,6 @@ export class ToolRegistry {
       },
     });
 
-    // 5. calculate_investment_projection
     this.registerTool({
       name: "calculate_investment_projection",
       description: "Calculates compound investment growth projections with monthly contributions.",
@@ -221,7 +221,6 @@ export class ToolRegistry {
       },
     });
 
-    // 6. calculate_goal_funding
     this.registerTool({
       name: "calculate_goal_funding",
       description: "Calculates required monthly savings and feasibility for a specific financial goal.",
@@ -246,7 +245,6 @@ export class ToolRegistry {
       },
     });
 
-    // 7. calculate_net_worth
     this.registerTool({
       name: "calculate_net_worth",
       description: "Calculates total assets, total liabilities, and total net worth.",
@@ -259,6 +257,7 @@ export class ToolRegistry {
             items: {
               type: "object",
               properties: {
+                id: { type: "string" },
                 name: { type: "string" },
                 category: { type: "string" },
                 value: { type: "string" },
@@ -272,6 +271,7 @@ export class ToolRegistry {
             items: {
               type: "object",
               properties: {
+                id: { type: "string" },
                 name: { type: "string" },
                 category: { type: "string" },
                 value: { type: "string" },
@@ -280,7 +280,6 @@ export class ToolRegistry {
               additionalProperties: false,
             },
           },
-          includeBreakdown: { type: "boolean" },
           policyVersion: { type: "string" },
         },
         additionalProperties: false,
@@ -290,7 +289,6 @@ export class ToolRegistry {
       },
     });
 
-    // 8. search_market_research
     this.registerTool({
       name: "search_market_research",
       description: "Searches approved official financial sources and retrieves verified, safe evidence snippets.",
@@ -316,6 +314,29 @@ export class ToolRegistry {
           researchRunId: result.run.id,
           evidence: result.evidence.map(serializeEvidence),
         };
+      },
+    });
+
+    this.registerTool({
+      name: "evaluate_scenario_draft",
+      description:
+        "Evaluates a proposed change against the household's current plan using the deterministic financial engine. This is read-only: it does not create, apply, or mutate a scenario or plan. Use this before making quantified what-if claims.",
+      parametersSchema: PlannerScenarioProposalInputSchema,
+      jsonSchema: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "Short user-facing name for the scenario draft" },
+          description: { type: "string", description: "What decision or change this draft is testing" },
+          overlay: PLANNER_SCENARIO_OVERLAY_JSON_SCHEMA,
+        },
+        required: ["name", "overlay"],
+        additionalProperties: false,
+      },
+      execute: async (householdId, _userId, args) => {
+        return evaluatePlannerScenarioProposal(
+          householdId,
+          args as z.infer<typeof PlannerScenarioProposalInputSchema>,
+        );
       },
     });
   }
