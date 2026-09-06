@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { createPlannerGraph } from "../../src/modules/planner/graph/planner-graph";
-import type { LlmProvider, LlmRequest, LlmResponse } from "../../src/modules/planner/llm/llm-provider";
+import type {
+  LlmProvider,
+  LlmRequest,
+  LlmResponse,
+} from "../../src/modules/planner/llm/llm-provider";
+import { trimConversationHistory } from "../../src/modules/planner/memory/conversation-memory";
 
 describe("Planner Bounded LangGraph Workflow", () => {
   const createMockLlm = (responseContent: string): LlmProvider => ({
@@ -75,6 +80,56 @@ describe("Planner Bounded LangGraph Workflow", () => {
     expect(result.finalAnswer?.content).toContain("emergency savings");
   });
 
+  it("places prior conversation turns before the current user message", async () => {
+    const requests: LlmRequest[] = [];
+    const mockLlm: LlmProvider = {
+      providerName: "mock-llm",
+      generate: async (request) => {
+        requests.push(request);
+        return {
+          content: "A ₹3 lakh down payment would reduce the amount you need to finance.",
+          provider: "mock-llm",
+          model: "mock-model",
+        };
+      },
+    };
+
+    const result = await createPlannerGraph({ llmProvider: mockLlm }).invoke({
+      householdId: "00000000-0000-0000-0000-000000000001",
+      userId: "00000000-0000-0000-0000-000000000002",
+      userMessage: "What if I put ₹3 lakh down instead?",
+      isAnalyzeOnly: false,
+      conversationHistory: [
+        { role: "user", content: "Can I afford a ₹12 lakh car?" },
+        { role: "assistant", content: "We should compare the car against your current plan." },
+      ],
+    });
+
+    expect(result.error).toBeUndefined();
+    const messages = requests[0].messages;
+    expect(messages.map((message) => message.role)).toEqual([
+      "system",
+      "user",
+      "assistant",
+      "user",
+    ]);
+    expect(messages[1].content).toContain("Can I afford a ₹12 lakh car?");
+    expect(messages[2].content).toContain("compare the car");
+    expect(messages[3].content).toContain("₹3 lakh down");
+  });
+
+  it("keeps only the newest conversation turns inside the configured memory budget", () => {
+    const history = Array.from({ length: 8 }, (_, index) => ({
+      role: index % 2 === 0 ? ("user" as const) : ("assistant" as const),
+      content: `message-${index}-${"x".repeat(20)}`,
+    }));
+
+    const trimmed = trimConversationHistory(history, 4, 10_000);
+    expect(trimmed).toHaveLength(4);
+    expect(trimmed[0].content).toContain("message-4");
+    expect(trimmed.at(-1)?.content).toContain("message-7");
+  });
+
   it("executes only an authorized typed tool and returns its result to the provider", async () => {
     const requests: LlmRequest[] = [];
     const mockLlm: LlmProvider = {
@@ -84,17 +139,30 @@ describe("Planner Bounded LangGraph Workflow", () => {
         if (requests.length === 1) {
           return {
             content: null,
-            toolCalls: [{ id: "call-1", name: "calculate_cash_flow", arguments: {
-              income: "100000.00", essentialExpenses: "40000.00",
-              discretionaryExpenses: "20000.00", emis: "10000.00", mandatoryObligations: "0.00",
-            } }],
+            toolCalls: [
+              {
+                id: "call-1",
+                name: "calculate_cash_flow",
+                arguments: {
+                  income: "100000.00",
+                  essentialExpenses: "40000.00",
+                  discretionaryExpenses: "20000.00",
+                  emis: "10000.00",
+                  mandatoryObligations: "0.00",
+                },
+              },
+            ],
             provider: "mock-llm",
             model: "mock-model",
           };
         }
         expect(request.messages.at(-1)?.role).toBe("tool");
         expect(request.messages.at(-1)?.content).toContain('"monthlySurplus":"30000.00"');
-        return { content: "Your deterministic monthly surplus is ₹30,000.", provider: "mock-llm", model: "mock-model" };
+        return {
+          content: "Your deterministic monthly surplus is ₹30,000.",
+          provider: "mock-llm",
+          model: "mock-model",
+        };
       },
     };
     const result = await createPlannerGraph({ llmProvider: mockLlm }).invoke({
@@ -113,7 +181,9 @@ describe("Planner Bounded LangGraph Workflow", () => {
       providerName: "mock-llm",
       generate: async () => ({
         content: null,
-        toolCalls: [{ id: "call-1", name: "execute_raw_sql", arguments: { query: "select 1" } }],
+        toolCalls: [
+          { id: "call-1", name: "execute_raw_sql", arguments: { query: "select 1" } },
+        ],
         provider: "mock-llm",
         model: "mock-model",
       }),
