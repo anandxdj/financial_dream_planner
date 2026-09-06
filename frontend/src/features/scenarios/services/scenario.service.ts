@@ -36,6 +36,8 @@ export async function runScenario(id: string) {
   return unwrap(response).data;
 }
 
+export type ScenarioEvaluation = Awaited<ReturnType<typeof runScenario>>;
+
 export async function applyScenario(id: string, body: ApplyScenarioBody = {}) {
   const response = await sdk.POST("/api/v1/scenarios/{id}/apply", {
     params: { path: { id } },
