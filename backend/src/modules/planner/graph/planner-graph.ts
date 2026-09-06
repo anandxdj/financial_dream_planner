@@ -8,6 +8,12 @@ import {
 } from "../context/financial-context";
 import type { LlmMessage, LlmProvider, LlmRequest } from "../llm/llm-provider";
 import type { Citation } from "../model";
+import {
+  createToolExecutionProvenance,
+  deduplicateCitations,
+  extractResearchCitations,
+  type PlannerToolExecutionProvenance,
+} from "../provenance/tool-provenance";
 import { validateCriticCitations } from "../safety/critic-validator";
 import { validateInputAgainstInjection, wrapUntrustedContent } from "../safety/prompt-injection";
 import { validateRiskPolicy } from "../safety/risk-validator";
@@ -36,7 +42,7 @@ export const PlannerGraphState = Annotation.Root({
   financialContext: Annotation<PlannerFinancialContext | undefined>(),
 
   evidence: Annotation<Citation[]>({
-    reducer: (curr, update) => (update ? [...curr, ...update] : curr),
+    reducer: (curr, update) => (update ? deduplicateCitations([...curr, ...update]) : curr),
     default: () => [],
   }),
 
@@ -44,6 +50,7 @@ export const PlannerGraphState = Annotation.Root({
     | {
         content: string;
         citations: Citation[];
+        toolExecutions: PlannerToolExecutionProvenance[];
       }
     | undefined
   >(),
@@ -69,6 +76,7 @@ export const PlannerGraphState = Annotation.Root({
     | {
         content: string;
         citations: Citation[];
+        metadata: Record<string, unknown>;
       }
     | undefined
   >(),
@@ -107,7 +115,6 @@ export function createPlannerGraph(dependencies: PlannerGraphDependencies) {
   const { llmProvider, toolContext, clock = () => new Date() } = dependencies;
   const toolRegistry = dependencies.toolRegistry ?? new ToolRegistry();
 
-  // 1. Supervisor Node
   const supervisorNode = async (state: PlannerState) => {
     try {
       validateInputAgainstInjection(state.userMessage);
@@ -167,7 +174,6 @@ export function createPlannerGraph(dependencies: PlannerGraphDependencies) {
     };
   };
 
-  // 2. Financial State Node
   const financialStateNode = async (state: PlannerState) => {
     try {
       return {
@@ -187,7 +193,6 @@ export function createPlannerGraph(dependencies: PlannerGraphDependencies) {
     }
   };
 
-  // 3. Research Node
   const researchNode = async (state: PlannerState) => {
     if (!state.intentClassification?.requiresResearch) {
       return { stepCount: 1 };
@@ -218,16 +223,14 @@ export function createPlannerGraph(dependencies: PlannerGraphDependencies) {
         stepCount: 1,
       };
     } catch {
-      // Research is optional for generic planning guidance; the planner will continue without it.
       return { stepCount: 1 };
     }
   };
 
-  // 4. Planner Node
   const plannerNode = async (state: PlannerState) => {
     const untrustedUserMessage = wrapUntrustedContent("user_input", state.userMessage);
     let evidenceContext = "";
-    if (state.evidence && state.evidence.length > 0) {
+    if (state.evidence.length > 0) {
       evidenceContext = state.evidence
         .map(
           (e) =>
@@ -272,6 +275,8 @@ ${evidenceContext || "No external evidence retrieved."}`;
       let response;
       let providerCalls = 0;
       let toolCalls = 0;
+      const toolExecutions: PlannerToolExecutionProvenance[] = [];
+      const toolEvidence: Citation[] = [];
 
       while (providerCalls < 3) {
         response = await llmProvider.generate({
@@ -299,6 +304,8 @@ ${evidenceContext || "No external evidence retrieved."}`;
             toolContext,
           );
           toolCalls += 1;
+          toolExecutions.push(createToolExecutionProvenance(call, result));
+          toolEvidence.push(...extractResearchCitations(result));
           messages.push({
             role: "tool",
             name: call.name,
@@ -316,21 +323,19 @@ ${evidenceContext || "No external evidence retrieved."}`;
         throw new AppError(502, "INVALID_PROVIDER_OUTPUT", "Planner produced empty output");
       }
 
-      const matchedCitations: Citation[] = [];
-      for (const evidence of state.evidence) {
-        if (content.includes(evidence.evidenceId)) {
-          matchedCitations.push(evidence);
-        }
-      }
+      const availableEvidence = deduplicateCitations([...state.evidence, ...toolEvidence]);
+      const matchedCitations = availableEvidence.filter((evidence) => content.includes(evidence.evidenceId));
 
-      if (state.evidence.length > 0 && matchedCitations.length === 0) {
+      if (availableEvidence.length > 0 && matchedCitations.length === 0) {
         throw new AppError(422, "INSUFFICIENT_EVIDENCE", "Research-backed output did not cite stored evidence");
       }
 
       return {
+        evidence: toolEvidence,
         plannerOutput: {
           content,
           citations: matchedCitations,
+          toolExecutions,
         },
         stepCount: 1,
         providerCallCount: providerCalls,
@@ -343,7 +348,6 @@ ${evidenceContext || "No external evidence retrieved."}`;
     }
   };
 
-  // 5. Risk Node
   const riskNode = async (state: PlannerState) => {
     if (!state.plannerOutput?.content) {
       return {
@@ -370,7 +374,6 @@ ${evidenceContext || "No external evidence retrieved."}`;
     };
   };
 
-  // 6. Critic Node
   const criticNode = async (state: PlannerState) => {
     if (!state.plannerOutput) {
       return {
@@ -405,6 +408,12 @@ ${evidenceContext || "No external evidence retrieved."}`;
       finalAnswer: {
         content: state.plannerOutput.content,
         citations: criticResult.validatedCitations,
+        metadata: {
+          grounding: "engine-backed",
+          planAsOf: state.financialContext?.planSummary?.asOf,
+          policyVersion: state.financialContext?.planSummary?.policyVersion,
+          toolExecutions: state.plannerOutput.toolExecutions,
+        },
       },
       stepCount: 1,
     };
