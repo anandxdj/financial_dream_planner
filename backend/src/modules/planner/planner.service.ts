@@ -8,6 +8,7 @@ import { FallbackLlmRouter } from "./llm/fallback-router";
 import { GeminiLlmAdapter } from "./llm/gemini-adapter";
 import type { LlmProvider } from "./llm/llm-provider";
 import { OpenAiLlmAdapter } from "./llm/openai-adapter";
+import { loadConversationHistory } from "./memory/conversation-memory";
 import {
   plannerConversations,
   plannerMessageCitations,
@@ -45,7 +46,6 @@ export async function postChatMessage(
   const retentionExpiresAt = computeRetentionExpiresAt(now, 90);
   let conversationId = input.conversationId;
 
-  // Verify or create conversation
   if (conversationId) {
     const [conv] = await db
       .select()
@@ -78,19 +78,40 @@ export async function postChatMessage(
     conversationId = newConv.id;
   }
 
+  const activeConversationId = conversationId;
   const userSeq = await db.transaction(async (tx) => {
-    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${conversationId}))`);
-    const [row] = await tx.select({ maxSeq: sql<number>`coalesce(max(${plannerMessages.sequenceNumber}), 0)` })
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${activeConversationId}))`);
+    const [row] = await tx
+      .select({ maxSeq: sql<number>`coalesce(max(${plannerMessages.sequenceNumber}), 0)` })
       .from(plannerMessages)
-      .where(and(eq(plannerMessages.conversationId, conversationId), eq(plannerMessages.householdId, householdId)));
+      .where(
+        and(
+          eq(plannerMessages.conversationId, activeConversationId),
+          eq(plannerMessages.householdId, householdId),
+        ),
+      );
     const maxSeq = Number(row?.maxSeq ?? 0);
     const nextUserSeq = maxSeq % 2 === 0 ? maxSeq + 1 : maxSeq + 2;
-    await tx.insert(plannerMessages).values({ householdId, conversationId, sender: "user", content: messageText,
-      sequenceNumber: nextUserSeq, citations: [], createdAt: now, retentionExpiresAt });
+    await tx.insert(plannerMessages).values({
+      householdId,
+      conversationId: activeConversationId,
+      sender: "user",
+      content: messageText,
+      sequenceNumber: nextUserSeq,
+      citations: [],
+      createdAt: now,
+      retentionExpiresAt,
+    });
     return nextUserSeq;
   });
 
-  // Execute Graph
+  const conversationHistory = await loadConversationHistory({
+    householdId,
+    conversationId: activeConversationId,
+    beforeSequenceNumber: userSeq,
+    now,
+  });
+
   const llmProvider = options.llmProvider ?? getDefaultLlmProvider();
   const graph = createPlannerGraph({
     llmProvider,
@@ -104,10 +125,11 @@ export async function postChatMessage(
     userId,
     userMessage: messageText,
     isAnalyzeOnly: false,
+    conversationHistory,
   });
 
   if (graphResult.error) {
-    // User message is preserved, but no assistant message is written
+    // Preserve the user's message for continuity and retry, but never write a fake assistant response.
     throw graphResult.error;
   }
 
@@ -118,32 +140,38 @@ export async function postChatMessage(
 
   const assistantSeq = userSeq + 1;
   const assistantMessage = await db.transaction(async (tx) => {
-    const [message] = await tx.insert(plannerMessages).values({
-      householdId,
-      conversationId,
-      sender: "assistant",
-      content: finalAnswer.content,
-      sequenceNumber: assistantSeq,
-      citations: finalAnswer.citations,
-      createdAt: new Date(),
-      retentionExpiresAt,
-    }).returning();
+    const [message] = await tx
+      .insert(plannerMessages)
+      .values({
+        householdId,
+        conversationId: activeConversationId,
+        sender: "assistant",
+        content: finalAnswer.content,
+        sequenceNumber: assistantSeq,
+        citations: finalAnswer.citations,
+        createdAt: new Date(),
+        retentionExpiresAt,
+      })
+      .returning();
     if (finalAnswer.citations.length > 0) {
-      await tx.insert(plannerMessageCitations).values(finalAnswer.citations.map((citation) => ({
-        householdId, messageId: message.id, evidenceId: citation.evidenceId,
-      })));
+      await tx.insert(plannerMessageCitations).values(
+        finalAnswer.citations.map((citation) => ({
+          householdId,
+          messageId: message.id,
+          evidenceId: citation.evidenceId,
+        })),
+      );
     }
     return message;
   });
 
-  // Update conversation updatedAt
   await db
     .update(plannerConversations)
     .set({ updatedAt: new Date() })
-    .where(eq(plannerConversations.id, conversationId));
+    .where(eq(plannerConversations.id, activeConversationId));
 
   return {
-    conversationId,
+    conversationId: activeConversationId,
     message: assistantMessage,
   };
 }
@@ -154,7 +182,6 @@ export async function analyzePlan(
   input: { conversationId?: string },
   options: PlannerServiceOptions = {},
 ): Promise<{ conversationId: string; message: SelectPlannerMessage }> {
-  // 1. Verify household has active current plan
   await getCurrentPlan(householdId);
 
   const now = options.clock ? options.clock() : new Date();
@@ -192,17 +219,39 @@ export async function analyzePlan(
     conversationId = newConv.id;
   }
 
+  const activeConversationId = conversationId;
   const userRequestText = "Please perform an in-depth analysis of my current active financial plan.";
   const userSeq = await db.transaction(async (tx) => {
-    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${conversationId}))`);
-    const [row] = await tx.select({ maxSeq: sql<number>`coalesce(max(${plannerMessages.sequenceNumber}), 0)` })
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${activeConversationId}))`);
+    const [row] = await tx
+      .select({ maxSeq: sql<number>`coalesce(max(${plannerMessages.sequenceNumber}), 0)` })
       .from(plannerMessages)
-      .where(and(eq(plannerMessages.conversationId, conversationId), eq(plannerMessages.householdId, householdId)));
+      .where(
+        and(
+          eq(plannerMessages.conversationId, activeConversationId),
+          eq(plannerMessages.householdId, householdId),
+        ),
+      );
     const maxSeq = Number(row?.maxSeq ?? 0);
     const nextUserSeq = maxSeq % 2 === 0 ? maxSeq + 1 : maxSeq + 2;
-    await tx.insert(plannerMessages).values({ householdId, conversationId, sender: "user", content: userRequestText,
-      sequenceNumber: nextUserSeq, citations: [], createdAt: now, retentionExpiresAt });
+    await tx.insert(plannerMessages).values({
+      householdId,
+      conversationId: activeConversationId,
+      sender: "user",
+      content: userRequestText,
+      sequenceNumber: nextUserSeq,
+      citations: [],
+      createdAt: now,
+      retentionExpiresAt,
+    });
     return nextUserSeq;
+  });
+
+  const conversationHistory = await loadConversationHistory({
+    householdId,
+    conversationId: activeConversationId,
+    beforeSequenceNumber: userSeq,
+    now,
   });
 
   const llmProvider = options.llmProvider ?? getDefaultLlmProvider();
@@ -218,6 +267,7 @@ export async function analyzePlan(
     userId,
     userMessage: userRequestText,
     isAnalyzeOnly: true,
+    conversationHistory,
   });
 
   if (graphResult.error) {
@@ -231,20 +281,27 @@ export async function analyzePlan(
 
   const assistantSeq = userSeq + 1;
   const assistantMessage = await db.transaction(async (tx) => {
-    const [message] = await tx.insert(plannerMessages).values({
-      householdId,
-      conversationId,
-      sender: "assistant",
-      content: finalAnswer.content,
-      sequenceNumber: assistantSeq,
-      citations: finalAnswer.citations,
-      createdAt: new Date(),
-      retentionExpiresAt,
-    }).returning();
+    const [message] = await tx
+      .insert(plannerMessages)
+      .values({
+        householdId,
+        conversationId: activeConversationId,
+        sender: "assistant",
+        content: finalAnswer.content,
+        sequenceNumber: assistantSeq,
+        citations: finalAnswer.citations,
+        createdAt: new Date(),
+        retentionExpiresAt,
+      })
+      .returning();
     if (finalAnswer.citations.length > 0) {
-      await tx.insert(plannerMessageCitations).values(finalAnswer.citations.map((citation) => ({
-        householdId, messageId: message.id, evidenceId: citation.evidenceId,
-      })));
+      await tx.insert(plannerMessageCitations).values(
+        finalAnswer.citations.map((citation) => ({
+          householdId,
+          messageId: message.id,
+          evidenceId: citation.evidenceId,
+        })),
+      );
     }
     return message;
   });
@@ -252,10 +309,10 @@ export async function analyzePlan(
   await db
     .update(plannerConversations)
     .set({ updatedAt: new Date() })
-    .where(eq(plannerConversations.id, conversationId));
+    .where(eq(plannerConversations.id, activeConversationId));
 
   return {
-    conversationId,
+    conversationId: activeConversationId,
     message: assistantMessage,
   };
 }
@@ -283,7 +340,8 @@ export async function listConversations(
   const rows = await query;
   const hasMore = rows.length > limit;
   const items = hasMore ? rows.slice(0, limit) : rows;
-  const nextCursor = hasMore && items.length > 0 ? items[items.length - 1].createdAt.toISOString() : undefined;
+  const nextCursor =
+    hasMore && items.length > 0 ? items[items.length - 1].createdAt.toISOString() : undefined;
 
   return {
     data: items,
@@ -296,7 +354,6 @@ export async function getConversationMessages(
   conversationId: string,
   now = new Date(),
 ): Promise<SelectPlannerMessage[]> {
-  // Check conversation exists and belongs to household
   const [conv] = await db
     .select()
     .from(plannerConversations)
