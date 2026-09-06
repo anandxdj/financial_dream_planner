@@ -1,4 +1,4 @@
-import { Reports } from "@/features/planner/reports";
+import { Reports } from "@/features/reports";
 
 export default function ReportsPage() {
   return <Reports />;

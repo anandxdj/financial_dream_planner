@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Overview } from "./overview";
+import * as planningQueries from "./planning-queries";
 
 const { currentPlan, planningState, goalsData, feasibilityData, accountsData, recordedData } = vi.hoisted(() => ({
   planningState: { revision: 7 },
@@ -107,5 +108,44 @@ describe("Overview Financial Command Center", () => {
     expect(screen.getByText("Emergency Fund")).toBeInTheDocument();
     expect(screen.getByText("House Downpayment")).toBeInTheDocument();
     expect(screen.getByText(/2 manually maintained accounts/i)).toBeInTheDocument();
+  });
+
+  it("renders only real goals and inline add goal slot without dummy showcase cards", () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <Overview />
+      </QueryClientProvider>
+    );
+
+    // Verifies real goals are rendered
+    expect(screen.getByText("Emergency Fund")).toBeInTheDocument();
+    expect(screen.getByText("House Downpayment")).toBeInTheDocument();
+    // Verifies inline open slot is rendered
+    expect(screen.getByText("Add another goal")).toBeInTheDocument();
+    // Verifies fake default showcase items are NOT rendered
+    expect(screen.queryByText("Buy a Home")).not.toBeInTheDocument();
+    expect(screen.queryByText("Plan a Dream Vacation")).not.toBeInTheDocument();
+    expect(screen.queryByText("Child's Education")).not.toBeInTheDocument();
+  });
+
+  it("renders dedicated empty state banner when user has 0 goals", () => {
+    vi.spyOn(planningQueries, "useGoals").mockReturnValueOnce({
+      data: [],
+      isPending: false,
+      error: null,
+      refetch: vi.fn(),
+    } as any);
+
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <Overview />
+      </QueryClientProvider>
+    );
+
+    expect(screen.getByText("No goals created yet")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /create your first goal/i })).toBeInTheDocument();
+    expect(screen.getByText(/0 goals set — Start planning your financial dreams/i)).toBeInTheDocument();
   });
 });

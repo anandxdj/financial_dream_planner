@@ -5,24 +5,24 @@ import { DataSources } from "./data-sources";
 describe("data sources", () => {
   afterEach(cleanup);
 
-  it("clearly identifies the preview and disconnected Android handoff", () => {
+  it("clearly identifies the data sources and disconnected Android handoff", () => {
     render(<DataSources />);
 
-    expect(screen.getByText("Demo preview")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Data sources", level: 1 })).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent("Disconnected");
     expect(screen.getByText(/browser cannot read your SMS messages/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /preview connected state/i })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: /connect companion/i })).toHaveAttribute("aria-pressed", "false");
   });
 
   it("previews connection freshness and review counts using local state", () => {
     render(<DataSources />);
 
-    fireEvent.click(screen.getByRole("button", { name: /preview connected state/i }));
+    fireEvent.click(screen.getByRole("button", { name: /connect companion/i }));
 
-    expect(screen.getByRole("status")).toHaveTextContent("Connected for demo");
+    expect(screen.getByRole("status")).toHaveTextContent("Connected");
     expect(screen.getByText("Fresh 3 minutes ago")).toBeInTheDocument();
     expect(screen.getByText("18 transactions")).toBeInTheDocument();
     expect(screen.getByText("3 transactions")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /disconnect demo/i })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: /disconnect companion/i })).toHaveAttribute("aria-pressed", "true");
   });
 });

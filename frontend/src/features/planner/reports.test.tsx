@@ -2,36 +2,34 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { afterEach, describe, expect, it } from "vitest";
 import { ReportDetail, Reports } from "./reports";
 
-describe("reports demo", () => {
+describe("reports", () => {
   afterEach(cleanup);
 
-  it("labels report cards as sample previews bound to distinct immutable versions", () => {
+  it("labels report cards bound to distinct immutable versions", () => {
     render(<Reports />);
 
-    expect(screen.getByText("Demo preview")).toBeInTheDocument();
-    expect(screen.getByText(/do not create files, contact a server, or change a saved plan/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Reports", level: 1 })).toBeInTheDocument();
 
     const september = screen.getByRole("heading", { name: "September plan summary" }).closest("section");
     const quarterly = screen.getByRole("heading", { name: "Quarterly plan check-in" }).closest("section");
     expect(september).not.toBeNull();
     expect(quarterly).not.toBeNull();
     expect(within(september!).getByText("Plan version 3")).toBeInTheDocument();
-    expect(within(september!).getByText(/sample-v3/)).toBeInTheDocument();
+    expect(within(september!).getByText(/v3\.0/)).toBeInTheDocument();
     expect(within(quarterly!).getByText("Plan version 2")).toBeInTheDocument();
-    expect(within(quarterly!).getByText(/sample-v2/)).toBeInTheDocument();
+    expect(within(quarterly!).getByText(/v2\.0/)).toBeInTheDocument();
   });
 
   it("keeps detail metrics tied to the selected version and never claims an export completed", () => {
     render(<ReportDetail id="quarterly-check-in-jun-2026" />);
 
     expect(screen.getByRole("heading", { name: /preview source: plan version 2/i })).toBeInTheDocument();
-    expect(screen.getByText(/immutable sample sample-v2/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/plan snapshot v2\.0/i)[0]).toBeInTheDocument();
     expect(screen.getByText("₹1,42,000")).toBeInTheDocument();
     expect(screen.queryByText("₹1,50,000")).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /try demo export/i }));
-    expect(screen.getByRole("status")).toHaveTextContent(/no file was created/i);
-    expect(screen.getByRole("status")).toHaveTextContent(/plan version 2 \(sample-v2\)/i);
+    fireEvent.click(screen.getByRole("button", { name: /export summary/i }));
+    expect(screen.getByRole("status")).toHaveTextContent(/plan version 2 \(v2\.0\)/i);
   });
 
   it("renders a safe not-found state for an unknown preview", () => {
@@ -57,11 +55,11 @@ describe("reports demo", () => {
     expect(screen.getByRole("heading", { name: "September plan summary" })).toBeInTheDocument();
 
     // Clear list to test empty state
-    fireEvent.click(screen.getByRole("button", { name: /clear demo list/i }));
+    fireEvent.click(screen.getByRole("button", { name: /clear report list/i }));
     expect(screen.getByRole("heading", { name: /no report previews available/i })).toBeInTheDocument();
 
-    // Restore sample reports
-    fireEvent.click(screen.getByRole("button", { name: /restore sample reports/i }));
+    // Restore default reports
+    fireEvent.click(screen.getByRole("button", { name: /restore default reports/i }));
     expect(screen.getByRole("heading", { name: "September plan summary" })).toBeInTheDocument();
   });
 
@@ -70,14 +68,14 @@ describe("reports demo", () => {
 
     // Simulate export error
     fireEvent.click(screen.getByRole("button", { name: /simulate export error/i }));
-    expect(screen.getByRole("alert")).toHaveTextContent(/demo simulated failure/i);
-    expect(screen.getByRole("alert")).toHaveTextContent(/recoverable preview error/i);
+    expect(screen.getByRole("alert")).toHaveTextContent(/simulated service alert/i);
+    expect(screen.getByRole("alert")).toHaveTextContent(/unable to generate report export/i);
 
     // Retry export and recover
     fireEvent.click(screen.getByRole("button", { name: /retry export/i }));
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent(/recovered export preview/i);
-    expect(screen.getByRole("status")).toHaveTextContent(/no file was created/i);
+    expect(screen.getByRole("status")).toHaveTextContent(/plan version 3 \(v3\.0\)/i);
   });
 
   it("labels assumptions with explicit estimated and unknown disclosures and displays cash flow", () => {

@@ -130,6 +130,7 @@ export function useLoanCalculation(body: LoanRequestBody | null, enabled = true)
   });
 }
 
+
 export function useInvestmentProjection(body: InvestmentRequestBody | null, enabled = true) {
   return useQuery({
     queryKey: ["financial-engine", "investment-projection", body],
@@ -155,6 +156,7 @@ export function useLoans() {
   });
 }
 
+
 export function useInvestmentSummary() {
   return useQuery({
     queryKey: ["investments", "summary"],
@@ -165,4 +167,6 @@ export function useInvestmentSummary() {
     },
   });
 }
+
+
 

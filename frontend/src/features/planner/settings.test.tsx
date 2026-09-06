@@ -122,4 +122,51 @@ describe("settings", () => {
     fireEvent.click(signoutBtn);
     expect(logoutMutate).toHaveBeenCalledTimes(1);
   });
+
+  it("renders Household Members and Security & Privacy guarantees card", () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <Settings />
+      </QueryClientProvider>,
+    );
+
+    // Profile & Household information
+    expect(screen.getByText(/household members/i)).toBeInTheDocument();
+    expect(screen.getByText(/3 active members/i)).toBeInTheDocument();
+    expect(screen.getByText("Priya Verma")).toBeInTheDocument();
+    expect(screen.getByText("Aarav Verma")).toBeInTheDocument();
+
+    // Security & Privacy guarantees
+    expect(screen.getByText("Security & Privacy guarantees")).toBeInTheDocument();
+    expect(screen.getByText("Bank-grade encryption")).toBeInTheDocument();
+    expect(screen.getByText("Zero third-party data selling")).toBeInTheDocument();
+    expect(screen.getByText("Strict credential isolation")).toBeInTheDocument();
+
+    // Data export & deletion safety zone
+    expect(screen.getByText("Export Financial Data (JSON)")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /export my financial data/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /delete household profile/i })).toBeInTheDocument();
+  });
+
+  it("opens accessible confirmation modal when clicking Delete Household Profile", () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <Settings />
+      </QueryClientProvider>,
+    );
+
+    const deleteBtn = screen.getByRole("button", { name: /delete household profile/i });
+    fireEvent.click(deleteBtn);
+
+    const modal = screen.getByRole("dialog");
+    expect(modal).toBeInTheDocument();
+    expect(modal).toHaveAttribute("aria-modal", "true");
+    expect(screen.getByText(/are you sure you want to permanently delete all data/i)).toBeInTheDocument();
+
+    // Can close with Cancel
+    fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
 });

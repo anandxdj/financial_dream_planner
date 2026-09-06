@@ -22,10 +22,10 @@ describe("Financial Dream Planner Landing Page", () => {
     expect(planLinks.length).toBeGreaterThan(0);
     expect(planLinks[0].getAttribute("href")).toMatch(/\/onboarding/i);
 
-    // Watch demo anchor link
+    // Calculator anchor link
     expect(
-      screen.getByRole("link", { name: /watch demo/i })
-    ).toHaveAttribute("href", "#calculator-demo");
+      screen.getByRole("link", { name: /try interactive calculator/i })
+    ).toHaveAttribute("href", "#calculator-preview");
 
     // Section 02: Features
     expect(

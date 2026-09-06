@@ -15,6 +15,7 @@ const { getTransactions, del, patch, post, refreshViews, routerPush } = vi.hoist
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: routerPush }),
   useSearchParams: () => new URLSearchParams(),
+  usePathname: () => "/dashboard/transactions",
 }));
 
 vi.mock("./queries", async (importOriginal) => {

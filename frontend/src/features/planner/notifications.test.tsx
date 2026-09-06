@@ -6,10 +6,9 @@ import { Notifications } from "./notifications";
 describe("Notifications", () => {
   afterEach(cleanup);
 
-  it("labels the local demo and renders valid planner deep links", () => {
+  it("renders valid planner deep links and page headings", () => {
     render(<Notifications />);
-    expect(screen.getByText("Demo preview")).toBeInTheDocument();
-    expect(screen.getByText("Local state only")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Notifications", level: 1 })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Review plan" })).toHaveAttribute("href", "/dashboard/plan");
     expect(screen.getByRole("link", { name: "Review transactions" })).toHaveAttribute("href", "/dashboard/transactions");
     expect(screen.getByRole("link", { name: "View goals" })).toHaveAttribute("href", "/dashboard/goals");
@@ -26,11 +25,11 @@ describe("Notifications", () => {
     expect(screen.queryByText("Your plan is ready for review")).not.toBeInTheDocument();
   });
 
-  it("offers a reversible empty-state demo control", () => {
+  it("offers a reversible empty-state control", () => {
     render(<Notifications />);
-    fireEvent.click(screen.getByRole("button", { name: "Clear demo inbox" }));
-    expect(screen.getByRole("heading", { name: "Demo inbox cleared" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Restore demo notifications" }));
+    fireEvent.click(screen.getByRole("button", { name: "Clear all notifications" }));
+    expect(screen.getByRole("heading", { name: "Inbox cleared" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Reset notifications" }));
     expect(screen.getByText("Your plan is ready for review")).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent("2 unread notifications");
   });
@@ -65,8 +64,7 @@ describe("Notifications", () => {
   it("renders the /dashboard/notifications route page", () => {
     render(<NotificationsPage />);
     expect(screen.getByRole("heading", { name: "Notifications" })).toBeInTheDocument();
-    expect(screen.getByText("Demo preview")).toBeInTheDocument();
-    expect(screen.getByText("Local state only")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /notification preferences/i })).toBeInTheDocument();
   });
 });
 

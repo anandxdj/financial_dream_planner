@@ -33,7 +33,7 @@ export default function HomePage() {
         {/* 06 Security & FAQ */}
         <SecurityFaqSection />
 
-        {/* 07 Can I Afford This? Calculator & Interactive Demo */}
+        {/* 07 Can I Afford This? Calculator & Interactive Sandbox */}
         <CalculatorPreviewSection />
       </main>
 

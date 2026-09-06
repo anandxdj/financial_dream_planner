@@ -10,6 +10,7 @@ const { post, push } = vi.hoisted(() => ({
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push }),
+  usePathname: () => "/dashboard/scenarios",
 }));
 
 vi.mock("@/lib/sdk", () => ({

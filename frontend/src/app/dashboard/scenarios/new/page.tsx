@@ -1,4 +1,4 @@
-import { ScenarioCreate } from "@/features/planner/scenarios";
+import { ScenarioCreate } from "@/features/scenarios";
 export default function Page() {
   return <ScenarioCreate />;
 }

@@ -1,4 +1,4 @@
-import { Affordability } from "@/features/planner/affordability";
+import { Affordability } from "@/features/affordability";
 
 export const metadata = {
   title: "Can I afford this? | Financial Dream Planner",

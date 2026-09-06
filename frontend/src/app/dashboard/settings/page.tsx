@@ -1,4 +1,4 @@
-import { Settings } from "@/features/planner/settings";
+import { Settings } from "@/features/settings";
 
 export default function SettingsPage() {
   return <Settings />;

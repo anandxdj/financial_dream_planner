@@ -9,6 +9,10 @@ const { del, patch, post } = vi.hoisted(() => ({
   post: vi.fn(),
 }));
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
 vi.mock("@/lib/sdk", () => ({
   sdk: {
     POST: post,
@@ -39,6 +43,12 @@ vi.mock("./planning-queries", () => ({
         },
       ],
     },
+    isPending: false,
+    error: null,
+    refetch: vi.fn(),
+  }),
+  useGoalContributions: () => ({
+    data: [],
     isPending: false,
     error: null,
     refetch: vi.fn(),
@@ -96,4 +106,33 @@ describe("goals", () => {
       params: { path: { id: "g1" } },
     });
   });
+
+  it("renders status filter tabs, milestones panel, AI suggestions, and footer helper", () => {
+    render(<Goals />);
+
+    // Filter tabs
+    expect(screen.getByRole("button", { name: /^all/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^in progress/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^not started/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^completed/i })).toBeInTheDocument();
+
+    // Board 08: Milestone tracker
+    expect(screen.getByText("Milestones keep you motivated")).toBeInTheDocument();
+    expect(screen.getByText(/a little progress each day adds up to big results/i)).toBeInTheDocument();
+
+    // Board 06: AI Suggestions
+    expect(screen.getByText("Smarter suggestions for your bigger tomorrow")).toBeInTheDocument();
+    expect(screen.getByText("You're on track!")).toBeInTheDocument();
+    expect(screen.getByText("Plan an International Trip")).toBeInTheDocument();
+
+    // Board 09: Footer CTA Helper
+    expect(screen.getByText("Ready to turn your goals into reality?")).toBeInTheDocument();
+    expect(screen.getByText(/no credit card required/i)).toBeInTheDocument();
+
+    // Test filtering interaction
+    fireEvent.click(screen.getByRole("button", { name: /^not started/i }));
+    // All 3 mock goals have savings > 0, so "not started" will show empty filter message
+    expect(screen.getByText(/no goals found in "not started"/i)).toBeInTheDocument();
+  });
 });
+

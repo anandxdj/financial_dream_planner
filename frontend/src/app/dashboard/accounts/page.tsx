@@ -1,2 +1,2 @@
-import { Accounts } from "@/features/planner/accounts";
+import { Accounts } from "@/features/accounts";
 export default function Page() { return <Accounts />; }

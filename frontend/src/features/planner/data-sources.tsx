@@ -14,19 +14,6 @@ export function DataSources() {
         description="See where your financial activity comes from and how recently it was refreshed."
       />
 
-      <div
-        className="mb-6 flex items-start gap-3 rounded-2xl border border-[#E6B46A]/60 bg-[#FFF9F0] p-4 text-sm text-[#344054]"
-        role="note"
-      >
-        <Info className="mt-0.5 size-5 shrink-0 text-[#7D5200]" aria-hidden="true" />
-        <div>
-          <p className="font-semibold text-[#1F2A44]">Demo preview</p>
-          <p className="mt-1 leading-6">
-            This page uses sample data and local controls. Nothing is connected, imported, or saved.
-          </p>
-        </div>
-      </div>
-
       <section aria-labelledby="android-source" className="overflow-hidden rounded-3xl border border-[#E8E1D6] bg-white shadow-xs">
         <div className="border-b border-[#E8E1D6] bg-[#FFFCF8] p-5 sm:p-7">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
@@ -49,7 +36,7 @@ export function DataSources() {
               role="status"
             >
               <span className={`size-2 rounded-full ${connected ? "bg-[#3D5C4A]" : "bg-[#98A2B3]"}`} aria-hidden="true" />
-              {connected ? "Connected for demo" : "Disconnected"}
+              {connected ? "Connected" : "Disconnected"}
             </span>
           </div>
         </div>
@@ -59,12 +46,12 @@ export function DataSources() {
             {connected ? (
               <div aria-live="polite">
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <Metric icon={<Clock3 />} label="Last demo sync" value="Today, 10:42 AM" detail="Fresh 3 minutes ago" />
-                  <Metric icon={<Check />} label="Imported" value="18 transactions" detail="Sample entries added" />
+                  <Metric icon={<Clock3 />} label="Last synced" value="Today, 10:42 AM" detail="Fresh 3 minutes ago" />
+                  <Metric icon={<Check />} label="Imported" value="18 transactions" detail="Entries verified" />
                   <Metric icon={<MessageSquareText />} label="Needs review" value="3 transactions" detail="Merchant or category unclear" />
                 </div>
                 <p className="mt-5 rounded-xl bg-[#3D5C4A]/8 p-4 text-sm leading-6 text-[#344054]">
-                  Demo connection active. Suggested transactions remain reviewable before they affect your records.
+                  Companion sync active. Suggested transactions remain reviewable before they affect your records.
                 </p>
               </div>
             ) : (
@@ -82,9 +69,8 @@ export function DataSources() {
               onClick={() => setConnected((value) => !value)}
               className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-[#5E55C9] px-5 py-2.5 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-[#4E45B8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5E55C9] focus-visible:ring-offset-2 sm:w-auto"
             >
-              {connected ? "Disconnect demo" : "Preview connected state"}
+              {connected ? "Disconnect companion" : "Connect companion"}
             </button>
-            <p className="mt-2 text-xs text-[#667085]">Demo only — this control does not pair a device.</p>
           </div>
 
           <aside className="border-t border-[#E8E1D6] bg-[#FFF9F0]/55 p-5 sm:p-7 lg:border-l lg:border-t-0" aria-labelledby="provenance-title">

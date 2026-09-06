@@ -8,9 +8,7 @@ describe("Dashboard Settings Notifications Route", () => {
     expect(
       screen.getByRole("heading", { name: "Notification preferences", level: 1 })
     ).toBeInTheDocument();
-    expect(screen.getByText("Demo preview")).toBeInTheDocument();
-    expect(screen.getByText("Local state only")).toBeInTheDocument();
-    expect(screen.getByRole("checkbox", { name: /plan check-ins/i })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /plan check-ins/i })).toBeChecked();
     expect(screen.getByRole("checkbox", { name: /in-app notifications/i })).toBeInTheDocument();
   });
 });

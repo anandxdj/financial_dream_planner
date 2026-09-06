@@ -1,4 +1,4 @@
-import { LoansOverview } from "@/features/planner/loans";
+import { LoansOverview } from "@/features/loans";
 export default function Page() {
   return <LoansOverview />;
 }

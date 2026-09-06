@@ -1,2 +1,2 @@
-import { Plan } from "@/features/planner/plan";
+import { Plan } from "@/features/plan";
 export default function Page() { return <Plan />; }

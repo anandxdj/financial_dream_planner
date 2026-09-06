@@ -1,4 +1,4 @@
-import { ScenariosList } from "@/features/planner/scenarios";
+import { ScenariosList } from "@/features/scenarios";
 export default function Page() {
   return <ScenariosList />;
 }

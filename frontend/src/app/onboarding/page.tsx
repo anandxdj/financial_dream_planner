@@ -1,4 +1,4 @@
-import { Onboarding } from "@/features/planner/onboarding";
+import { Onboarding } from "@/features/onboarding";
 
 export default function Page() {
   return <Onboarding />;
