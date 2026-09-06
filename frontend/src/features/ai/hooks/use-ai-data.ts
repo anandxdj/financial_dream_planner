@@ -12,7 +12,11 @@ import {
   getAiGoals,
   getAiPlanning,
 } from "../services/financial-context.service";
-import { stagePlannerProposal } from "../services/proposal.service";
+import {
+  stagePlannerProposal,
+  type StagePlannerProposalOptions,
+} from "../services/proposal.service";
+import type { PlannerScenarioProposal } from "../types";
 
 export function useAiFinancialContext() {
   const currentPlan = useQuery({
@@ -61,5 +65,13 @@ export function usePlannerAnalyzeMutation() {
 }
 
 export function useStagePlannerProposalMutation() {
-  return useMutation({ mutationFn: stagePlannerProposal });
+  return useMutation({
+    mutationFn: ({
+      proposal,
+      options,
+    }: {
+      proposal: PlannerScenarioProposal;
+      options?: StagePlannerProposalOptions;
+    }) => stagePlannerProposal(proposal, options),
+  });
 }
