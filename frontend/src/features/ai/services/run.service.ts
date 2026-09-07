@@ -1,5 +1,5 @@
 import { API_ORIGIN } from "@/constants/api";
-import { api } from "@/lib/api";
+import { api, refreshSession } from "@/lib/api";
 import { subscribeRun, type RunEvent } from "@/lib/sdk";
 
 export type PlannerRunRequest =
@@ -29,7 +29,15 @@ export class PlannerRunError extends Error {
 }
 
 function isCompletedPayload(value: Record<string, unknown>): value is PlannerRunCompletedPayload {
-  return typeof value.conversationId === "string" && Boolean(value.message) && typeof value.message === "object";
+  return (
+    typeof value.conversationId === "string" &&
+    Boolean(value.message) &&
+    typeof value.message === "object"
+  );
+}
+
+function isUnauthorizedStreamError(error: unknown) {
+  return error instanceof Error && /run stream failed with 401/i.test(error.message);
 }
 
 export async function startPlannerRun(input: PlannerRunRequest): Promise<PlannerRunCreated> {
@@ -103,6 +111,9 @@ export async function waitForPlannerRun(
       );
     } catch (error) {
       if (options.signal?.aborted) throw error;
+      if (isUnauthorizedStreamError(error)) {
+        await refreshSession();
+      }
       if (attempt >= maxReconnects) throw error;
       continue;
     }
