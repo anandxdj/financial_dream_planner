@@ -21,11 +21,16 @@ describe("PlannerRunService", () => {
       householdId: HOUSEHOLD_ID,
       userId: USER_ID,
       plannerKind: "chat",
-      message: "Can I afford a car?",
     });
+    expect(run.input).not.toHaveProperty("message");
     expect(add).toHaveBeenCalledWith(
       "planner_chat",
-      expect.objectContaining({ runId: run.id, householdId: HOUSEHOLD_ID, userId: USER_ID }),
+      expect.objectContaining({
+        runId: run.id,
+        householdId: HOUSEHOLD_ID,
+        userId: USER_ID,
+        input: expect.objectContaining({ kind: "chat", message: "Can I afford a car?" }),
+      }),
       expect.objectContaining({ jobId: run.id, attempts: 1 }),
     );
     expect((await runs.eventsAfter(run.id)).map((event) => event.payload)).toContainEqual({
@@ -42,9 +47,6 @@ describe("PlannerRunService", () => {
     await expect(
       service.create(HOUSEHOLD_ID, USER_ID, { kind: "analyze" }),
     ).rejects.toMatchObject({ code: "QUEUE_UNAVAILABLE" });
-
-    // The service creates exactly one run before queueing, so inspect it through the emitted event path.
-    // The in-memory store is intentionally opaque; queue failure behavior is also asserted by the thrown code.
   });
 
   it("rejects invalid planner run input before creating work", async () => {
