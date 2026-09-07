@@ -8,6 +8,9 @@ import type { RunEventType } from "./model";
 export interface RunStore {
   create(kind: string, input: Record<string, unknown>): Promise<SelectJobRun>;
   get(id: string): Promise<SelectJobRun | undefined>;
+  markRunning(id: string): Promise<SelectJobRun | undefined>;
+  complete(id: string, result: Record<string, unknown>): Promise<SelectJobRun | undefined>;
+  fail(id: string, error: Record<string, unknown>): Promise<SelectJobRun | undefined>;
   cancel(id: string): Promise<SelectJobRun | undefined>;
   append(runId: string, type: RunEventType, payload: Record<string, unknown>): Promise<SelectRunEvent>;
   eventsAfter(runId: string, eventId?: string): Promise<SelectRunEvent[]>;
@@ -22,6 +25,39 @@ export class PostgresRunStore implements RunStore {
 
   async get(id: string) {
     return (await this.database.select().from(jobRuns).where(eq(jobRuns.id, id)).limit(1))[0];
+  }
+
+  async markRunning(id: string) {
+    const updated = (
+      await this.database
+        .update(jobRuns)
+        .set({ status: "running", startedAt: new Date() })
+        .where(and(eq(jobRuns.id, id), eq(jobRuns.status, "queued")))
+        .returning()
+    )[0];
+    return updated ?? this.get(id);
+  }
+
+  async complete(id: string, result: Record<string, unknown>) {
+    const updated = (
+      await this.database
+        .update(jobRuns)
+        .set({ status: "completed", result, error: null, completedAt: new Date() })
+        .where(and(eq(jobRuns.id, id), eq(jobRuns.status, "running")))
+        .returning()
+    )[0];
+    return updated ?? this.get(id);
+  }
+
+  async fail(id: string, error: Record<string, unknown>) {
+    const updated = (
+      await this.database
+        .update(jobRuns)
+        .set({ status: "failed", error, completedAt: new Date() })
+        .where(and(eq(jobRuns.id, id), inArray(jobRuns.status, ["queued", "running"])))
+        .returning()
+    )[0];
+    return updated ?? this.get(id);
   }
 
   async cancel(id: string) {
@@ -102,6 +138,39 @@ export class InMemoryRunStore implements RunStore {
     return this.runs.get(id);
   }
 
+  async markRunning(id: string) {
+    const run = this.runs.get(id);
+    if (!run || run.status !== "queued") return run;
+    const updated: SelectJobRun = { ...run, status: "running", startedAt: new Date(), updatedAt: new Date() };
+    this.runs.set(id, updated);
+    return updated;
+  }
+
+  async complete(id: string, result: Record<string, unknown>) {
+    const run = this.runs.get(id);
+    if (!run || run.status !== "running") return run;
+    const now = new Date();
+    const updated: SelectJobRun = {
+      ...run,
+      status: "completed",
+      result,
+      error: null,
+      completedAt: now,
+      updatedAt: now,
+    };
+    this.runs.set(id, updated);
+    return updated;
+  }
+
+  async fail(id: string, error: Record<string, unknown>) {
+    const run = this.runs.get(id);
+    if (!run || !["queued", "running"].includes(run.status)) return run;
+    const now = new Date();
+    const updated: SelectJobRun = { ...run, status: "failed", error, completedAt: now, updatedAt: now };
+    this.runs.set(id, updated);
+    return updated;
+  }
+
   async cancel(id: string) {
     const run = this.runs.get(id);
     if (!run || !["queued", "running"].includes(run.status)) return run;
@@ -165,6 +234,24 @@ export class RunService {
     if (!runBelongsToHousehold(run, householdId)) {
       throw new AppError(404, "RUN_NOT_FOUND", "Run not found");
     }
+    return run;
+  }
+
+  async markRunning(id: string) {
+    const run = await this.store.markRunning(id);
+    if (!run) throw new AppError(404, "RUN_NOT_FOUND", "Run not found");
+    return run;
+  }
+
+  async complete(id: string, result: Record<string, unknown>) {
+    const run = await this.store.complete(id, result);
+    if (!run) throw new AppError(404, "RUN_NOT_FOUND", "Run not found");
+    return run;
+  }
+
+  async fail(id: string, error: Record<string, unknown>) {
+    const run = await this.store.fail(id, error);
+    if (!run) throw new AppError(404, "RUN_NOT_FOUND", "Run not found");
     return run;
   }
 
