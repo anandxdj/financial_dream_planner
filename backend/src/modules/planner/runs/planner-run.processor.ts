@@ -7,7 +7,7 @@ import {
   postChatMessage as postChatMessageDefault,
   serializeMessage as serializeMessageDefault,
 } from "../planner.service";
-import { PlannerRunRequestSchema } from "./planner-run.service";
+import { PlannerRunRequestSchema } from "./planner-run.model";
 
 export const PLANNER_RUN_JOB = {
   chat: "planner_chat",
