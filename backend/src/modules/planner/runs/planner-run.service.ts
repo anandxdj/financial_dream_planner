@@ -1,26 +1,8 @@
-import { z } from "zod";
 import { AppError } from "../../../shared/errors/app-error";
 import { durableJobOptions } from "../../jobs/queue";
 import { RUN_EVENT_TYPE } from "../../runs/model";
 import type { RunService } from "../../runs/run.service";
-
-export const PlannerRunRequestSchema = z.discriminatedUnion("kind", [
-  z
-    .object({
-      kind: z.literal("chat"),
-      message: z.string().trim().min(1).max(4000),
-      conversationId: z.string().uuid().optional(),
-    })
-    .strict(),
-  z
-    .object({
-      kind: z.literal("analyze"),
-      conversationId: z.string().uuid().optional(),
-    })
-    .strict(),
-]);
-
-export type PlannerRunRequest = z.infer<typeof PlannerRunRequestSchema>;
+import { PlannerRunRequestSchema } from "./planner-run.model";
 
 export interface PlannerRunQueue {
   add(
