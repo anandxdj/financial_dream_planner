@@ -6,11 +6,18 @@ export type PlannerRunRequest =
   | { kind: "chat"; message: string; conversationId?: string }
   | { kind: "analyze"; conversationId?: string };
 
+export type PlannerRunStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
+
 export interface PlannerRunCreated {
   id: string;
   kind: string;
-  status: "queued" | "running" | "completed" | "failed" | "cancelled";
+  status: PlannerRunStatus;
   createdAt: string;
+}
+
+export interface PlannerRunState extends PlannerRunCreated {
+  result: Record<string, unknown> | null;
+  error: Record<string, unknown> | null;
 }
 
 export interface PlannerRunCompletedPayload {
@@ -40,14 +47,46 @@ function isUnauthorizedStreamError(error: unknown) {
   return error instanceof Error && /run stream failed with 401/i.test(error.message);
 }
 
+function failureFromRun(run: PlannerRunState) {
+  return new PlannerRunError(
+    typeof run.error?.code === "string" ? run.error.code : "PLANNER_RUN_FAILED",
+    typeof run.error?.message === "string"
+      ? run.error.message
+      : "The planner run could not be completed",
+  );
+}
+
 export async function startPlannerRun(input: PlannerRunRequest): Promise<PlannerRunCreated> {
   const response = await api.post<{ data: PlannerRunCreated }>("/planner/runs", input);
+  return response.data.data;
+}
+
+export async function getPlannerRun(runId: string): Promise<PlannerRunState> {
+  const response = await api.get<{ data: PlannerRunState }>(`/runs/${encodeURIComponent(runId)}`);
   return response.data.data;
 }
 
 export async function cancelPlannerRun(runId: string) {
   const response = await api.post(`/runs/${encodeURIComponent(runId)}/cancel`);
   return response.data.data;
+}
+
+async function recoverTerminalRun(runId: string): Promise<PlannerRunCompletedPayload | undefined> {
+  const run = await getPlannerRun(runId);
+  if (run.status === "completed") {
+    if (!run.result || !isCompletedPayload(run.result)) {
+      throw new PlannerRunError(
+        "INVALID_RUN_RESULT",
+        "Planner run completed without a valid result",
+      );
+    }
+    return run.result;
+  }
+  if (run.status === "failed") throw failureFromRun(run);
+  if (run.status === "cancelled") {
+    throw new PlannerRunError("RUN_CANCELLED", "Planner run was cancelled");
+  }
+  return undefined;
 }
 
 export async function waitForPlannerRun(
@@ -109,10 +148,22 @@ export async function waitForPlannerRun(
           ...(lastEventId ? { lastEventId } : {}),
         },
       );
+
+      if (!terminal) {
+        const recovered = await recoverTerminalRun(runId);
+        if (recovered) return recovered;
+      }
     } catch (error) {
       if (options.signal?.aborted) throw error;
+      if (error instanceof PlannerRunError) throw error;
       if (isUnauthorizedStreamError(error)) {
         await refreshSession();
+      }
+      try {
+        const recovered = await recoverTerminalRun(runId);
+        if (recovered) return recovered;
+      } catch (recoveryError) {
+        if (recoveryError instanceof PlannerRunError) throw recoveryError;
       }
       if (attempt >= maxReconnects) throw error;
       continue;
@@ -120,6 +171,8 @@ export async function waitForPlannerRun(
   }
 
   if (!terminal) {
+    const recovered = await recoverTerminalRun(runId);
+    if (recovered) return recovered;
     throw new PlannerRunError("RUN_STREAM_ENDED", "Planner run stream ended before completion");
   }
   if (terminal.type === "failed") {
