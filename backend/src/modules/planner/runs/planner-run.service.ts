@@ -44,7 +44,6 @@ export class PlannerRunService {
       userId,
       plannerKind: input.kind,
       ...(input.conversationId ? { conversationId: input.conversationId } : {}),
-      ...(input.kind === "chat" ? { message: input.message } : {}),
     };
 
     const run = await this.runs.create(jobName, runInput);
