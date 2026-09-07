@@ -1,23 +1,16 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import {
-  Playfair_Display,
-  DM_Serif_Display,
-  Plus_Jakarta_Sans,
-  Manrope,
-  Kalam,
-  Caveat,
-} from "next/font/google";
+import { DM_Serif_Display, Kalam, Manrope } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryProvider } from "@/providers/query-provider";
 import { AppThemeProvider } from "@/providers/theme-provider";
 import { RouterGuard } from "@/providers/router-guard";
 import "./globals.css";
 
-const playfairDisplay = Playfair_Display({
+const manrope = Manrope({
   weight: ["400", "500", "600", "700", "800"],
   subsets: ["latin"],
-  variable: "--font-playfair",
+  variable: "--font-manrope",
   display: "swap",
 });
 
@@ -28,48 +21,27 @@ const dmSerifDisplay = DM_Serif_Display({
   display: "swap",
 });
 
-const plusJakartaSans = Plus_Jakarta_Sans({
-  weight: ["300", "400", "500", "600", "700", "800"],
-  subsets: ["latin"],
-  variable: "--font-plus-jakarta",
-  display: "swap",
-});
-
-const manrope = Manrope({
-  weight: ["300", "400", "500", "600", "700", "800"],
-  subsets: ["latin"],
-  variable: "--font-manrope",
-  display: "swap",
-});
-
 const kalam = Kalam({
   weight: ["400", "700"],
   subsets: ["latin"],
-  variable: "--font-script",
-  display: "swap",
-});
-
-const caveat = Caveat({
-  weight: ["400", "600", "700"],
-  subsets: ["latin"],
-  variable: "--font-caveat",
+  variable: "--font-kalam",
   display: "swap",
 });
 
 export const metadata: Metadata = {
   title: "Financial Dream Planner — See the trade-offs before you decide",
   description:
-    "India-first living financial plan: canonical money data, deterministic financial mathematics, what-if scenarios, and living plan drift.",
+    "India-first financial planning with deterministic calculations, what-if scenarios, and a living view of your goals and money.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="en"
-      className={`${playfairDisplay.variable} ${dmSerifDisplay.variable} ${plusJakartaSans.variable} ${manrope.variable} ${kalam.variable} ${caveat.variable} h-full antialiased`}
+      className={`${manrope.variable} ${dmSerifDisplay.variable} ${kalam.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col font-sans bg-[#FFF9F0] text-[#344054] selection:bg-[#E6B46A]/30">
+      <body className="min-h-full flex flex-col font-sans bg-canvas text-foreground selection:bg-purple/20">
         <RouterGuard>
           <AppThemeProvider>
             <QueryProvider>
