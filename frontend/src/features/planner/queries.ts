@@ -1,4 +1,5 @@
 "use client";
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { sdk } from "@/lib/sdk";
 import { demoStore } from "@/lib/demo-store";
@@ -39,7 +40,7 @@ export function useAccounts() {
             let updated = false;
             for (const sa of serverAccs) {
               const exists = demoStore.getAccounts().some(
-                (da) => da.id === sa.id || da.name.trim().toLowerCase() === sa.name.trim().toLowerCase()
+                (da) => da.id === sa.id || da.name.trim().toLowerCase() === sa.name.trim().toLowerCase(),
               );
               if (!exists) {
                 demoStore.addAccount({
@@ -51,24 +52,16 @@ export function useAccounts() {
                 updated = true;
               }
             }
-            if (updated) {
-              return demoStore.getAccounts();
-            }
+            if (updated) return demoStore.getAccounts();
           }
         } catch {
-          // Ignore backend sync failure in demo mode
+          // Explicit demo mode remains usable even when the backend is unavailable.
         }
         return demoAccounts;
       }
-      try {
-        const res = await sdk.GET("/api/v1/accounts");
-        if (res.response.ok) {
-          return unwrap(res).data ?? [];
-        }
-      } catch {
-        // Fallback to demo store
-      }
-      return [];
+
+      const res = await sdk.GET("/api/v1/accounts");
+      return unwrap(res).data ?? [];
     },
   });
 }
@@ -77,16 +70,9 @@ export function useCategories() {
   return useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
-      try {
-        const res = await sdk.GET("/api/v1/categories");
-        if (res.response.ok) {
-          const data = unwrap(res).data;
-          if (data && data.length > 0) return data;
-        }
-      } catch {
-        // Fallback to demo store
-      }
-      return demoStore.getCategories();
+      if (demoStore.isDemoMode()) return demoStore.getCategories();
+      const res = await sdk.GET("/api/v1/categories");
+      return unwrap(res).data ?? [];
     },
   });
 }
@@ -95,16 +81,10 @@ export function useCurrentPlan() {
   return useQuery({
     queryKey: ["plan"],
     queryFn: async () => {
-      try {
-        const result = await sdk.GET("/api/v1/plans/current");
-        if (result.response.status === 404) return null;
-        if (result.response.ok) {
-          return unwrap(result).data;
-        }
-      } catch {
-        // Fallback to demo store
-      }
-      return demoStore.getCurrentPlan();
+      if (demoStore.isDemoMode()) return demoStore.getCurrentPlan();
+      const result = await sdk.GET("/api/v1/plans/current");
+      if (result.response.status === 404) return null;
+      return unwrap(result).data;
     },
   });
 }
@@ -113,19 +93,19 @@ export function useRecordedCashFlow() {
   return useQuery({
     queryKey: ["recorded-cash-flow"],
     queryFn: async () => {
-      try {
-        const now = new Date();
-        const start = new Date(now.getFullYear(), now.getMonth(), 1);
-        const res = await sdk.GET("/api/v1/transactions/cash-flow", {
-          params: { query: { startDate: start.toISOString(), endDate: now.toISOString(), currency: "INR" } },
-        });
-        if (res.response.ok) {
-          return unwrap(res).data;
-        }
-      } catch {
-        // Fallback to demo store
-      }
-      return demoStore.getRecordedCashFlow();
+      if (demoStore.isDemoMode()) return demoStore.getRecordedCashFlow();
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      const res = await sdk.GET("/api/v1/transactions/cash-flow", {
+        params: {
+          query: {
+            startDate: start.toISOString(),
+            endDate: now.toISOString(),
+            currency: "INR",
+          },
+        },
+      });
+      return unwrap(res).data;
     },
   });
 }
@@ -134,10 +114,18 @@ export function useRefreshFinancialViews() {
   const client = useQueryClient();
   return async () => {
     await Promise.all(
-      ["accounts", "categories", "transactions", "recorded-cash-flow", "planning", "goals", "plan", "loans", "investments", "scenarios"].map((key) =>
-        client.invalidateQueries({ queryKey: [key] })
-      )
+      [
+        "accounts",
+        "categories",
+        "transactions",
+        "recorded-cash-flow",
+        "planning",
+        "goals",
+        "plan",
+        "loans",
+        "investments",
+        "scenarios",
+      ].map((key) => client.invalidateQueries({ queryKey: [key] })),
     );
   };
 }
-
