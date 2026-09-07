@@ -12,6 +12,8 @@ import { financialEngineRouter } from "./modules/financial-engine/financial-engi
 import { plansRouter } from "./modules/plans/plans.route";
 import { scenariosRouter } from "./modules/scenarios/scenarios.route";
 import { plannerRouter } from "./modules/planner/planner.route";
+import { createPlannerRunRouter } from "./modules/planner/runs/planner-run.route";
+import type { PlannerRunService } from "./modules/planner/runs/planner-run.service";
 import { researchRouter } from "./modules/research/research.route";
 import { driftRouter } from "./modules/drift/drift.route";
 import { errorHandler } from "./shared/middleware/error-handler";
@@ -32,6 +34,7 @@ import { investmentsRouter } from "./modules/investments/investments.route";
 
 export interface AppDependencies {
   runService?: RunService;
+  plannerRunService?: PlannerRunService;
   storage?: ObjectStorage;
   health?: HealthDependencies;
 }
@@ -85,6 +88,9 @@ export function createApp(dependencies: AppDependencies = {}) {
   app.use("/api/v1/financial-engine", financialEngineRouter);
   app.use("/api/v1/plans", plansRouter);
   app.use("/api/v1/scenarios", scenariosRouter);
+  if (dependencies.plannerRunService) {
+    app.use("/api/v1/planner/runs", createPlannerRunRouter(dependencies.plannerRunService));
+  }
   app.use("/api/v1/planner", plannerRouter);
   app.use("/api/v1/research", researchRouter);
   app.use("/api/v1/drift", driftRouter);
