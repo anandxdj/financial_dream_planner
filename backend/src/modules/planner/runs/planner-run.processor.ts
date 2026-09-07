@@ -2,7 +2,11 @@ import { z } from "zod";
 import { AppError } from "../../../shared/errors/app-error";
 import { RUN_EVENT_TYPE } from "../../runs/model";
 import type { RunService } from "../../runs/run.service";
-import { analyzePlan, postChatMessage, serializeMessage } from "../planner.service";
+import {
+  analyzePlan as analyzePlanDefault,
+  postChatMessage as postChatMessageDefault,
+  serializeMessage as serializeMessageDefault,
+} from "../planner.service";
 import { PlannerRunRequestSchema } from "./planner-run.service";
 
 export const PLANNER_RUN_JOB = {
@@ -18,6 +22,12 @@ const PlannerRunJobDataSchema = z.object({
   userId: z.string().uuid(),
   input: PlannerRunRequestSchema,
 });
+
+export interface PlannerRunProcessorDependencies {
+  postChatMessage?: typeof postChatMessageDefault;
+  analyzePlan?: typeof analyzePlanDefault;
+  serializeMessage?: typeof serializeMessageDefault;
+}
 
 export function isPlannerRunJob(name: string): name is PlannerRunJobName {
   return name === PLANNER_RUN_JOB.chat || name === PLANNER_RUN_JOB.analyze;
@@ -41,8 +51,13 @@ export async function processPlannerRunJob(
   name: PlannerRunJobName,
   rawData: unknown,
   runs: RunService,
+  dependencies: PlannerRunProcessorDependencies = {},
 ) {
+  const postChatMessage = dependencies.postChatMessage ?? postChatMessageDefault;
+  const analyzePlan = dependencies.analyzePlan ?? analyzePlanDefault;
+  const serializeMessage = dependencies.serializeMessage ?? serializeMessageDefault;
   const data = PlannerRunJobDataSchema.parse(rawData);
+
   const existing = await runs.get(data.runId);
   if (existing.status === "cancelled" || existing.cancelRequestedAt) {
     return { status: "cancelled" as const };
