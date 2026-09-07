@@ -12,6 +12,10 @@ import { processPrivacyExport, processHouseholdDeletion } from "./modules/privac
 import { createStorageFromConfig, type ObjectStorage } from "./modules/storage";
 import { logger } from "./shared/logger/logger";
 import { recordJobOutcome, recordPrivacyOperation } from "./modules/metrics/metrics";
+import {
+  isPlannerRunJob,
+  processPlannerRunJob,
+} from "./modules/planner/runs/planner-run.processor";
 
 export interface WorkerRuntime {
   close(): Promise<void>;
@@ -26,7 +30,10 @@ export interface WorkerCompositionOptions {
   redisFactory?: typeof createRedisConnection;
   queueFactory?: typeof createDomainQueue;
   workerFactory?: typeof createDomainWorker;
-  dispatcherFactory?: (database: Database, queue: ReturnType<typeof createDomainQueue>) => Pick<OutboxDispatcher, "dispatchBatch">;
+  dispatcherFactory?: (
+    database: Database,
+    queue: ReturnType<typeof createDomainQueue>,
+  ) => Pick<OutboxDispatcher, "dispatchBatch">;
   log?: typeof logger;
 }
 
@@ -48,6 +55,20 @@ export async function composeWorker(options: WorkerCompositionOptions = {}): Pro
     const name = job.name;
 
     try {
+      if (isPlannerRunJob(name)) {
+        log.info("planner_run_started", { correlationId, jobId, name });
+        const outcome = await processPlannerRunJob(name, job.data, runService);
+        const status = outcome.status === "completed" ? "completed" : "cancelled";
+        recordJobOutcome(name, status);
+        log.info("planner_run_finished", {
+          correlationId,
+          jobId,
+          name,
+          status: outcome.status,
+        });
+        return;
+      }
+
       if (name === "privacy_export") {
         const exportId =
           typeof job.data?.exportId === "string"
@@ -108,10 +129,16 @@ export async function composeWorker(options: WorkerCompositionOptions = {}): Pro
         recordJobOutcome(name, "cancelled");
         return;
       }
-      await database.update(jobRuns).set({ status: "running", startedAt: new Date() }).where(eq(jobRuns.id, runId));
+      await database
+        .update(jobRuns)
+        .set({ status: "running", startedAt: new Date() })
+        .where(eq(jobRuns.id, runId));
       await runService.appendEvent(runId, RUN_EVENT_TYPE.started, { jobId: job.id, name: job.name });
       log.info("job_started", { correlationId, jobId: job.id, runId, name: job.name });
-      await database.update(jobRuns).set({ status: "completed", completedAt: new Date(), result: {} }).where(eq(jobRuns.id, runId));
+      await database
+        .update(jobRuns)
+        .set({ status: "completed", completedAt: new Date(), result: {} })
+        .where(eq(jobRuns.id, runId));
       await runService.appendEvent(runId, RUN_EVENT_TYPE.completed, {});
       recordJobOutcome(name, "completed");
     } catch (err) {
@@ -128,9 +155,9 @@ export async function composeWorker(options: WorkerCompositionOptions = {}): Pro
     }
   });
 
-  const dispatcher = options.dispatcherFactory?.(database, queue) ?? new OutboxDispatcher(database, queue);
+  const dispatcher =
+    options.dispatcherFactory?.(database, queue) ?? new OutboxDispatcher(database, queue);
 
-  // Initial startup replay of undispatched outbox records
   void dispatcher.dispatchBatch().catch((error) => {
     log.error("startup_outbox_replay_failed", {
       error: error instanceof Error ? error.message : "unknown",
