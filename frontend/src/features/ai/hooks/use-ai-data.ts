@@ -2,10 +2,8 @@
 
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
-  analyzeCurrentPlan,
   getPlannerConversations,
   getPlannerMessages,
-  sendPlannerMessage,
 } from "../services/ai.service";
 import {
   getAiCurrentPlan,
@@ -16,6 +14,7 @@ import {
   stagePlannerProposal,
   type StagePlannerProposalOptions,
 } from "../services/proposal.service";
+import { executePlannerRun } from "../services/run.service";
 import type { PlannerScenarioProposal } from "../types";
 
 export function useAiFinancialContext() {
@@ -52,15 +51,32 @@ export function usePlannerMessages(conversationId?: string | null) {
 
 export function usePlannerChatMutation() {
   return useMutation({
-    mutationFn: ({ message, conversationId }: { message: string; conversationId?: string }) =>
-      sendPlannerMessage(message, conversationId),
+    mutationFn: async ({
+      message,
+      conversationId,
+    }: {
+      message: string;
+      conversationId?: string;
+    }) => {
+      const { result } = await executePlannerRun({
+        kind: "chat",
+        message,
+        ...(conversationId ? { conversationId } : {}),
+      });
+      return result;
+    },
   });
 }
 
 export function usePlannerAnalyzeMutation() {
   return useMutation({
-    mutationFn: ({ conversationId }: { conversationId?: string } = {}) =>
-      analyzeCurrentPlan(conversationId),
+    mutationFn: async ({ conversationId }: { conversationId?: string } = {}) => {
+      const { result } = await executePlannerRun({
+        kind: "analyze",
+        ...(conversationId ? { conversationId } : {}),
+      });
+      return result;
+    },
   });
 }
 
