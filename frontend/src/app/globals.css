@@ -5,8 +5,10 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-canvas: #FAF8F5;
-  --color-surface: #FFFFFF;
+  --color-canvas: #FFF9F0;
+  --color-surface: #FFFCF8;
+  --color-surface-strong: #FFFFFF;
+  --color-surface-muted: #F5EFE6;
   --color-navy: #1F2A44;
   --color-body: #344054;
   --color-muted-ink: #475467;
@@ -14,7 +16,7 @@
   --color-sage: #3D5C4A;
   --color-blue: #3B5B8C;
   --color-gold: #7D5200;
-  --color-border-warm: #EAE5DE;
+  --color-border-warm: #E8E1D6;
 
   --color-functional-sage: #3D5C4A;
   --color-functional-blue: #3B5B8C;
@@ -50,16 +52,10 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --font-serif: var(--font-playfair), var(--font-dm-serif), "Playfair Display", "DM Serif Display", Georgia, serif;
-  --font-sans: var(--font-plus-jakarta), var(--font-manrope), "Plus Jakarta Sans", "Manrope", system-ui, -apple-system, sans-serif;
-  --font-heading: var(--font-playfair), var(--font-dm-serif), "Playfair Display", "DM Serif Display", Georgia, serif;
-  --font-script: var(--font-script), var(--font-caveat), "Kalam", "Caveat", cursive, sans-serif;
-  --font-playfair: var(--font-playfair), "Playfair Display", Georgia, serif;
-  --font-dm-serif: var(--font-dm-serif), "DM Serif Display", Georgia, serif;
-  --font-plus-jakarta: var(--font-plus-jakarta), "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
-  --font-manrope: var(--font-manrope), "Manrope", system-ui, -apple-system, sans-serif;
-  --font-kalam: var(--font-script), "Kalam", cursive, sans-serif;
-  --font-caveat: var(--font-caveat), "Caveat", cursive, sans-serif;
+  --font-sans: var(--font-manrope), "Manrope", system-ui, -apple-system, sans-serif;
+  --font-serif: var(--font-dm-serif), "DM Serif Display", Georgia, serif;
+  --font-heading: var(--font-dm-serif), "DM Serif Display", Georgia, serif;
+  --font-script: var(--font-kalam), "Kalam", cursive;
 
   --radius-panel: 16px;
   --radius-control: 10px;
@@ -71,47 +67,14 @@
 }
 
 :root {
-  --background: #FAF8F5;
+  --background: #FFF9F0;
   --foreground: #344054;
-  --card: #FFFFFF;
+  --card: #FFFCF8;
   --card-foreground: #1F2A44;
-  --popover: #FFFFFF;
+  --popover: #FFFCF8;
   --popover-foreground: #1F2A44;
   --primary: #1F2A44;
   --primary-foreground: #FFFFFF;
-  --secondary: #F4EFEA;
-  --secondary-foreground: #1F2A44;
-  --muted: #F4EFEA;
-  --muted-foreground: #475467;
-  --accent: #F4EFEA;
-  --accent-foreground: #1F2A44;
-  --destructive: #A13F39;
-  --destructive-foreground: #FFFFFF;
-  --border: #EAE5DE;
-  --input: #EAE5DE;
-  --ring: #5E55C9;
-  --radius: 12px;
-
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #1F2A44;
-  --sidebar-primary: #5E55C9;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #FAF8F5;
-  --sidebar-accent-foreground: #1F2A44;
-  --sidebar-border: #EAE5DE;
-  --sidebar-ring: #5E55C9;
-}
-
-/* Light-only design: keep warm palette in dark mode */
-.dark {
-  --background: #FAF8F5;
-  --foreground: #344054;
-  --card: #FFFFFF;
-  --card-foreground: #1F2A44;
-  --popover: #FFFFFF;
-  --popover-foreground: #1F2A44;
-  --primary: #1F2A44;
-  --primary-foreground: #FFFCF8;
   --secondary: #F5EFE6;
   --secondary-foreground: #1F2A44;
   --muted: #F5EFE6;
@@ -119,15 +82,48 @@
   --accent: #F5EFE6;
   --accent-foreground: #1F2A44;
   --destructive: #A13F39;
-  --destructive-foreground: #FFFCF8;
+  --destructive-foreground: #FFFFFF;
   --border: #E8E1D6;
   --input: #E8E1D6;
   --ring: #5E55C9;
+  --radius: 10px;
 
   --sidebar: #FFFCF8;
   --sidebar-foreground: #1F2A44;
   --sidebar-primary: #5E55C9;
-  --sidebar-primary-foreground: #FFFCF8;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #FFF9F0;
+  --sidebar-accent-foreground: #1F2A44;
+  --sidebar-border: #E8E1D6;
+  --sidebar-ring: #5E55C9;
+}
+
+/* The current product is intentionally light-first. Keep semantic values stable
+   if a host environment adds `.dark` until a real dark theme is designed. */
+.dark {
+  --background: #FFF9F0;
+  --foreground: #344054;
+  --card: #FFFCF8;
+  --card-foreground: #1F2A44;
+  --popover: #FFFCF8;
+  --popover-foreground: #1F2A44;
+  --primary: #1F2A44;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F5EFE6;
+  --secondary-foreground: #1F2A44;
+  --muted: #F5EFE6;
+  --muted-foreground: #475467;
+  --accent: #F5EFE6;
+  --accent-foreground: #1F2A44;
+  --destructive: #A13F39;
+  --destructive-foreground: #FFFFFF;
+  --border: #E8E1D6;
+  --input: #E8E1D6;
+  --ring: #5E55C9;
+  --sidebar: #FFFCF8;
+  --sidebar-foreground: #1F2A44;
+  --sidebar-primary: #5E55C9;
+  --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: #FFF9F0;
   --sidebar-accent-foreground: #1F2A44;
   --sidebar-border: #E8E1D6;
@@ -138,29 +134,45 @@
   * {
     @apply border-border;
   }
+
   html {
     max-width: 100%;
     overflow-x: clip;
     -webkit-text-size-adjust: 100%;
   }
+
   body {
-    background-color: #FFF9F0;
-    color: #344054;
-    font-family: var(--font-plus-jakarta), var(--font-manrope), "Plus Jakarta Sans", "Manrope", system-ui, -apple-system, sans-serif;
     max-width: 100%;
     overflow-x: clip;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-manrope), "Manrope", system-ui, -apple-system, sans-serif;
   }
-  h1, h2, h3, .font-heading {
-    font-family: var(--font-playfair), var(--font-dm-serif), "Playfair Display", "DM Serif Display", Georgia, serif;
+
+  h1,
+  h2,
+  .font-heading {
+    font-family: var(--font-dm-serif), "DM Serif Display", Georgia, serif;
     color: #1F2A44;
   }
+
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: #1F2A44;
+  }
+
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
+
+  ::selection {
+    background: rgb(94 85 201 / 0.18);
+  }
 }
 
-/* Anti-Gravity visual primitives and touch accessibility */
 .touch-target {
   min-height: 44px;
   min-width: 44px;
@@ -174,7 +186,11 @@
   border-radius: 10px;
 }
 
-/* Accessible utility for screen readers */
+.money-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -187,31 +203,45 @@
   border-width: 0;
 }
 
-/* Cross-browser scrollbar hiding for horizontal chip rails */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
-/* Sleek subtle scrollbar for chat message stream */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(232, 225, 214, 0.8);
+  background-color: rgb(232 225 214 / 0.85);
   border-radius: 9999px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(94, 85, 201, 0.4);
+  background-color: rgb(94 85 201 / 0.35);
 }
+
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(232, 225, 214, 0.8) transparent;
+  scrollbar-color: rgb(232 225 214 / 0.85) transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
