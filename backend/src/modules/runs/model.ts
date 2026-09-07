@@ -5,6 +5,7 @@ export const RUN_EVENT_TYPE = {
   evidence: "evidence",
   completed: "completed",
   failed: "failed",
+  cancelled: "cancelled",
 } as const;
 
 export type RunEventType = (typeof RUN_EVENT_TYPE)[keyof typeof RUN_EVENT_TYPE];
