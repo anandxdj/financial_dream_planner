@@ -5,6 +5,7 @@ import { env, type Env } from "./config/env";
 import { connectDb, db, disconnectDb } from "./database";
 import { RunService, PostgresRunStore } from "./modules/runs/run.service";
 import { createDomainQueue, createRedisConnection } from "./modules/jobs/queue";
+import { PlannerRunService } from "./modules/planner/runs/planner-run.service";
 import { createStorageFromConfig, type ObjectStorage } from "./modules/storage";
 import type { HealthDependencies } from "./modules/health/health.service";
 
@@ -22,6 +23,7 @@ export async function composeApi(
   const redis = createRedisConnection(config.REDIS_URL);
   const queue = createDomainQueue(redis);
   const runService = new RunService(new PostgresRunStore(db));
+  const plannerRunService = new PlannerRunService(runService, queue);
   const storage = options.storage ?? createStorageFromConfig(config);
 
   let isShuttingDown = false;
@@ -46,7 +48,7 @@ export async function composeApi(
   };
 
   return {
-    app: createApp({ runService, storage, health }),
+    app: createApp({ runService, plannerRunService, storage, health }),
     setShuttingDown(val: boolean) {
       isShuttingDown = val;
     },
