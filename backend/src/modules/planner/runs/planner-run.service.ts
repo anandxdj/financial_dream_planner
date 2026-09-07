@@ -26,7 +26,7 @@ export interface PlannerRunQueue {
   add(
     name: string,
     data: Record<string, unknown>,
-    options?: { jobId?: string },
+    options?: { jobId?: string; attempts?: number },
   ): Promise<unknown>;
 }
 
@@ -59,7 +59,7 @@ export class PlannerRunService {
           userId,
           input,
         },
-        durableJobOptions(run.id),
+        { ...durableJobOptions(run.id), attempts: 1 },
       );
       return run;
     } catch (error) {
