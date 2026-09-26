@@ -25,13 +25,32 @@ export function GoalsStep({
 }: GoalsStepProps) {
   const [showAddCustom, setShowAddCustom] = useState(false);
   const [customName, setCustomName] = useState("");
+  const [limitWarning, setLimitWarning] = useState(false);
+
+  const selectedCount = goals.filter((g) => g.selected).length;
+
+  const handleToggle = (id: string) => {
+    const goal = goals.find((g) => g.id === id);
+    if (!goal) return;
+    if (!goal.selected && selectedCount >= 3) {
+      setLimitWarning(true);
+      return;
+    }
+    setLimitWarning(false);
+    onToggleGoal(id);
+  };
 
   const handleAddCustom = (e: React.FormEvent) => {
     e.preventDefault();
+    if (selectedCount >= 3) {
+      setLimitWarning(true);
+      return;
+    }
     if (customName.trim()) {
       onAddCustomGoal(customName.trim());
       setCustomName("");
       setShowAddCustom(false);
+      setLimitWarning(false);
     }
   };
 
@@ -39,12 +58,22 @@ export function GoalsStep({
     <div className="space-y-6">
       {/* Title block */}
       <div>
-        <h2 className="font-serif text-2xl font-medium tracking-tight text-[#1F2A44] sm:text-3xl">
-          What are your financial goals?
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-serif text-2xl font-medium tracking-tight text-[#1F2A44] sm:text-3xl">
+            What are your financial goals?
+          </h2>
+          <span className="rounded-full bg-[#5E55C9]/10 px-3 py-1 text-xs font-semibold text-[#5E55C9]">
+            {selectedCount} / 3 selected
+          </span>
+        </div>
         <p className="mt-1.5 text-sm text-[#475467]">
-          You can select multiple goals. We&apos;ll personalize your plan accordingly.
+          Select up to 3 priority goals. We&apos;ll build your personalized roadmap around them.
         </p>
+        {limitWarning && (
+          <div className="mt-3 rounded-xl border border-[#E6B46A]/60 bg-[#FFF9F0] px-4 py-2.5 text-xs font-medium text-[#7D5200]">
+            ⚡ You have selected 3 goals (the maximum for your baseline plan). Deselect a goal to pick a different one.
+          </div>
+        )}
       </div>
 
       {/* Conversational Fast-track Banner */}
@@ -89,12 +118,14 @@ export function GoalsStep({
             <button
               key={goal.id}
               type="button"
-              onClick={() => onToggleGoal(goal.id)}
+              onClick={() => handleToggle(goal.id)}
               className={cn(
                 "group relative flex flex-col items-center justify-between rounded-2xl border p-5 text-center transition-all focus-visible:ring-2 focus-visible:ring-[#5E55C9] focus-visible:outline-none",
                 isSelected
                   ? "border-[#5E55C9] bg-[#5E55C9]/5 shadow-xs ring-1 ring-[#5E55C9]"
-                  : "border-[#E8E1D6] bg-white hover:border-[#D0D5DD] hover:bg-[#FFF9F0]/40"
+                  : selectedCount >= 3
+                    ? "border-[#E8E1D6] bg-white opacity-60 hover:border-[#D0D5DD]"
+                    : "border-[#E8E1D6] bg-white hover:border-[#D0D5DD] hover:bg-[#FFF9F0]/40"
               )}
             >
               {/* Checkbox indicator at top-right */}

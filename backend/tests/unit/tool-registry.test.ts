@@ -105,4 +105,26 @@ describe("Closed Typed Tool Registry", () => {
     expect(result.monthlyEmi).toBe("12398.57");
     expect(result.totalInterest).toBe("487828.27");
   });
+
+  it("handles search_market_research failure gracefully without throwing", async () => {
+    const failingSearchProvider = {
+      providerName: "failing-tavily",
+      search: async () => {
+        throw new Error("Tavily search failed with status 401");
+      },
+    };
+
+    const result: any = await registry.executeTool(
+      "search_market_research",
+      { query: "current PPF rate", topic: "rates" },
+      testHouseholdId,
+      testUserId,
+      { researchOptions: { searchProvider: failingSearchProvider } },
+    );
+
+    expect(result.researchRunId).toBeNull();
+    expect(result.evidence).toEqual([]);
+    expect(result.note).toContain("External market research is currently unavailable");
+  });
 });
+

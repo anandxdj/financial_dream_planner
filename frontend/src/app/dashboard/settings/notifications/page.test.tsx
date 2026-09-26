@@ -1,8 +1,11 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
 import NotificationPreferencesPage from "./page";
 
 describe("Dashboard Settings Notifications Route", () => {
+  afterEach(() => {
+    cleanup();
+  });
   it("renders the notification preferences route", () => {
     render(<NotificationPreferencesPage />);
     expect(

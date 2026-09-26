@@ -203,7 +203,7 @@ describe.skipIf(!isDockerAvailable())("plans and scenarios API", () => {
     expect(applyARes.body.data.snapshot.calculatedOutput.cashFlow.monthlyIncome).toBe("120000.00");
     expect(applyARes.body.data.snapshot.calculatedOutput.cashFlow.monthlySurplus).toBe("60000.00");
     expect(applyARes.body.data.snapshot.asOf).toBe("2026-08-30T10:00:00.000Z");
-    expect(applyARes.body.data.snapshot.revision).toBe(0);
+    expect(applyARes.body.data.snapshot.revision).toBe(1);
     const v2Id = applyARes.body.data.version.id;
 
     // Check current plan now points to Version 2

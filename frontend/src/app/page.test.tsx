@@ -10,22 +10,22 @@ describe("Financial Dream Planner Landing Page", () => {
     expect(screen.getAllByText(/financial dream planner/i).length).toBeGreaterThan(0);
     expect(
       screen.getByRole("heading", {
-        name: /where clarity meets financial confidence\./i,
+        name: /see the trade-offs/i,
         level: 1,
       })
     ).toBeInTheDocument();
 
     // Primary CTA to onboarding
     const planLinks = screen.getAllByRole("link", {
-      name: /start planning|get started/i,
+      name: /build my financial plan|start planning|get started/i,
     });
     expect(planLinks.length).toBeGreaterThan(0);
     expect(planLinks[0].getAttribute("href")).toMatch(/\/onboarding/i);
 
-    // Calculator anchor link
+    // Calculator link
     expect(
-      screen.getByRole("link", { name: /try interactive calculator/i })
-    ).toHaveAttribute("href", "#calculator-preview");
+      screen.getByRole("link", { name: /try “can i afford this\?”/i })
+    ).toHaveAttribute("href", "/can-i-afford-this");
 
     // Section 02: Features
     expect(

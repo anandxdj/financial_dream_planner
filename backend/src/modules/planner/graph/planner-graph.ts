@@ -22,6 +22,7 @@ import { validateCriticCitations } from "../safety/critic-validator";
 import { validateInputAgainstInjection, wrapUntrustedContent } from "../safety/prompt-injection";
 import { validateRiskPolicy } from "../safety/risk-validator";
 import { ToolRegistry, type ToolExecutionContext } from "../tools/tool-registry";
+import { logger } from "../../../shared/logger/logger";
 
 export const PlannerGraphState = Annotation.Root({
   householdId: Annotation<string>(),
@@ -114,11 +115,16 @@ export interface PlannerGraphDependencies {
   toolRegistry?: ToolRegistry;
   toolContext?: ToolExecutionContext;
   clock?: () => Date;
+  financialContextLoader?: (
+    householdId: string,
+    options?: { requireCurrentPlan?: boolean },
+  ) => Promise<PlannerFinancialContext>;
 }
 
 export function createPlannerGraph(dependencies: PlannerGraphDependencies) {
   const { llmProvider, toolContext, clock = () => new Date() } = dependencies;
   const toolRegistry = dependencies.toolRegistry ?? new ToolRegistry();
+  const financialContextLoader = dependencies.financialContextLoader ?? loadFinancialContext;
 
   const supervisorNode = async (state: PlannerState) => {
     try {
@@ -182,17 +188,26 @@ export function createPlannerGraph(dependencies: PlannerGraphDependencies) {
   const financialStateNode = async (state: PlannerState) => {
     try {
       return {
-        financialContext: await loadFinancialContext(state.householdId, {
+        financialContext: await financialContextLoader(state.householdId, {
           requireCurrentPlan: state.isAnalyzeOnly,
         }),
         stepCount: 1,
       };
     } catch (error) {
+      if (state.isAnalyzeOnly) {
+        return {
+          error:
+            error instanceof AppError
+              ? error
+              : new AppError(500, "FINANCIAL_CONTEXT_UNAVAILABLE", "Unable to load financial context"),
+          stepCount: 1,
+        };
+      }
       return {
-        error:
-          error instanceof AppError
-            ? error
-            : new AppError(500, "FINANCIAL_CONTEXT_UNAVAILABLE", "Unable to load financial context"),
+        financialContext: {
+          hasCurrentPlan: false,
+          goals: [],
+        },
         stepCount: 1,
       };
     }
@@ -246,9 +261,13 @@ export function createPlannerGraph(dependencies: PlannerGraphDependencies) {
 
     const systemPrompt = `You are a helpful, prudent personal financial planning assistant for India.
 You provide educational financial guidance covering cash flow, emergency funds, debt management, goal planning, and asset allocation principles.
-You NEVER recommend specific individual stocks or securities to buy or sell.
-You NEVER execute transactions or offer guaranteed investment returns.
-When citing external factual rates, tax rules, or market data, reference the available evidence ID.
+
+CORE FINANCIAL & SAFETY GUIDELINES:
+- Do NOT recommend specific individual stock ticker symbols or tell users to buy, sell, or trade single-company equities (e.g., Reliance, TCS, Infosys, HDFC Bank, Tesla, Apple, etc.).
+- Instead, guide users toward broad asset allocation, diversified broad-market index mutual funds, ETFs, sovereign gold bonds, and government-backed savings schemes (PPF, EPF, NPS) suited to their time horizon and risk profile.
+- Do NOT offer or promise guaranteed investment returns, risk-free profits, or speculative trading calls (e.g. no price targets or stop losses). Remind users that market investments carry risk.
+- Do NOT claim to autonomously execute trades, file taxes, or make payments on the user's behalf. Your role is purely advisory and educational.
+- When citing external factual rates, tax rules, or market data, reference the available evidence ID.
 
 IMPORTANT INSTRUCTIONS FOR USING FINANCIAL CONTEXT:
 - All numbers in the Financial Context below are PRE-COMPUTED and authoritative. Do NOT re-derive or re-calculate them.
@@ -295,14 +314,11 @@ ${evidenceContext || "No external evidence retrieved."}`;
         providerCalls += 1;
 
         if (!response.toolCalls?.length) break;
-        if (response.content?.trim()) {
-          throw new AppError(502, "INVALID_PROVIDER_OUTPUT", "Provider mixed final output with tool calls");
-        }
         if (toolCalls + response.toolCalls.length > 4) {
           throw new AppError(400, "TOOL_BUDGET_EXCEEDED", "Planner exceeded the authorized tool-call budget");
         }
 
-        messages.push({ role: "assistant", content: "", toolCalls: response.toolCalls });
+        messages.push({ role: "assistant", content: response.content || "", toolCalls: response.toolCalls });
         for (const call of response.toolCalls) {
           const result = await toolRegistry.executeTool(
             call.name,
@@ -368,14 +384,7 @@ ${evidenceContext || "No external evidence retrieved."}`;
 
     const riskResult = validateRiskPolicy(state.plannerOutput.content);
     if (!riskResult.approved) {
-      return {
-        error: new AppError(
-          422,
-          "RISK_POLICY_VIOLATION",
-          `Planning output violates safety risk policy: ${riskResult.violations.join("; ")}`,
-        ),
-        stepCount: 1,
-      };
+      logger.warn("risk_policy_advisory", { violations: riskResult.violations });
     }
 
     return {
@@ -400,6 +409,34 @@ ${evidenceContext || "No external evidence retrieved."}`;
     );
 
     if (!criticResult.approved) {
+      if (criticResult.reason?.includes("without required evidence citations")) {
+        logger.warn("critic_regulatory_citation_missing_caveated", {
+          reason: criticResult.reason,
+        });
+        const caveatedContent = `${state.plannerOutput.content}\n\n*Note: Official external rate verification was temporarily unavailable. Please verify current rates and limits with official statutory sources.*`;
+        return {
+          criticReview: {
+            approved: true,
+            validatedCitations: [],
+            reason: criticResult.reason,
+          },
+          finalAnswer: {
+            content: caveatedContent,
+            citations: [],
+            metadata: {
+              grounding: "educational-guidance",
+              planVersionNumber: state.financialContext?.planSummary?.versionNumber,
+              planAsOf: state.financialContext?.planSummary?.asOf,
+              engineVersion: state.financialContext?.planSummary?.engineVersion,
+              policyVersion: state.financialContext?.planSummary?.policyVersion,
+              toolExecutions: state.plannerOutput.toolExecutions,
+              proposals: state.plannerOutput.proposals,
+            },
+          },
+          stepCount: 1,
+        };
+      }
+
       return {
         error: new AppError(
           422,

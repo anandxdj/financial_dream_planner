@@ -41,28 +41,21 @@ import {
 } from "./demo-data";
 import type { GoalContributionRecord } from "@/features/goals/types";
 
-const BASE_STORAGE_KEY = "fdp_demo_store_v4";
+const BASE_STORAGE_KEY = "fdp_demo_store_v5";
 const ACTIVE_PERSONA_KEY = "fdp_demo_active_persona";
 const DEMO_MODE_ACTIVE_KEY = "fdp_demo_mode_active";
 
 const INITIAL_GOAL_CONTRIBUTIONS_ANAND: GoalContributionRecord[] = [
-  { id: "gcon_1", goalId: "goal_emergency", amount: "10000.00", date: "2026-08-05", note: "Monthly SIP", type: "sip" },
-  { id: "gcon_2", goalId: "goal_emergency", amount: "10000.00", date: "2026-07-05", note: "Monthly SIP", type: "sip" },
-  { id: "gcon_3", goalId: "goal_emergency", amount: "15000.00", date: "2026-06-05", note: "Bonus Allocation", type: "adhoc" },
-  { id: "gcon_4", goalId: "goal_emergency", amount: "10000.00", date: "2026-05-05", note: "Monthly SIP", type: "sip" },
-  { id: "gcon_5", goalId: "goal_emergency", amount: "10000.00", date: "2026-04-05", note: "Monthly SIP", type: "sip" },
-  { id: "gcon_6", goalId: "goal_emergency", amount: "10000.00", date: "2026-03-05", note: "Monthly SIP", type: "sip" },
+  { id: "gcon_1", goalId: "goal_home", amount: "20000.00", date: "2026-08-05", note: "Monthly SIP", type: "sip" },
+  { id: "gcon_2", goalId: "goal_home", amount: "20000.00", date: "2026-07-05", note: "Monthly SIP", type: "sip" },
+  { id: "gcon_3", goalId: "goal_home", amount: "25000.00", date: "2026-06-05", note: "Extra savings", type: "adhoc" },
+  { id: "gcon_4", goalId: "goal_home", amount: "20000.00", date: "2026-05-05", note: "Monthly SIP", type: "sip" },
+  { id: "gcon_5", goalId: "goal_home", amount: "20000.00", date: "2026-04-05", note: "Monthly SIP", type: "sip" },
+  { id: "gcon_6", goalId: "goal_home", amount: "20000.00", date: "2026-03-05", note: "Monthly SIP", type: "sip" },
 
-  { id: "gcon_7", goalId: "goal_home_blr", amount: "20000.00", date: "2026-08-05", note: "Monthly SIP", type: "sip" },
-  { id: "gcon_8", goalId: "goal_home_blr", amount: "20000.00", date: "2026-07-05", note: "Monthly SIP", type: "sip" },
-  { id: "gcon_9", goalId: "goal_home_blr", amount: "25000.00", date: "2026-06-05", note: "Extra savings", type: "adhoc" },
-  { id: "gcon_10", goalId: "goal_home_blr", amount: "20000.00", date: "2026-05-05", note: "Monthly SIP", type: "sip" },
-  { id: "gcon_11", goalId: "goal_home_blr", amount: "20000.00", date: "2026-04-05", note: "Monthly SIP", type: "sip" },
-  { id: "gcon_12", goalId: "goal_home_blr", amount: "20000.00", date: "2026-03-05", note: "Monthly SIP", type: "sip" },
-
-  { id: "gcon_13", goalId: "goal_child_edu", amount: "8000.00", date: "2026-08-05", note: "Monthly SIP", type: "sip" },
-  { id: "gcon_14", goalId: "goal_child_edu", amount: "8000.00", date: "2026-07-05", note: "Monthly SIP", type: "sip" },
-  { id: "gcon_15", goalId: "goal_child_edu", amount: "8000.00", date: "2026-06-05", note: "Monthly SIP", type: "sip" },
+  { id: "gcon_7", goalId: "goal_education", amount: "5000.00", date: "2026-08-05", note: "Monthly SIP", type: "sip" },
+  { id: "gcon_8", goalId: "goal_education", amount: "5000.00", date: "2026-07-05", note: "Monthly SIP", type: "sip" },
+  { id: "gcon_9", goalId: "goal_education", amount: "5000.00", date: "2026-06-05", note: "Monthly SIP", type: "sip" },
 ];
 
 const INITIAL_GOAL_CONTRIBUTIONS_ROHIT: GoalContributionRecord[] = [
@@ -123,9 +116,10 @@ class DemoStore {
 
   constructor() {
     if (this.isClient) {
-      const savedPersona = localStorage.getItem(ACTIVE_PERSONA_KEY);
-      if (savedPersona === "rohit" || savedPersona === "anand") {
-        this.currentPersonaId = savedPersona;
+      try {
+        localStorage.removeItem(ACTIVE_PERSONA_KEY);
+      } catch {
+        // Ignore storage errors
       }
     }
     this.state = this.loadState(this.currentPersonaId);
@@ -194,19 +188,11 @@ class DemoStore {
     return [
       {
         id: "anand" as const,
-        name: "Anand Sharma",
-        title: "Tech Professional (Bengaluru)",
-        incomeText: "₹1.5L/mo",
-        badge: "HDFC/ICICI · ₹45L Home Loan",
-        highlight: "₹1.5L/mo Tech Salary · Bengaluru Home Down Payment · ₹45L Loan",
-      },
-      {
-        id: "rohit" as const,
-        name: "Rohit Verma",
-        title: "Junior Associate / Early Career",
-        incomeText: "₹30k/mo",
-        badge: "SBI/Groww · Bullet 350 · ₹10k Phone EMI",
-        highlight: "₹30k/mo Junior Associate · Royal Enfield Bullet 350 · ₹10k Phone EMI",
+        name: "Onboarded Plan",
+        title: "Onboarded Plan",
+        incomeText: "₹65k/mo",
+        badge: "Onboarding Profile · Buy a Home",
+        highlight: "₹65k/mo Income · ₹75L Home Goal",
       },
     ];
   }

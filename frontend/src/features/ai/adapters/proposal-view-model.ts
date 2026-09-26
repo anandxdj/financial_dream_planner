@@ -59,8 +59,8 @@ function sourceLabels(proposal: PlannerScenarioProposal): string[] {
 }
 
 function investmentViewModel(proposal: PlannerScenarioProposal): ProposalViewModel | null {
-  const baseline = proposal.evaluation.baseline.investment;
-  const proposed = proposal.evaluation.scenario.investment;
+  const baseline = proposal.evaluation?.baseline?.investment;
+  const proposed = proposal.evaluation?.scenario?.investment;
   if (!baseline || !proposed) return null;
 
   const baselineExpected = baseline.scenarios?.expected;
@@ -118,10 +118,10 @@ function investmentViewModel(proposal: PlannerScenarioProposal): ProposalViewMod
 }
 
 function emergencyFundViewModel(proposal: PlannerScenarioProposal): ProposalViewModel | null {
-  const baseline = proposal.evaluation.baseline.emergencyFund;
-  const proposed = proposal.evaluation.scenario.emergencyFund;
+  const baseline = proposal.evaluation?.baseline?.emergencyFund;
+  const proposed = proposal.evaluation?.scenario?.emergencyFund;
   if (!baseline || !proposed) return null;
-  const delta = proposal.evaluation.deltas.emergencyFund;
+  const delta = proposal.evaluation?.deltas?.emergencyFund;
 
   return {
     id: `${proposal.baselineVersionId}:${proposal.name}`,
@@ -151,10 +151,10 @@ function emergencyFundViewModel(proposal: PlannerScenarioProposal): ProposalView
 }
 
 function loanViewModel(proposal: PlannerScenarioProposal): ProposalViewModel | null {
-  const baseline = proposal.evaluation.baseline.loan;
-  const proposed = proposal.evaluation.scenario.loan;
+  const baseline = proposal.evaluation?.baseline?.loan;
+  const proposed = proposal.evaluation?.scenario?.loan;
   if (!baseline || !proposed) return null;
-  const delta = proposal.evaluation.deltas.loan;
+  const delta = proposal.evaluation?.deltas?.loan;
 
   return {
     id: `${proposal.baselineVersionId}:${proposal.name}`,
@@ -184,10 +184,10 @@ function loanViewModel(proposal: PlannerScenarioProposal): ProposalViewModel | n
 }
 
 function goalViewModel(proposal: PlannerScenarioProposal): ProposalViewModel | null {
-  const baseline = proposal.evaluation.baseline.goal;
-  const proposed = proposal.evaluation.scenario.goal;
+  const baseline = proposal.evaluation?.baseline?.goal;
+  const proposed = proposal.evaluation?.scenario?.goal;
   if (!baseline || !proposed) return null;
-  const delta = proposal.evaluation.deltas.goal;
+  const delta = proposal.evaluation?.deltas?.goal;
 
   return {
     id: `${proposal.baselineVersionId}:${proposal.name}`,
@@ -217,10 +217,10 @@ function goalViewModel(proposal: PlannerScenarioProposal): ProposalViewModel | n
 }
 
 function cashFlowViewModel(proposal: PlannerScenarioProposal): ProposalViewModel | null {
-  const baseline = proposal.evaluation.baseline.cashFlow;
-  const proposed = proposal.evaluation.scenario.cashFlow;
+  const baseline = proposal.evaluation?.baseline?.cashFlow;
+  const proposed = proposal.evaluation?.scenario?.cashFlow;
   if (!baseline || !proposed) return null;
-  const delta = proposal.evaluation.deltas.cashFlow;
+  const delta = proposal.evaluation?.deltas?.cashFlow;
 
   return {
     id: `${proposal.baselineVersionId}:${proposal.name}`,

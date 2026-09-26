@@ -167,8 +167,35 @@ export function AiPlanner() {
     const output = currentPlan.data?.snapshot?.calculatedOutput;
     const inputs = planning.data?.inputs;
     const activeGoals = goals.data ?? [];
-    const monthlyIncome = output?.cashFlow?.monthlyIncome;
+    const monthlyIncome = output?.cashFlow?.monthlyIncome ?? inputs?.cashFlow?.income;
     const annualIncome = monthlyIncome ? Number(monthlyIncome) * 12 : null;
+
+    const totalOutflows = output?.cashFlow?.totalOutflows ?? (
+      inputs?.cashFlow
+        ? String(
+            Number(inputs.cashFlow.essentialExpenses ?? 0) +
+            Number(inputs.cashFlow.discretionaryExpenses ?? 0) +
+            Number(inputs.cashFlow.emis ?? 0) +
+            Number(inputs.cashFlow.mandatoryObligations ?? 0)
+          )
+        : null
+    );
+
+    const savingsRate = output?.cashFlow?.savingsRate ?? (
+      monthlyIncome && Number(monthlyIncome) > 0 && totalOutflows !== null
+        ? String(Math.max(0, Math.round(((Number(monthlyIncome) - Number(totalOutflows)) / Number(monthlyIncome)) * 100)))
+        : null
+    );
+
+    const netWorth = output?.netWorth?.netWorth ?? (
+      inputs?.netWorth?.assets
+        ? String(
+            inputs.netWorth.assets.reduce((sum, a) => sum + Number(a.value || 0), 0) -
+            (inputs.netWorth.liabilities?.reduce((sum, l) => sum + Number(l.value || 0), 0) ?? 0)
+          )
+        : null
+    );
+
     const targetDates = activeGoals
       .map((goal) => new Date(`${goal.targetDate}T00:00:00Z`))
       .filter((date) => !Number.isNaN(date.getTime()));
@@ -179,22 +206,22 @@ export function AiPlanner() {
       {
         label: "Annual Income",
         value: annualIncome !== null && Number.isFinite(annualIncome) ? formatMoney(String(annualIncome)) : "Not recorded",
-        note: "Display conversion from the plan's monthly income",
+        note: output?.cashFlow?.monthlyIncome ? "Display conversion from the plan's monthly income" : "From saved planning inputs",
       },
       {
         label: "Monthly Outflows",
-        value: formatMoney(output?.cashFlow?.totalOutflows),
-        note: "Authoritative plan output",
+        value: formatMoney(totalOutflows),
+        note: output?.cashFlow?.totalOutflows ? "Authoritative plan output" : "Sum of saved expenses and EMIs",
       },
       {
         label: "Net Worth",
-        value: formatMoney(output?.netWorth?.netWorth),
-        note: "Authoritative plan output",
+        value: formatMoney(netWorth),
+        note: output?.netWorth?.netWorth ? "Authoritative plan output" : "From saved assets and liabilities",
       },
       {
         label: "Savings Rate",
-        value: formatRate(output?.cashFlow?.savingsRate),
-        note: "Authoritative plan output",
+        value: formatRate(savingsRate),
+        note: output?.cashFlow?.savingsRate ? "Authoritative plan output" : "Calculated from saved cash flow",
       },
       {
         label: "Active Goals",
@@ -403,6 +430,7 @@ export function AiPlanner() {
           {isChatActive && (
             <button
               type="button"
+              aria-label="Start fresh"
               className="inline-flex min-h-8 items-center justify-center rounded-xl bg-white border border-[#E8E1D6] px-2.5 py-1 text-xs font-semibold text-[#1A2238] shadow-2xs hover:bg-[#FAF8F5] transition-colors cursor-pointer"
               onClick={startNewConversation}
             >

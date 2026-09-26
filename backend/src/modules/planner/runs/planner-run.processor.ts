@@ -17,9 +17,9 @@ export const PLANNER_RUN_JOB = {
 export type PlannerRunJobName = (typeof PLANNER_RUN_JOB)[keyof typeof PLANNER_RUN_JOB];
 
 const PlannerRunJobDataSchema = z.object({
-  runId: z.string().uuid(),
-  householdId: z.string().uuid(),
-  userId: z.string().uuid(),
+  runId: z.string().min(1),
+  householdId: z.string().min(1),
+  userId: z.string().min(1),
   input: PlannerRunRequestSchema,
 });
 

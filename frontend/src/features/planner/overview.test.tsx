@@ -85,32 +85,33 @@ describe("Overview Financial Command Center", () => {
     );
 
     // Header and completeness badge
-    expect(screen.getByText("Overview")).toBeInTheDocument();
+    expect(screen.getByText("Financial command center")).toBeInTheDocument();
     expect(screen.getByText("Inputs complete")).toBeInTheDocument();
 
     // Dominant Next Action Banner
-    expect(screen.getByText("RECOMMENDED NEXT STEP")).toBeInTheDocument();
-    expect(screen.getByText("Keep your plan close to real life")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /review financial inputs/i })).toHaveAttribute("href", "/onboarding");
+    expect(screen.getByText("Plan is current")).toBeInTheDocument();
+    expect(screen.getByText("Your next useful step is to compare the plan with real money movement.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /review money reality/i })).toHaveAttribute("href", "/dashboard/transactions");
 
-    // Three High-Level Metric Panels
-    expect(screen.getByText("Monthly surplus")).toBeInTheDocument();
-    expect(screen.getByText("Emergency coverage")).toBeInTheDocument();
-    expect(screen.getByText("4.5 months")).toBeInTheDocument();
-    expect(screen.getByText("Within monthly capacity")).toBeInTheDocument();
+    // Metric Panels
+    expect(screen.getAllByText("Monthly income").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Planned outflows").length).toBeGreaterThan(0);
+    expect(screen.getByText("Monthly free capacity")).toBeInTheDocument();
+    expect(screen.getByText("Emergency runway")).toBeInTheDocument();
+    expect(screen.getByText(/4\.5\s*months/i)).toBeInTheDocument();
 
     // Separated Planned vs Recorded Money
-    expect(screen.getByText("Planned income")).toBeInTheDocument();
+    expect(screen.getByText("Saved plan")).toBeInTheDocument();
     expect(screen.getByText("Recorded this month")).toBeInTheDocument();
-    expect(screen.getByText(/recorded activity is not added to planned expenses/i)).toBeInTheDocument();
+    expect(screen.getByText(/these sources are intentionally shown separately/i)).toBeInTheDocument();
 
     // Goals and Data sources
     expect(screen.getByText("Emergency Fund")).toBeInTheDocument();
     expect(screen.getByText("House Downpayment")).toBeInTheDocument();
-    expect(screen.getByText(/2 manually maintained accounts/i)).toBeInTheDocument();
+    expect(screen.getByText(/2 recorded accounts/i)).toBeInTheDocument();
   });
 
-  it("renders only real goals and inline add goal slot without dummy showcase cards", () => {
+  it("renders only real goals without dummy showcase cards", () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
@@ -121,8 +122,7 @@ describe("Overview Financial Command Center", () => {
     // Verifies real goals are rendered
     expect(screen.getByText("Emergency Fund")).toBeInTheDocument();
     expect(screen.getByText("House Downpayment")).toBeInTheDocument();
-    // Verifies inline open slot is rendered
-    expect(screen.getByText("Add another goal")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /view goals/i })).toBeInTheDocument();
     // Verifies fake default showcase items are NOT rendered
     expect(screen.queryByText("Buy a Home")).not.toBeInTheDocument();
     expect(screen.queryByText("Plan a Dream Vacation")).not.toBeInTheDocument();
@@ -144,8 +144,7 @@ describe("Overview Financial Command Center", () => {
       </QueryClientProvider>
     );
 
-    expect(screen.getByText("No goals created yet")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /create your first goal/i })).toBeInTheDocument();
-    expect(screen.getByText(/0 goals set — Start planning your financial dreams/i)).toBeInTheDocument();
+    expect(screen.getByText("No active goals recorded yet.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /add a goal/i })).toBeInTheDocument();
   });
 });

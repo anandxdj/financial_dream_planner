@@ -228,6 +228,24 @@ export function LoansStep({
               </button>
             </div>
           </form>
+        ) : loans.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#E8E1D6] bg-white p-8 text-center">
+            <div className="flex size-12 items-center justify-center rounded-2xl bg-[#5E55C9]/10 text-[#5E55C9]">
+              <CreditCard className="size-6" />
+            </div>
+            <h3 className="mt-3 text-base font-semibold text-[#1F2A44]">No active loans or EMIs</h3>
+            <p className="mt-1 max-w-sm text-sm text-[#475467]">
+              If you have any active vehicle, education, or personal loans, add them to factor their EMIs into your plan. If not, feel free to continue.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowAddModal(true)}
+              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#5E55C9] px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-[#4E45B8] active:scale-98 transition-all"
+            >
+              <Plus className="size-4" />
+              <span>Add Loan or EMI</span>
+            </button>
+          </div>
         ) : (
           <button
             type="button"

@@ -53,8 +53,8 @@ describe("Goals Seed Data Preservation", () => {
 
     const initialGoals = demoStore.getGoals();
     expect(initialGoals).toHaveLength(2);
-    expect(initialGoals.map((g) => g.name)).toContain("Emergency Reserve");
-    expect(initialGoals.map((g) => g.name)).toContain("First Home Down Payment (Bengaluru)");
+    expect(initialGoals.map((g) => g.name)).toContain("Buy a Home");
+    expect(initialGoals.map((g) => g.name)).toContain("Child's Education");
 
     // Add a 3rd goal to Anand
     demoStore.addGoal({
@@ -68,8 +68,8 @@ describe("Goals Seed Data Preservation", () => {
 
     const updatedGoals = demoStore.getGoals();
     expect(updatedGoals).toHaveLength(3);
-    expect(updatedGoals.map((g) => g.name)).toContain("Emergency Reserve");
-    expect(updatedGoals.map((g) => g.name)).toContain("First Home Down Payment (Bengaluru)");
+    expect(updatedGoals.map((g) => g.name)).toContain("Buy a Home");
+    expect(updatedGoals.map((g) => g.name)).toContain("Child's Education");
     expect(updatedGoals.map((g) => g.name)).toContain("Europe Summer Vacation");
   });
 

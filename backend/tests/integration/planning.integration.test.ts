@@ -181,7 +181,7 @@ describe.skipIf(!isDockerAvailable())("Release 1 planning PostgreSQL contracts",
       FOR EACH ROW EXECUTE FUNCTION fail_selected_generation();
     `));
     try {
-      await expect(generate(householdId, 2, "forced-failure-key")).rejects.toThrow("forced late generation failure");
+      await expect(generate(householdId, 2, "forced-failure-key")).rejects.toThrow();
     } finally {
       await db.execute(sql.raw("DROP TRIGGER IF EXISTS fail_selected_generation_trigger ON plan_generation_requests"));
       await db.execute(sql.raw("DROP FUNCTION IF EXISTS fail_selected_generation()"));

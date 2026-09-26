@@ -32,7 +32,14 @@ export function trimConversationHistory(
     usedCharacters += messageCharacters;
   }
 
-  return selected.reverse();
+  const result = selected.reverse();
+
+  // Ensure conversation history starts with a user turn so LLM providers receive valid turn alternation
+  while (result.length > 0 && result[0].role === "assistant") {
+    result.shift();
+  }
+
+  return result;
 }
 
 export async function loadConversationHistory(

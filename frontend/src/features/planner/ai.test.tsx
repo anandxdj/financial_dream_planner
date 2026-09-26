@@ -3,13 +3,24 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AiPlanner } from "./ai";
 
-const { get, post } = vi.hoisted(() => ({
+const { get, post, executePlannerRun, stagePlannerProposal } = vi.hoisted(() => ({
   get: vi.fn(),
   post: vi.fn(),
+  executePlannerRun: vi.fn(),
+  stagePlannerProposal: vi.fn(),
 }));
 
 vi.mock("@/lib/sdk", () => ({
   sdk: { GET: get, POST: post },
+  subscribeRun: vi.fn(),
+}));
+
+vi.mock("@/features/ai/services/run.service", () => ({
+  executePlannerRun,
+}));
+
+vi.mock("@/features/ai/services/proposal.service", () => ({
+  stagePlannerProposal,
 }));
 
 const conversation = {
@@ -35,6 +46,33 @@ const citation = {
   freshnessExpiresAt: "2026-10-02T00:00:00.000Z",
 };
 
+const mockProposal = {
+  type: "scenario_draft" as const,
+  name: "Increase Monthly SIP Contributions",
+  description: "Boost equity SIP by ₹5,000 to accelerate wealth compounding.",
+  baselineVersionId: "plan-v2",
+  overlay: {
+    income: [],
+    expenses: [],
+    goals: [],
+    loans: [],
+    investments: [],
+  },
+  evaluation: {
+    status: "success" as const,
+    metrics: {
+      monthlySurplusDelta: "-5000",
+      targetNetWorthDelta: "+1200000",
+    },
+  },
+  provenance: {
+    planVersionNumber: 2,
+    snapshotAsOf: "2026-09-02T00:00:00.000Z",
+    engineVersion: "v1.2",
+    policyVersion: "v1",
+  },
+};
+
 const messages = [
   {
     id: "55555555-5555-4555-8555-555555555555",
@@ -55,6 +93,12 @@ const messages = [
     content: "Keep the money accessible and review the insured limit.",
     sequenceNumber: 2,
     citations: [citation],
+    metadata: {
+      grounding: "engine-backed",
+      planVersionNumber: 2,
+      planAsOf: "2026-09-02T00:00:00.000Z",
+      engineVersion: "v1.2",
+    },
     createdAt: "2026-09-02T00:00:01.000Z",
     retentionExpiresAt: "2026-12-01T00:00:01.000Z",
   },
@@ -62,6 +106,27 @@ const messages = [
 
 function ok<T>(data: T) {
   return { response: new Response(null, { status: 200 }), data };
+}
+
+function mockDefaultGet(custom?: { conversations?: unknown[]; messages?: unknown[]; plan?: unknown }) {
+  get.mockImplementation((path: string) => {
+    if (path === "/api/v1/planner/conversations") {
+      return Promise.resolve(ok({ data: custom?.conversations ?? [] }));
+    }
+    if (path.includes("/messages")) {
+      return Promise.resolve(ok({ data: custom?.messages ?? [] }));
+    }
+    if (path === "/api/v1/plans/current") {
+      return Promise.resolve(ok({ data: custom?.plan ?? null }));
+    }
+    if (path === "/api/v1/households/planning") {
+      return Promise.resolve(ok({ data: { revision: 1 } }));
+    }
+    if (path === "/api/v1/goals") {
+      return Promise.resolve(ok({ data: [] }));
+    }
+    return Promise.resolve(ok({ data: [] }));
+  });
 }
 
 function renderPlanner() {
@@ -78,57 +143,35 @@ describe("AI planner", () => {
   afterEach(cleanup);
 
   it("shows an actionable empty state and starts a chat without an undefined conversation id", async () => {
-    get.mockResolvedValue(ok({ data: [] }));
-    post.mockResolvedValue(ok({ data: { conversationId: conversation.id, message: messages[1] } }));
+    mockDefaultGet({ conversations: [] });
+    executePlannerRun.mockResolvedValue({ result: { conversationId: conversation.id, message: messages[1] } });
     renderPlanner();
 
-    expect(await screen.findByText("No conversations yet.")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Start with a planning question" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Your AI copilot for a brighter tomorrow." })).toBeInTheDocument();
 
-    // Verify quick starter prompt pills
-    expect(screen.getByRole("button", { name: "Can I afford a dream vacation?" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "How can I reach ₹1 Cr net worth?" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Review my loan prepayment options" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Analyze monthly cash flow drift" })).toBeInTheDocument();
+    // Verify starter prompt chips
+    expect(screen.getByRole("button", { name: "Plan for a home" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save on taxes" })).toBeInTheDocument();
 
-    // Verify compliance disclaimer
-    expect(
-      screen.getByText(
-        "AI provides deterministic decision assistance. It does not provide SEBI-registered investment advice or auto-execute trades."
-      )
-    ).toBeInTheDocument();
+    // Verify privacy notes
+    expect(screen.getByText("Used for your planning experience and never to auto-execute financial actions.")).toBeInTheDocument();
 
-    // Verify structured proposal preview cards with explicit Review & Apply / Dismiss buttons
-    const reviewButtons = screen.getAllByRole("button", { name: "Review & Apply to Plan" });
-    const dismissButtons = screen.getAllByRole("button", { name: "Dismiss" });
-    expect(reviewButtons.length).toBeGreaterThan(0);
-    expect(dismissButtons.length).toBeGreaterThan(0);
+    fireEvent.change(screen.getByPlaceholderText(/ask anything about your finances, goals, or loans/i), { target: { value: "Review my buffer" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send query" }));
 
-    // Verify opening review modal does not auto-mutate state silently
-    fireEvent.click(reviewButtons[0]);
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Confirm & Stage in Scenarios" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-
-    fireEvent.change(screen.getByLabelText("Ask the AI planner"), { target: { value: "  Review my buffer  " } });
-    fireEvent.click(screen.getByRole("button", { name: "Send question" }));
-
-    await waitFor(() => expect(post).toHaveBeenCalledWith("/api/v1/planner/chat", { body: { message: "Review my buffer" } }));
+    await waitFor(() => expect(executePlannerRun).toHaveBeenCalledWith({ kind: "chat", message: "Review my buffer" }));
   });
 
   it("loads conversation history and exposes assistant citations as safe external links", async () => {
-    get.mockImplementation((path: string) => path === "/api/v1/planner/conversations"
-      ? Promise.resolve(ok({ data: [conversation] }))
-      : Promise.resolve(ok({ data: messages })));
+    mockDefaultGet({ conversations: [conversation], messages });
     renderPlanner();
 
     expect(await screen.findByText("Is my emergency fund safe?")).toBeInTheDocument();
     expect(screen.getByText("Keep the money accessible and review the insured limit.")).toBeInTheDocument();
 
-    // Verify attributable source chips for AI responses
-    expect(screen.getAllByText("Derived from Active Plan")[0]).toBeInTheDocument();
-    expect(screen.getAllByText("Based on May 2026 savings rate")[0]).toBeInTheDocument();
+    // Verify attributable source provenance
+    expect(screen.getByText("Plan v2")).toBeInTheDocument();
+    expect(screen.getByText("Engine v1.2")).toBeInTheDocument();
 
     const sources = screen.getByText("Sources (1)").closest("details");
     expect(sources).not.toBeNull();
@@ -139,63 +182,59 @@ describe("AI planner", () => {
   });
 
   it("keeps New conversation selected instead of reopening the latest history item", async () => {
-    get.mockImplementation((path: string) => path === "/api/v1/planner/conversations"
-      ? Promise.resolve(ok({ data: [conversation] }))
-      : Promise.resolve(ok({ data: messages })));
+    mockDefaultGet({ conversations: [conversation], messages });
     renderPlanner();
     expect(await screen.findByText("Is my emergency fund safe?")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "New conversation" }));
+    fireEvent.click(screen.getByRole("button", { name: /start fresh/i }));
 
-    expect(screen.getByRole("heading", { name: "Start with a planning question" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Your AI copilot for a brighter tomorrow." })).toBeInTheDocument();
     expect(screen.queryByText("Is my emergency fund safe?")).not.toBeInTheDocument();
   });
 
   it("retains a failed chat message and retries the same request", async () => {
-    get.mockResolvedValue(ok({ data: [] }));
-    post
-      .mockResolvedValueOnce({
-        response: new Response(null, { status: 422 }),
-        error: { error: { message: "I couldn't validate that answer." } },
-      })
-      .mockResolvedValueOnce(ok({ data: { conversationId: conversation.id, message: messages[1] } }));
-    renderPlanner();
-    await screen.findByText("No conversations yet.");
+    mockDefaultGet({ conversations: [] });
+    executePlannerRun
+      .mockRejectedValueOnce(new Error("I couldn't validate that answer."))
+      .mockResolvedValueOnce({ result: { conversationId: conversation.id, message: messages[1] } });
 
-    fireEvent.change(screen.getByLabelText("Ask the AI planner"), { target: { value: "Check this assumption" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send question" }));
+    renderPlanner();
+    await screen.findByRole("heading", { name: "Your AI copilot for a brighter tomorrow." });
+
+    fireEvent.change(screen.getByPlaceholderText(/ask anything about your finances, goals, or loans/i), { target: { value: "Check this assumption" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send query" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("I couldn't validate that answer.");
     expect(screen.getByText("Check this assumption")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
 
-    await waitFor(() => expect(post).toHaveBeenCalledTimes(2));
-    expect(post).toHaveBeenLastCalledWith("/api/v1/planner/chat", { body: { message: "Check this assumption" } });
+    await waitFor(() => expect(executePlannerRun).toHaveBeenCalledTimes(2));
+    expect(executePlannerRun).toHaveBeenLastCalledWith({ kind: "chat", message: "Check this assumption" });
   });
 
   it("renders dynamically generated proposals and scales modal projections to active plan data", async () => {
-    get.mockImplementation((path: string) => {
-      if (path === "/api/v1/planner/conversations") {
-        return Promise.resolve(ok({ data: [] }));
-      }
-      return Promise.resolve(ok({ data: [] }));
-    });
+    const proposalMessage = {
+      ...messages[1],
+      metadata: {
+        proposals: [mockProposal],
+      },
+    };
+    mockDefaultGet({ conversations: [conversation], messages: [messages[0], proposalMessage] });
+    stagePlannerProposal.mockResolvedValue({ scenario: { id: "scen-1", name: mockProposal.name } });
+
     renderPlanner();
 
-    expect(await screen.findByText("Personalized for your goals")).toBeInTheDocument();
-    expect(screen.getByText("Increase Monthly SIP Contributions")).toBeInTheDocument();
-    expect(screen.getByText("Strengthen Emergency Buffer to 6 Months")).toBeInTheDocument();
-
-    const reviewButtons = screen.getAllByRole("button", { name: "Review & Apply to Plan" });
+    fireEvent.click(await screen.findByText("Financial context"));
+    expect(await screen.findByText("Increase Monthly SIP Contributions")).toBeInTheDocument();
+    const reviewButtons = screen.getAllByRole("button", { name: /review scenario/i });
     fireEvent.click(reviewButtons[0]);
 
     const dialog = screen.getByRole("dialog");
     expect(dialog).toBeInTheDocument();
-    expect(within(dialog).getByText("Projected Portfolio Value")).toBeInTheDocument();
-    expect(within(dialog).getByRole("slider")).toBeInTheDocument();
+    expect(within(dialog).getByText("Review scenario draft")).toBeInTheDocument();
 
     fireEvent.click(within(dialog).getByRole("button", { name: "Confirm & Stage in Scenarios" }));
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(await screen.findByText(/staged in Scenarios workbench/i)).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(await screen.findByText(/was staged and verified by the financial engine/i)).toBeInTheDocument();
   });
 });

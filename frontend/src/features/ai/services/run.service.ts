@@ -20,7 +20,7 @@ export interface PlannerRunState extends PlannerRunCreated {
   error: Record<string, unknown> | null;
 }
 
-export interface PlannerRunCompletedPayload {
+export interface PlannerRunCompletedPayload extends Record<string, unknown> {
   conversationId: string;
   message: Record<string, unknown>;
 }

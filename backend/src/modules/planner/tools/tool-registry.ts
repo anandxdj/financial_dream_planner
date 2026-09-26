@@ -22,6 +22,7 @@ import {
   serializeEvidence,
   type ResearchExecutionOptions,
 } from "../../research/research.service";
+import { logger } from "../../../shared/logger/logger";
 import type { LlmToolDefinition } from "../llm/llm-provider";
 import {
   evaluatePlannerScenarioProposal,
@@ -304,16 +305,29 @@ export class ToolRegistry {
       },
       execute: async (householdId, userId, args, context) => {
         const { query, topic } = args as { query: string; topic: string };
-        const result = await executeResearch(
-          householdId,
-          userId,
-          { query, topic },
-          context?.researchOptions,
-        );
-        return {
-          researchRunId: result.run.id,
-          evidence: result.evidence.map(serializeEvidence),
-        };
+        try {
+          const result = await executeResearch(
+            householdId,
+            userId,
+            { query, topic },
+            context?.researchOptions,
+          );
+          return {
+            researchRunId: result.run.id,
+            evidence: result.evidence.map(serializeEvidence),
+          };
+        } catch (err: any) {
+          logger.warn("search_market_research_unavailable", {
+            query,
+            topic,
+            error: err?.message,
+          });
+          return {
+            researchRunId: null,
+            evidence: [],
+            note: "External market research is currently unavailable. Proceed with your guidance using established financial planning knowledge, and explicitly inform the user that live external market search was unavailable.",
+          };
+        }
       },
     });
 

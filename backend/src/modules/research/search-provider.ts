@@ -38,6 +38,14 @@ export class TavilySearchAdapter implements SearchProvider {
   }
 
   async search(query: string, options: SearchOptions = {}): Promise<SearchCandidate[]> {
+    if (!this.apiKey || this.apiKey.trim() === "") {
+      throw new AppError(
+        502,
+        "SEARCH_PROVIDER_ERROR",
+        "Tavily search provider is not configured: TAVILY_API_KEY is missing or empty. Please set TAVILY_API_KEY in backend/.env",
+      );
+    }
+
     const maxResults = options.maxResults ?? 5;
     const timeoutMs = options.timeoutMs ?? 10000;
 
@@ -52,6 +60,7 @@ export class TavilySearchAdapter implements SearchProvider {
           Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
+          api_key: this.apiKey,
           query,
           max_results: maxResults,
           search_depth: "basic",
@@ -62,6 +71,13 @@ export class TavilySearchAdapter implements SearchProvider {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          throw new AppError(
+            502,
+            "SEARCH_PROVIDER_ERROR",
+            "Tavily search failed with status 401 (Unauthorized). Please check that TAVILY_API_KEY in backend/.env is valid.",
+          );
+        }
         throw new AppError(502, "SEARCH_PROVIDER_ERROR", `Tavily search failed with status ${response.status}`);
       }
 

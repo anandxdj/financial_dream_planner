@@ -3,7 +3,8 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Onboarding } from "./onboarding";
 
-const { put, post, routerPush, planning } = vi.hoisted(() => ({
+const { get, put, post, routerPush, planning } = vi.hoisted(() => ({
+  get: vi.fn(),
   put: vi.fn(),
   post: vi.fn(),
   routerPush: vi.fn(),
@@ -25,7 +26,7 @@ vi.mock("./queries", () => ({
     return result.data;
   },
 }));
-vi.mock("@/lib/sdk", () => ({ sdk: { PUT: put, POST: post } }));
+vi.mock("@/lib/sdk", () => ({ sdk: { GET: get, PUT: put, POST: post } }));
 
 describe("Web Onboarding flow", () => {
   beforeEach(() => {
@@ -144,7 +145,7 @@ describe("Web Onboarding flow", () => {
 
     // Loans Screen
     expect(screen.getByText(/do you have any loans or emis\?/i)).toBeInTheDocument();
-    expect(screen.getByText("Home Loan")).toBeInTheDocument();
+    expect(screen.getByText(/no active loans or emis/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /next/i }));
 
     // Investments Screen
@@ -156,4 +157,65 @@ describe("Web Onboarding flow", () => {
     expect(screen.getByText(/review your information/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /generate my plan/i })).toBeInTheDocument();
   });
+
+  it("ensures completedStep sent to backend does not exceed 3 on later wizard steps", async () => {
+    put.mockResolvedValue({ data: { data: { ...planning, revision: 5 } } });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <Onboarding />
+      </QueryClientProvider>
+    );
+
+    // Welcome -> Get Started
+    fireEvent.click(screen.getByRole("button", { name: /get started/i }));
+    // Goals -> Next
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    // Income -> Next
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    // Expenses -> Next (advances to loans, UI step 4)
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(750);
+    });
+
+    // Verify PUT was called with completedStep <= 3
+    expect(put).toHaveBeenCalled();
+    const lastCall = put.mock.calls[put.mock.calls.length - 1];
+    expect(lastCall[1].body.completedStep).toBeLessThanOrEqual(3);
+    expect(lastCall[1].body.completedStep).toBeGreaterThanOrEqual(0);
+  });
+
+  it("recovers automatically from 409 conflict during plan generation", async () => {
+    put.mockResolvedValue({ data: { data: { ...planning, revision: 4 } } });
+    get.mockResolvedValue({ data: { data: { ...planning, revision: 5 } } });
+    // First generate fails with 409 conflict
+    post.mockResolvedValueOnce({ error: { status: 409, message: "Revision is stale" } });
+    // Retry generate succeeds
+    post.mockResolvedValueOnce({ data: { data: { planId: "p2" } } });
+
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <Onboarding />
+      </QueryClientProvider>
+    );
+
+    // Welcome -> Review
+    fireEvent.click(screen.getByRole("button", { name: /get started/i }));
+    fireEvent.click(screen.getByRole("button", { name: /review/i }));
+
+    const generateBtn = screen.getByRole("button", { name: /generate my plan/i });
+    await act(async () => {
+      fireEvent.click(generateBtn);
+      await Promise.resolve();
+      await vi.advanceTimersByTimeAsync(50);
+    });
+
+    expect(post).toHaveBeenCalledTimes(2);
+    expect(get).toHaveBeenCalledWith("/api/v1/households/planning");
+    expect(post.mock.calls[1][1].body.expectedRevision).toBe(5);
+  });
 });
+

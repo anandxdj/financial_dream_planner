@@ -119,5 +119,32 @@ describe("Search & Source Classifier Unit Tests", () => {
       expect(results[0].score).toBe(0.92);
       expect(results[0].publishedDate).toBe("2026-08-01T00:00:00Z");
     });
+
+    it("throws SEARCH_PROVIDER_ERROR when apiKey is missing", async () => {
+      const adapter = new TavilySearchAdapter({ apiKey: "" });
+      await expect(adapter.search("test query")).rejects.toMatchObject({
+        code: "SEARCH_PROVIDER_ERROR",
+        statusCode: 502,
+        message: expect.stringContaining("TAVILY_API_KEY is missing or empty"),
+      });
+    });
+
+    it("provides informative message when Tavily returns status 401", async () => {
+      const mock401Fetch = async () =>
+        new Response(JSON.stringify({ detail: { error: "unauthorized" } }), { status: 401 });
+
+      const adapter = new TavilySearchAdapter({
+        apiKey: "invalid-key",
+        baseUrl: "https://api.tavily.com",
+        fetchTransport: mock401Fetch as any,
+      });
+
+      await expect(adapter.search("test query")).rejects.toMatchObject({
+        code: "SEARCH_PROVIDER_ERROR",
+        statusCode: 502,
+        message: expect.stringContaining("Tavily search failed with status 401"),
+      });
+    });
   });
 });
+

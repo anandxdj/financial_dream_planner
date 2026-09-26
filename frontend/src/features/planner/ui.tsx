@@ -84,16 +84,28 @@ export function ErrorNotice({
   retry?: () => void;
 }) {
   if (!error) return null;
+  let message = "Couldn’t load this section. Please try again.";
+  if (error && typeof error === "object") {
+    const errObj = error as { message?: string; details?: unknown };
+    const baseMsg = typeof errObj.message === "string" && errObj.message ? errObj.message : "Something went wrong";
+    if (Array.isArray(errObj.details) && errObj.details.length > 0) {
+      const detailMsgs = (errObj.details as Array<{ path?: (string | number)[]; message?: string }>)
+        .map((d) => (d.path?.length ? `${d.path.join(".")}: ${d.message}` : d.message))
+        .filter(Boolean);
+      message = detailMsgs.length > 0 ? `${baseMsg} (${detailMsgs.join(", ")})` : baseMsg;
+    } else {
+      message = baseMsg;
+    }
+  } else if (typeof error === "string") {
+    message = error;
+  }
+
   return (
     <div
       role="alert"
       className="my-3 rounded-xl border border-[#A13F39]/40 bg-[#A13F39]/10 p-4 text-[#A13F39]"
     >
-      <p>
-        {error instanceof Error
-          ? error.message
-          : "Couldn’t load this section. Please try again."}
-      </p>
+      <p>{message}</p>
       {retry && (
         <button type="button" className={`${secondary} mt-3`} onClick={retry}>
           Try again

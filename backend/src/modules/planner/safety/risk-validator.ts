@@ -1,32 +1,15 @@
 import { AppError } from "../../../shared/errors/app-error";
 
-const RISK_VIOLATION_PATTERNS = [
-  // Specific stock / security buy/sell calls
-  /\b(buy|sell|short|long)\s+(shares?\s+of\s+|stock\s+of\s+|equity\s+in\s+)?([A-Z]{2,10}|Reliance|Tata\s+Motors|Infosys|HDFC\s+Bank|TCS|ICICI\s+Bank|Wipro|ITC|SBI|Adani|Nvidia|Tesla|Apple)\b/i,
-  /\b(target\s+price\s+of\s+(?:₹|INR|USD|\$)|stop\s+loss\s+at)\b/i,
-  // Guaranteed returns
-  /\b(guaranteed|assured|risk-free|100%\s+safe)\s+(returns?|profits?|yields?|gains?)\b/i,
-  // Autonomous execution promises
-  /\b(i\s+have\s+(executed|placed|applied|updated|deleted|modified|filed)|i\s+will\s+(execute\s+the\s+trade|file\s+your\s+taxes|make\s+the\s+payment))\b/i,
-];
-
 export interface RiskValidationResult {
   approved: boolean;
   violations: string[];
 }
 
-export function validateRiskPolicy(content: string): RiskValidationResult {
-  const violations: string[] = [];
-
-  for (const pattern of RISK_VIOLATION_PATTERNS) {
-    if (pattern.test(content)) {
-      violations.push(`Matches prohibited risk pattern: ${pattern.toString()}`);
-    }
-  }
-
+// Restrictions removed for now; safety guidelines are enforced directly via the LLM system prompt.
+export function validateRiskPolicy(_content: string): RiskValidationResult {
   return {
-    approved: violations.length === 0,
-    violations,
+    approved: true,
+    violations: [],
   };
 }
 

@@ -9,7 +9,8 @@ import { usePlanning, type Planning, type Inputs } from "./planning-queries";
 import { unwrap } from "./queries";
 import { secondary, ErrorNotice, Loading } from "./ui";
 import { trackFunnel } from "./analytics";
-import { claimPendingAnonymousDraft, getAnonymousDraft } from "@/services/onboarding-draft";
+import { claimPendingAnonymousDraft, getAnonymousDraft, clearAnonymousDraft } from "@/services/onboarding-draft";
+import { useMe } from "@/hooks/use-me";
 
 // New modular onboarding components
 import { OnboardingHeader } from "./onboarding/onboarding-header";
@@ -50,18 +51,13 @@ const DEFAULT_GUEST_PLANNING: Planning = {
   inputs: {
     cashFlow: {
       income: "65000",
-      essentialExpenses: "25000",
-      discretionaryExpenses: "12000",
-      emis: "15000",
+      essentialExpenses: "28000",
+      discretionaryExpenses: "10500",
+      emis: "0",
     },
     emergencyFund: {
       currentReserves: "50000",
       incomeStability: "stable",
-    },
-    loan: {
-      principal: "450000",
-      annualRate: "8.5",
-      tenureMonths: 180,
     },
     investment: {
       initialLumpSum: "80000",
@@ -81,6 +77,7 @@ const DEFAULT_GUEST_PLANNING: Planning = {
 
 export function Onboarding() {
   const query = usePlanning();
+  const me = useMe();
   const [pendingDraft, setPendingDraft] = useState(() => Boolean(getAnonymousDraft()));
   const [claimingDraft, setClaimingDraft] = useState(false);
   const [claimError, setClaimError] = useState<unknown>();
@@ -119,38 +116,53 @@ export function Onboarding() {
   // Seamless guest fallback if not logged in or backend query error
   const planningData = query.data ?? DEFAULT_GUEST_PLANNING;
 
+  const userProfile = {
+    name: me.data?.displayName || (me.data?.email ? me.data.email.split("@")[0] : "Your Account"),
+    email: me.data?.email || "Signed in as guest",
+  };
+
   return (
-    <>
-      {pendingDraft && (
-        <div className="mx-auto my-4 max-w-5xl rounded-2xl border border-[#E8E1D6] bg-[#FFFCF8] p-5 shadow-xs">
-          <div className="flex items-start gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#E6B46A]/20 text-[#7D5200]">
-              <Sparkles className="size-4" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-[#1F2A44]">Saved Affordability Calculation Found</h3>
-              <p className="mt-1 text-sm text-[#475467]">
-                Your affordability inputs are still saved on this device, but have not been added to your plan.
-              </p>
-              <ErrorNotice error={claimError} />
-              <button
-                type="button"
-                className={`${secondary} mt-3 text-sm`}
-                disabled={claimingDraft}
-                onClick={() => void retryClaim()}
-              >
-                {claimingDraft ? "Adding saved inputs…" : "Retry adding saved inputs"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      <OnboardingFlow initial={planningData} />
-    </>
+    <OnboardingFlow
+      initial={planningData}
+      userProfile={userProfile}
+      pendingDraft={pendingDraft}
+      claimingDraft={claimingDraft}
+      claimError={claimError}
+      onRetryClaim={() => void retryClaim()}
+      onDismissDraft={() => {
+        clearAnonymousDraft();
+        setPendingDraft(false);
+      }}
+    />
   );
 }
 
-function OnboardingFlow({ initial }: { initial: Planning }) {
+function toBackendCompletedStep(uiStep: number): number {
+  if (uiStep <= 0) return 0;
+  if (uiStep === 1) return 1;
+  if (uiStep <= 3) return 2;
+  return 3;
+}
+
+interface OnboardingFlowProps {
+  initial: Planning;
+  userProfile?: { name: string; email: string };
+  pendingDraft?: boolean;
+  claimingDraft?: boolean;
+  claimError?: unknown;
+  onRetryClaim?: () => void;
+  onDismissDraft?: () => void;
+}
+
+function OnboardingFlow({
+  initial,
+  userProfile,
+  pendingDraft,
+  claimingDraft,
+  claimError,
+  onRetryClaim,
+  onDismissDraft,
+}: OnboardingFlowProps) {
   const router = useRouter();
   const client = useQueryClient();
 
@@ -158,21 +170,20 @@ function OnboardingFlow({ initial }: { initial: Planning }) {
   const [stage, setStage] = useState<OnboardingStage>(() => {
     // If completedStep > 0, resume at that step
     if (initial.completedStep && initial.completedStep >= 1) {
-      const stepMap: Record<number, OnboardingStage> = {
-        1: "goals",
-        2: "income",
-        3: "expenses",
-        4: "loans",
-        5: "investments",
-        6: "review",
-        7: "complete",
-      };
-      return stepMap[initial.completedStep] || "goals";
+      if (initial.completedStep === 1) return "income";
+      if (initial.completedStep === 2) return "loans";
+      if (initial.completedStep >= 3) return "review";
     }
     return "welcome";
   });
 
-  const [maxCompletedStep, setMaxCompletedStep] = useState<number>(initial.completedStep ?? 0);
+  const [maxCompletedStep, setMaxCompletedStep] = useState<number>(() => {
+    const step = initial.completedStep ?? 0;
+    if (step === 1) return 1;
+    if (step === 2) return 3;
+    if (step >= 3) return 6;
+    return 0;
+  });
 
   // Detailed items state with fallback from initial or defaults
   const [goals, setGoals] = useState<GoalCardItem[]>(() => {
@@ -188,12 +199,25 @@ function OnboardingFlow({ initial }: { initial: Planning }) {
     return initial.inputs?.cashFlow?.income ?? "65000";
   });
 
-  const [otherIncome, setOtherIncome] = useState<IncomeStream[]>([
-    { id: "inc-1", source: "Freelance", type: "Freelance", amount: "10000" },
-  ]);
+  const [otherIncome, setOtherIncome] = useState<IncomeStream[]>([]);
 
   const [expenses, setExpenses] = useState<ExpenseItem[]>(INITIAL_EXPENSES);
-  const [loans, setLoans] = useState<LoanItem[]>(INITIAL_LOANS);
+  const [loans, setLoans] = useState<LoanItem[]>(() => {
+    if (initial.inputs?.loan?.principal && parseFloat(initial.inputs.loan.principal) > 0) {
+      return [
+        {
+          id: "loan-1",
+          name: "Existing Loan",
+          type: "other",
+          outstandingAmount: initial.inputs.loan.principal,
+          monthlyEmi: initial.inputs.cashFlow?.emis || "0",
+          annualRate: initial.inputs.loan.annualRate || "8.5",
+          tenureMonths: initial.inputs.loan.tenureMonths || 180,
+        },
+      ];
+    }
+    return INITIAL_LOANS;
+  });
   const [investments, setInvestments] = useState<InvestmentItem[]>(INITIAL_INVESTMENTS);
 
   // Autosave and sync tracking
@@ -205,38 +229,45 @@ function OnboardingFlow({ initial }: { initial: Planning }) {
   const [apiGenerateSuccess, setApiGenerateSuccess] = useState(false);
 
   const revision = useRef(initial.revision);
+  useEffect(() => {
+    if (typeof initial.revision === "number" && initial.revision > revision.current) {
+      revision.current = initial.revision;
+    }
+  }, [initial.revision]);
+
   const inFlight = useRef<Promise<void> | null>(null);
   const generationKey = useRef<string | null>(null);
 
   // Compute roll-up backend inputs snapshot
   const getRolledUpInputs = useCallback((): Inputs => {
-    const totalSalary = parseFloat(salary) || 0;
-    const totalOtherIncome = otherIncome.reduce((acc, s) => acc + (parseFloat(s.amount) || 0), 0);
+    const totalSalary = Math.max(0, parseFloat(salary) || 0);
+    const totalOtherIncome = otherIncome.reduce((acc, s) => acc + Math.max(0, parseFloat(s.amount) || 0), 0);
     const totalIncome = (totalSalary + totalOtherIncome).toString();
 
     const essentialExp = expenses
       .filter((e) => e.isEssential)
-      .reduce((acc, e) => acc + (parseFloat(e.amount) || 0), 0)
+      .reduce((acc, e) => acc + Math.max(0, parseFloat(e.amount) || 0), 0)
       .toString();
 
     const discretionaryExp = expenses
       .filter((e) => !e.isEssential)
-      .reduce((acc, e) => acc + (parseFloat(e.amount) || 0), 0)
+      .reduce((acc, e) => acc + Math.max(0, parseFloat(e.amount) || 0), 0)
       .toString();
 
     const totalEmis = loans
-      .reduce((acc, l) => acc + (parseFloat(l.monthlyEmi) || 0), 0)
+      .reduce((acc, l) => acc + Math.max(0, parseFloat(l.monthlyEmi) || 0), 0)
       .toString();
 
     const totalLoanPrincipal = loans
-      .reduce((acc, l) => acc + (parseFloat(l.outstandingAmount) || 0), 0)
-      .toString();
+      .reduce((acc, l) => acc + Math.max(0, parseFloat(l.outstandingAmount) || 0), 0);
 
     const totalInvestments = investments
-      .reduce((acc, i) => acc + (parseFloat(i.currentValue) || 0), 0)
+      .reduce((acc, i) => acc + Math.max(0, parseFloat(i.currentValue) || 0), 0)
       .toString();
 
     const firstGoal = goals.find((g) => g.selected);
+    const goalTarget = firstGoal?.targetAmount ? Math.max(0, parseFloat(firstGoal.targetAmount) || 0) : 0;
+    const primaryLoan = loans.find((l) => (parseFloat(l.outstandingAmount) || 0) > 0);
 
     return {
       cashFlow: {
@@ -249,17 +280,17 @@ function OnboardingFlow({ initial }: { initial: Planning }) {
         currentReserves: totalInvestments,
         incomeStability: "stable",
       },
-      loan: {
-        principal: totalLoanPrincipal,
-        annualRate: "8.5",
-        tenureMonths: 180,
-      },
+      loan: totalLoanPrincipal > 0 ? {
+        principal: totalLoanPrincipal.toString(),
+        annualRate: primaryLoan?.annualRate && parseFloat(primaryLoan.annualRate) > 0 ? primaryLoan.annualRate : "8.5",
+        tenureMonths: primaryLoan?.tenureMonths && primaryLoan.tenureMonths > 0 ? primaryLoan.tenureMonths : 180,
+      } : undefined,
       investment: {
         initialLumpSum: totalInvestments,
       },
       goal: firstGoal
         ? {
-            goalName: firstGoal.name,
+            goalName: firstGoal.name?.trim() || "Financial Goal",
             goalCategory:
               firstGoal.category === "home"
                 ? "home"
@@ -268,20 +299,24 @@ function OnboardingFlow({ initial }: { initial: Planning }) {
                   : firstGoal.category === "retirement"
                     ? "retirement"
                     : "custom",
-            targetAmountToday: firstGoal.targetAmount,
+            ...(goalTarget > 0 ? { targetAmountToday: goalTarget.toString() } : {}),
           }
         : undefined,
       netWorth: {
-        assets: investments.map((inv) => ({
-          name: inv.name,
-          category: inv.type,
-          value: inv.currentValue,
-        })),
-        liabilities: loans.map((l) => ({
-          name: l.name,
-          category: l.type,
-          value: l.outstandingAmount,
-        })),
+        assets: investments
+          .filter((inv) => inv.name?.trim() && !isNaN(parseFloat(inv.currentValue)) && parseFloat(inv.currentValue) >= 0)
+          .map((inv) => ({
+            name: inv.name.trim(),
+            category: inv.type || "other",
+            value: Math.max(0, parseFloat(inv.currentValue) || 0).toString(),
+          })),
+        liabilities: loans
+          .filter((l) => l.name?.trim() && !isNaN(parseFloat(l.outstandingAmount)) && parseFloat(l.outstandingAmount) >= 0)
+          .map((l) => ({
+            name: l.name.trim(),
+            category: l.type || "other",
+            value: Math.max(0, parseFloat(l.outstandingAmount) || 0).toString(),
+          })),
       },
     };
   }, [salary, otherIncome, expenses, loans, investments, goals]);
@@ -312,22 +347,23 @@ function OnboardingFlow({ initial }: { initial: Planning }) {
   };
   const currentStepNumber = stageToStepNumber[stage];
 
-  const save = useCallback(async () => {
+  const save = useCallback(async (force = false) => {
     if (inFlight.current) await inFlight.current;
     const snapshot = latestRef.current;
-    if (snapshot.change === savedChange) return;
+    if (!force && snapshot.change === savedChange) return;
 
     setSaving(true);
     setError(null);
 
     const pending = (async () => {
       const rolledUp = snapshot.getRolledUpInputs();
+      const backendStep = toBackendCompletedStep(snapshot.maxCompletedStep);
       try {
         const result = unwrap(
           await sdk.PUT("/api/v1/households/planning", {
             body: {
               inputs: rolledUp,
-              completedStep: snapshot.maxCompletedStep,
+              completedStep: backendStep,
               estimates: [],
               expectedRevision: revision.current,
             },
@@ -338,6 +374,34 @@ function OnboardingFlow({ initial }: { initial: Planning }) {
         generationKey.current = null;
         client.setQueryData(["planning"], result.data);
       } catch (e: unknown) {
+        const errObj = e as { status?: number; message?: string } | undefined;
+        // Automatic 409 conflict recovery: fetch latest planning revision and retry save once
+        if (errObj?.status === 409) {
+          try {
+            const fresh = unwrap(await sdk.GET("/api/v1/households/planning"));
+            if (fresh?.data && typeof fresh.data.revision === "number") {
+              revision.current = fresh.data.revision;
+              const retryResult = unwrap(
+                await sdk.PUT("/api/v1/households/planning", {
+                  body: {
+                    inputs: rolledUp,
+                    completedStep: backendStep,
+                    estimates: [],
+                    expectedRevision: revision.current,
+                  },
+                })
+              );
+              revision.current = retryResult.data.revision;
+              setSavedChange(snapshot.change);
+              generationKey.current = null;
+              client.setQueryData(["planning"], retryResult.data);
+              return;
+            }
+          } catch {
+            // Fall through to default error handling
+          }
+        }
+
         if (typeof window !== "undefined") {
           try {
             window.localStorage.setItem("fdp:guest-planning-inputs", JSON.stringify(rolledUp));
@@ -345,7 +409,6 @@ function OnboardingFlow({ initial }: { initial: Planning }) {
             // ignore
           }
         }
-        const errObj = e as { status?: number; message?: string } | undefined;
         const errMsg = errObj?.message?.toLowerCase() ?? "";
         const isAuthOrCsrfIssue =
           errObj?.status === 401 ||
@@ -419,7 +482,7 @@ function OnboardingFlow({ initial }: { initial: Planning }) {
     setApiGenerateSuccess(false);
 
     try {
-      await save().catch(() => undefined);
+      await save(true);
       generationKey.current ??= crypto.randomUUID();
       try {
         unwrap(
@@ -429,8 +492,34 @@ function OnboardingFlow({ initial }: { initial: Planning }) {
           })
         );
         await client.invalidateQueries({ queryKey: ["plan"] });
+        await client.invalidateQueries({ queryKey: ["planning"] });
       } catch (postErr: unknown) {
         const errObj = postErr as { status?: number; message?: string } | undefined;
+        // Automatic 409 conflict recovery on generate: fetch latest planning and retry once
+        if (errObj?.status === 409) {
+          try {
+            const fresh = unwrap(await sdk.GET("/api/v1/households/planning"));
+            if (fresh?.data && typeof fresh.data.revision === "number") {
+              revision.current = fresh.data.revision;
+              generationKey.current = crypto.randomUUID();
+              unwrap(
+                await sdk.POST("/api/v1/households/planning/generate", {
+                  params: { header: { "Idempotency-Key": generationKey.current } },
+                  body: { expectedRevision: revision.current },
+                })
+              );
+              await client.invalidateQueries({ queryKey: ["plan"] });
+              await client.invalidateQueries({ queryKey: ["planning"] });
+              trackFunnel("onboarding_completed");
+              trackFunnel("first_plan_generated");
+              setApiGenerateSuccess(true);
+              return;
+            }
+          } catch {
+            // Fall through
+          }
+        }
+
         const errMsg = errObj?.message?.toLowerCase() ?? "";
         const isAuthOrCsrfIssue =
           errObj?.status === 401 ||
@@ -472,13 +561,75 @@ function OnboardingFlow({ initial }: { initial: Planning }) {
 
       {/* Main Content Area */}
       <main className="flex-1">
+        {pendingDraft && (
+          <div className="mx-auto mt-4 max-w-5xl px-4">
+            <div className="rounded-2xl border border-[#E8E1D6] bg-[#FFFCF8] p-5 shadow-xs">
+              <div className="flex items-start gap-3">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#E6B46A]/20 text-[#7D5200]">
+                  <Sparkles className="size-4" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-semibold text-[#1F2A44]">Saved Affordability Calculation Found</h3>
+                    {onDismissDraft && (
+                      <button
+                        type="button"
+                        className="text-xs text-[#475467] hover:text-[#1F2A44] hover:underline"
+                        onClick={onDismissDraft}
+                      >
+                        Dismiss
+                      </button>
+                    )}
+                  </div>
+                  <p className="mt-1 text-sm text-[#475467]">
+                    Your affordability inputs are still saved on this device, but have not been added to your plan.
+                  </p>
+                  <ErrorNotice error={claimError} />
+                  {onRetryClaim && (
+                    <div className="mt-3 flex items-center gap-3">
+                      <button
+                        type="button"
+                        className={`${secondary} text-sm`}
+                        disabled={claimingDraft}
+                        onClick={onRetryClaim}
+                      >
+                        {claimingDraft ? "Adding saved inputs…" : "Retry adding saved inputs"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {Boolean(error) && (
           <div className="mx-auto mt-4 max-w-5xl px-4">
             <div className="rounded-xl border border-[#A13F39]/40 bg-[#FFF9F0] p-4 text-sm text-[#A13F39]">
-              <p className="font-semibold">Couldn’t save. Your edits are still here.</p>
+              <div className="flex items-start justify-between gap-2">
+                <p className="font-semibold">
+                  {stage === "review"
+                    ? "Couldn’t generate your plan or save changes. Your inputs are safely preserved."
+                    : "Couldn’t save. Your edits are still here."}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setError(null)}
+                  className="text-xs font-semibold text-[#A13F39]/80 hover:text-[#A13F39] hover:underline"
+                >
+                  Dismiss
+                </button>
+              </div>
               <ErrorNotice
                 error={error}
-                retry={() => void saveRef.current().catch(() => undefined)}
+                retry={() => {
+                  setError(null);
+                  if (stage === "review") {
+                    void triggerPlanGeneration();
+                  } else {
+                    void saveRef.current(true).catch(() => undefined);
+                  }
+                }}
               />
             </div>
           </div>
@@ -519,20 +670,28 @@ function OnboardingFlow({ initial }: { initial: Planning }) {
                     <GoalsStep
                       goals={goals}
                       onToggleGoal={(id) => {
-                        setGoals((prev) =>
-                          prev.map((g) => (g.id === id ? { ...g, selected: !g.selected } : g))
-                        );
+                        setGoals((prev) => {
+                          const target = prev.find((g) => g.id === id);
+                          if (!target) return prev;
+                          if (!target.selected && prev.filter((g) => g.selected).length >= 3) {
+                            return prev;
+                          }
+                          return prev.map((g) => (g.id === id ? { ...g, selected: !g.selected } : g));
+                        });
                         setChange((c) => c + 1);
                       }}
                       onAddCustomGoal={(name) => {
-                        const newGoal: GoalCardItem = {
-                          id: `custom-${Date.now()}`,
-                          name,
-                          category: "custom",
-                          image: "/Assets/Objects/coin_stacks.png",
-                          selected: true,
-                        };
-                        setGoals((prev) => [...prev, newGoal]);
+                        setGoals((prev) => {
+                          if (prev.filter((g) => g.selected).length >= 3) return prev;
+                          const newGoal: GoalCardItem = {
+                            id: `custom-${Date.now()}`,
+                            name,
+                            category: "custom",
+                            image: "/Assets/Objects/coin_stacks.png",
+                            selected: true,
+                          };
+                          return [...prev, newGoal];
+                        });
                         setChange((c) => c + 1);
                       }}
                       onStartChat={() => setStage("chat")}
@@ -687,6 +846,7 @@ function OnboardingFlow({ initial }: { initial: Planning }) {
                       expenses={expenses}
                       loans={loans}
                       investments={investments}
+                      userProfile={userProfile}
                       onNavigateToStep={(stepNum) => {
                         const stepMap: Record<number, OnboardingStage> = {
                           1: "goals",

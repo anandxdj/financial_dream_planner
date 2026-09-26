@@ -71,8 +71,19 @@ export class GeminiLlmAdapter implements LlmProvider {
       }
     }
 
+    // Merge any adjacent contents with the same role to strictly satisfy Gemini turn alternation
+    const mergedContents: Array<{ role: string; parts: Array<Record<string, unknown>> }> = [];
+    for (const item of contents) {
+      const prev = mergedContents[mergedContents.length - 1];
+      if (prev && prev.role === item.role) {
+        prev.parts.push(...item.parts);
+      } else {
+        mergedContents.push(item);
+      }
+    }
+
     const bodyPayload: Record<string, unknown> = {
-      contents,
+      contents: mergedContents,
     };
 
     if (systemText) {

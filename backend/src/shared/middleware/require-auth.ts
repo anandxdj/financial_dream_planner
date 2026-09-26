@@ -18,29 +18,33 @@ export async function requireAuth(req: Request, _res: Response, next: () => void
   const selected = selectAuthToken(header, req.cookies?.[COOKIE.access] as string | undefined);
 
   if (!selected) {
-    if (!env.AUTH_ENABLED || env.NODE_ENV !== "production") {
-      const [defaultMember] = await db.select({
-        userId: householdMembers.userId,
-        householdId: householdMembers.householdId,
-        role: householdMembers.role,
-        email: users.email,
-      }).from(householdMembers)
-        .innerJoin(users, eq(users.id, householdMembers.userId))
-        .where(and(eq(users.status, USER_STATUS.active), isNull(householdMembers.endedAt)))
-        .limit(1);
+    if (db && (!env.AUTH_ENABLED || env.NODE_ENV === "development") && env.NODE_ENV !== "test") {
+      try {
+        const [defaultMember] = await db.select({
+          userId: householdMembers.userId,
+          householdId: householdMembers.householdId,
+          role: householdMembers.role,
+          email: users.email,
+        }).from(householdMembers)
+          .innerJoin(users, eq(users.id, householdMembers.userId))
+          .where(and(eq(users.status, USER_STATUS.active), isNull(householdMembers.endedAt)))
+          .limit(1);
 
-      if (defaultMember) {
-        req.user = { id: defaultMember.userId, email: defaultMember.email };
-        req.auth = {
-          userId: defaultMember.userId,
-          sessionId: "dev-bypass-session",
-          householdId: defaultMember.householdId,
-          role: defaultMember.role,
-          authMethod: "password",
-          transport: "cookie",
-          authenticatedAt: new Date(),
-        };
-        return next();
+        if (defaultMember) {
+          req.user = { id: defaultMember.userId, email: defaultMember.email };
+          req.auth = {
+            userId: defaultMember.userId,
+            sessionId: "dev-bypass-session",
+            householdId: defaultMember.householdId,
+            role: defaultMember.role,
+            authMethod: "password",
+            transport: "cookie",
+            authenticatedAt: new Date(),
+          };
+          return next();
+        }
+      } catch {
+        // Database not connected (e.g. unit test environment); fall through to 401
       }
     }
     throw new AppError(401, "UNAUTHORIZED", "Authentication required");
@@ -76,7 +80,7 @@ export async function requireAuth(req: Request, _res: Response, next: () => void
     };
     next();
   } catch (err) {
-    if (!env.AUTH_ENABLED || env.NODE_ENV !== "production") {
+    if (db && (!env.AUTH_ENABLED || env.NODE_ENV === "development") && env.NODE_ENV !== "test") {
       const [defaultMember] = await db.select({
         userId: householdMembers.userId,
         householdId: householdMembers.householdId,

@@ -62,44 +62,16 @@ export const INITIAL_GOALS: GoalCardItem[] = [
 ];
 
 export const INITIAL_EXPENSES: ExpenseItem[] = [
-  { id: "housing", category: "housing", label: "Housing (Rent / Home)", amount: "22000", isEssential: true },
-  { id: "food", category: "food", label: "Food & Dining", amount: "14200", isEssential: true },
-  { id: "transport", category: "transport", label: "Transport", amount: "8600", isEssential: false },
-  { id: "utilities", category: "utilities", label: "Utilities (Electricity, Internet, etc.)", amount: "4500", isEssential: true },
-  { id: "shopping", category: "shopping", label: "Shopping", amount: "7800", isEssential: false },
-  { id: "entertainment", category: "entertainment", label: "Entertainment", amount: "6450", isEssential: false },
-  { id: "others", category: "others", label: "Others", amount: "5000", isEssential: false },
+  { id: "housing", category: "housing", label: "Housing (Rent / Home)", amount: "16000", isEssential: true },
+  { id: "food", category: "food", label: "Food & Dining", amount: "9000", isEssential: true },
+  { id: "transport", category: "transport", label: "Transport", amount: "3500", isEssential: false },
+  { id: "utilities", category: "utilities", label: "Utilities (Electricity, Internet, etc.)", amount: "3000", isEssential: true },
+  { id: "shopping", category: "shopping", label: "Shopping", amount: "3000", isEssential: false },
+  { id: "entertainment", category: "entertainment", label: "Entertainment", amount: "2500", isEssential: false },
+  { id: "others", category: "others", label: "Others", amount: "1500", isEssential: false },
 ];
 
-export const INITIAL_LOANS: LoanItem[] = [
-  {
-    id: "loan-1",
-    name: "Home Loan",
-    type: "home",
-    outstandingAmount: "4500000",
-    monthlyEmi: "15750",
-    annualRate: "8.5",
-    tenureMonths: 240,
-  },
-  {
-    id: "loan-2",
-    name: "Car Loan",
-    type: "car",
-    outstandingAmount: "650000",
-    monthlyEmi: "12800",
-    annualRate: "9.2",
-    tenureMonths: 60,
-  },
-  {
-    id: "loan-3",
-    name: "Personal Loan",
-    type: "personal",
-    outstandingAmount: "120000",
-    monthlyEmi: "4200",
-    annualRate: "12.5",
-    tenureMonths: 36,
-  },
-];
+export const INITIAL_LOANS: LoanItem[] = [];
 
 export const INITIAL_INVESTMENTS: InvestmentItem[] = [
   { id: "inv-1", name: "Savings Account", type: "savings", currentValue: "180000" },
